@@ -32,6 +32,7 @@ export function topbar() {
       <div class="topbar-sub">${esc(d.business.name)}</div>
     </div>
     <div class="topbar-spacer"></div>
+    <button type="button" id="sync-indicator" class="sync-badge" data-act="trigger-sync" title="Sync Status" style="margin-right:6px;border:none;background:none;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;gap:4px"></button>
     <span class="pill-date">${todayTxt()}</span>
     ${langSelector()}
     <div class="topbar-cta">
@@ -63,7 +64,7 @@ export function viewShell(content) {
       </nav>
       <div class="side-foot">
         <div class="who">
-          <div class="avatar small">${esc(d.business.name.trim().charAt(0) || 'द')}</div>
+          <div class="avatar small">${esc(d.business.name.trim().charAt(0) || 'D')}</div>
           <div class="grow">
             <div class="who-name ellipsis">${esc(d.business.name)}</div>
             <div class="who-sub">${d.business.phone}</div>
@@ -81,4 +82,3 @@ export function viewShell(content) {
     ${tabbar()}
   </div>`;
 }
-

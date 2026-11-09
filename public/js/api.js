@@ -1,5 +1,7 @@
+// Network API Client with Offline-First State Synchronization
 import { state, toastEl } from './state.js';
 import { closeModal } from './components/modals.js';
+import { saveOfflineSnapshot, loadOfflineSnapshot, syncOfflineQueue, isOnline } from './sync.js';
 
 let toastTimer = null;
 export function toast(msg) {
@@ -19,8 +21,8 @@ export async function api(path, body) {
       credentials: 'same-origin',
     });
   } catch (err) {
-    toast('इंटरनेट नहीं चल रहा — फिर कोशिश करें');
-    return null;
+    // Network unreachable
+    return { ok: false, offline: true, error: 'Network offline' };
   }
 
   let data = {};
@@ -34,11 +36,11 @@ export async function api(path, body) {
     state.data = null;
     closeModal();
     window.__appRender?.();
-    toast('सत्र खत्म हो गया — फिर लॉगिन करें');
+    toast('Session expired. Please sign in again.');
     return null;
   }
   if (!res.ok) {
-    toast(data.error || 'कुछ गड़बड़ हुई');
+    toast(data.error || 'Request failed');
     return null;
   }
   return data;
@@ -47,13 +49,39 @@ export async function api(path, body) {
 export function applyState(snapshot) {
   if (snapshot) {
     state.data = snapshot;
+    saveOfflineSnapshot(snapshot);
     window.__appRender?.();
   }
 }
 
 export async function loadState(range) {
+  // If offline, boot instantly from cached local snapshot
+  if (!isOnline()) {
+    const cached = loadOfflineSnapshot();
+    if (cached) {
+      state.data = cached;
+      window.__appRender?.();
+      toast('Working Offline — Cached records loaded');
+      return { ok: true, state: cached };
+    }
+  }
+
   const data = await api('/api/state?range=' + encodeURIComponent(range || state.range));
-  if (data && data.state) applyState(data.state);
+  if (data && data.state) {
+    applyState(data.state);
+    // Background sync check
+    syncOfflineQueue();
+    return data;
+  }
+
+  // Network failed or offline fallback
+  const cached = loadOfflineSnapshot();
+  if (cached) {
+    state.data = cached;
+    window.__appRender?.();
+    return { ok: true, state: cached };
+  }
+
   return data;
 }
 
@@ -68,4 +96,3 @@ export async function withBusy(el, fn) {
     if (el && el.isConnected) el.disabled = false;
   }
 }
-

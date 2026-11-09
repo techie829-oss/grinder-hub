@@ -1,4 +1,4 @@
-// Centralized DOM Event Listeners & Dispatcher
+// Centralized DOM Event Listeners & Dispatcher with Offline-First Fallback
 import { state } from './state.js';
 import { api, withBusy, loadState, applyState, toast } from './api.js';
 import { inr, unitOf } from './utils/formatters.js';
@@ -10,6 +10,7 @@ import { filteredCustomers } from './views/customerView.js';
 import { currentService } from './views/jobView.js';
 import { showAuthError } from './views/authView.js';
 import { setLanguage, t } from './i18n.js';
+import { enqueueOfflineAction, syncOfflineQueue, saveOfflineSnapshot } from './sync.js';
 
 export function recalcJob() {
   const qtyEl = document.getElementById('j-qty');
@@ -118,6 +119,11 @@ export function setupEventListeners() {
         goTo(el.dataset.view);
         break;
 
+      case 'trigger-sync':
+        toast('Syncing with server…');
+        await syncOfflineQueue();
+        break;
+
       case 'auth-mode':
         state.auth.mode = el.dataset.mode === 'signup' ? 'signup' : 'login';
         state.auth.error = '';
@@ -142,7 +148,18 @@ export function setupEventListeners() {
       case 'token-done':
         await withBusy(el, async () => {
           const data = await api('/api/tokens/status', { id: el.dataset.id, status: 'done' });
-          if (data) {
+          if (data && data.offline) {
+            enqueueOfflineAction('tokenStatus', { id: el.dataset.id, status: 'done' });
+            const tok = state.data.tokens.serving?.id === el.dataset.id
+              ? state.data.tokens.serving
+              : state.data.tokens.waiting.find((x) => x.id === el.dataset.id);
+            if (tok) tok.status = 'done';
+            if (state.data.tokens.serving?.id === el.dataset.id) state.data.tokens.serving = null;
+            state.data.tokens.done += 1;
+            saveOfflineSnapshot(state.data);
+            window.__appRender?.();
+            toast('Token marked done (offline)');
+          } else if (data) {
             applyState(data.state);
             toast('Token completed ✓');
           }
@@ -152,7 +169,18 @@ export function setupEventListeners() {
       case 'token-start':
         await withBusy(el, async () => {
           const data = await api('/api/tokens/status', { id: el.dataset.id, status: 'serving' });
-          if (data) {
+          if (data && data.offline) {
+            enqueueOfflineAction('tokenStatus', { id: el.dataset.id, status: 'serving' });
+            const tok = state.data.tokens.waiting.find((x) => x.id === el.dataset.id);
+            if (tok) {
+              tok.status = 'serving';
+              state.data.tokens.serving = tok;
+              state.data.tokens.waiting = state.data.tokens.waiting.filter((x) => x.id !== el.dataset.id);
+            }
+            saveOfflineSnapshot(state.data);
+            window.__appRender?.();
+            toast('Calling token (offline)');
+          } else if (data) {
             applyState(data.state);
             toast('Calling token');
           }
@@ -167,7 +195,15 @@ export function setupEventListeners() {
         }
         await withBusy(el, async () => {
           const data = await api('/api/tokens/status', { id: next.id, status: 'serving' });
-          if (data) {
+          if (data && data.offline) {
+            enqueueOfflineAction('tokenStatus', { id: next.id, status: 'serving' });
+            next.status = 'serving';
+            state.data.tokens.serving = next;
+            state.data.tokens.waiting.shift();
+            saveOfflineSnapshot(state.data);
+            window.__appRender?.();
+            toast(`Calling token #${next.no} (offline)`);
+          } else if (data) {
             applyState(data.state);
             toast(`Calling token #${next.no}`);
           }
@@ -179,7 +215,14 @@ export function setupEventListeners() {
         if (!confirm('Cancel this token?')) return;
         await withBusy(el, async () => {
           const data = await api('/api/tokens/delete', { id: el.dataset.id });
-          if (data) {
+          if (data && data.offline) {
+            enqueueOfflineAction('tokenDelete', { id: el.dataset.id });
+            state.data.tokens.waiting = state.data.tokens.waiting.filter((x) => x.id !== el.dataset.id);
+            if (state.data.tokens.serving?.id === el.dataset.id) state.data.tokens.serving = null;
+            saveOfflineSnapshot(state.data);
+            window.__appRender?.();
+            toast('Token cancelled (offline)');
+          } else if (data) {
             applyState(data.state);
             toast(t('tokenCancelled'));
           }
@@ -203,7 +246,7 @@ export function setupEventListeners() {
             state.job.lossRateG = String(svc.lossRateG || 0);
           }
         }
-        if (tok.qty) state.job.qty = String(tok.qty);
+        if (tok.grossWeight) state.job.qty = String(tok.grossWeight);
         goTo('job');
         break;
       }
@@ -231,7 +274,14 @@ export function setupEventListeners() {
         if (!confirm(`Delete customer "${customer.name}${customer.village ? ' (' + customer.village + ')' : ''}"?`)) return;
         await withBusy(el, async () => {
           const data = await api('/api/customers/delete', { id });
-          if (data) {
+          if (data && data.offline) {
+            enqueueOfflineAction('customerDelete', { id });
+            state.data.customers = state.data.customers.filter((c) => c.id !== id);
+            saveOfflineSnapshot(state.data);
+            closeModal();
+            window.__appRender?.();
+            toast('Customer deleted (offline)');
+          } else if (data) {
             applyState(data.state);
             closeModal();
             toast('Customer deleted');
@@ -260,20 +310,22 @@ export function setupEventListeners() {
       }
 
       case 'wa-remind': {
-        const c = state.customer;
+        const c = state.customer?.customer || state.customer;
         if (!c) return;
         const biz = state.data.business;
-        const msg = `*${biz.name}*\nHello ${c.name}${c.village ? ' (' + c.village + ')' : ''},\nYour pending due balance is *${inr(c.balancePaise)}*.\n${biz.upi ? 'UPI: ' + biz.upi + '\n' : ''}Thank you! 🙏`;
+        const balance = c.balancePaise || 0;
+        const msg = `*${biz.name}*\nHello ${c.name}${c.village ? ' (' + c.village + ')' : ''},\nYour pending due balance is *${inr(balance)}*.\n${biz.upi ? 'UPI: ' + biz.upi + '\n' : ''}Thank you! 🙏`;
         openWhatsApp(msg, c.phone);
         break;
       }
 
       case 'job-for-cust': {
-        const c = state.customer;
+        const c = state.customer?.customer || state.customer;
         if (!c) return;
         state.job.name = c.name;
         state.job.village = c.village || '';
         state.job.phone = c.phone || '';
+        closeModal();
         goTo('job');
         break;
       }
@@ -292,7 +344,13 @@ export function setupEventListeners() {
         if (!confirm('Delete this ledger entry?')) return;
         await withBusy(el, async () => {
           const data = await api('/api/entries/delete', { id: el.dataset.id });
-          if (data) {
+          if (data && data.offline) {
+            enqueueOfflineAction('entryDelete', { id: el.dataset.id });
+            state.data.entries = state.data.entries.filter((x) => x.id !== el.dataset.id);
+            saveOfflineSnapshot(state.data);
+            window.__appRender?.();
+            toast('Entry deleted (offline)');
+          } else if (data) {
             applyState(data.state);
             toast('Entry deleted');
           }
@@ -431,6 +489,7 @@ export function setupEventListeners() {
           state.auth.error = '';
           state.view = 'dashboard';
           state.data = data.state;
+          saveOfflineSnapshot(data.state);
           window.__appRender?.();
           toast(mode === 'signup' ? 'Welcome! Shop created' : 'Welcome back');
         }
@@ -463,15 +522,14 @@ export function setupEventListeners() {
       const lossRateG = Number(fd.get('lossRateG') || 0);
       const totalLossG = Math.round(grossWeight * lossRateG);
       const netWeight = Math.max(0, grossWeight - (totalLossG / 1000));
+      const amountPaise = Math.round(grossWeight * rate * 100);
 
-      const data = await api('/api/jobs', {
+      const jobPayload = {
         serviceId: state.job.serviceId,
-        qty: grossWeight,
         grossWeight,
         rate,
         lossRateG,
         totalLossG,
-        lossG: totalLossG,
         netWeight,
         paid: state.job.paid,
         name: state.job.name,
@@ -481,13 +539,81 @@ export function setupEventListeners() {
         withToken: state.job.withToken,
         tokenId: state.job.tokenId,
         tokenNo: state.job.tokenNo,
-      });
+      };
 
+      const data = await api('/api/jobs', jobPayload);
       state.busy = false;
       if (submitBtn && submitBtn.isConnected) submitBtn.disabled = false;
 
+      // Handle offline mode fallback
+      if (data && data.offline) {
+        const offlineEntryId = 'offline-' + crypto.randomUUID();
+        const svc = currentService();
+        const now = Date.now();
+
+        enqueueOfflineAction('job', { ...jobPayload, offlineId: offlineEntryId, at: now });
+
+        const newEntry = {
+          id: offlineEntryId,
+          kind: 'job',
+          name: jobPayload.name,
+          village: jobPayload.village,
+          grossWeight,
+          lossG: totalLossG,
+          netWeight,
+          ratePaise: Math.round(rate * 100),
+          amountPaise,
+          paid: jobPayload.paid,
+          note: jobPayload.note,
+          tokenNo: jobPayload.tokenNo,
+          serviceName: svc ? svc.name : 'Grinding',
+          unit: svc ? svc.unit : 'kg',
+          at: now,
+        };
+
+        state.data.entries.unshift(newEntry);
+        state.data.stats.jobs += 1;
+        state.data.stats.grossWeight += grossWeight;
+        state.data.stats.lossG += totalLossG;
+        state.data.stats.netWeight += netWeight;
+        state.data.stats.salePaise += amountPaise;
+
+        if (jobPayload.paid) {
+          state.data.stats.cashPaise += amountPaise;
+        } else {
+          state.data.stats.creditPaise += amountPaise;
+          state.data.stats.outstandingPaise += amountPaise;
+          // Optimistically update customer balance if present
+          const cust = state.data.customers.find(
+            (c) => c.name.toLowerCase() === jobPayload.name.toLowerCase() &&
+                   (c.village || '').toLowerCase() === (jobPayload.village || '').toLowerCase()
+          );
+          if (cust) cust.balancePaise += amountPaise;
+        }
+
+        saveOfflineSnapshot(state.data);
+
+        // Reset form inputs
+        state.job.qty = '';
+        state.job.name = '';
+        state.job.village = '';
+        state.job.phone = '';
+        state.job.note = '';
+        state.job.paid = true;
+        state.job.withToken = false;
+        state.job.tokenId = null;
+        state.job.tokenNo = null;
+
+        window.__appRender?.();
+        showJobDone({ entryId: offlineEntryId, token: null, state: state.data });
+        toast('Saved Offline — Will sync automatically');
+        return;
+      }
+
       if (data && data.state) {
         state.data = data.state;
+        saveOfflineSnapshot(data.state);
+
         state.job.qty = '';
         state.job.name = '';
         state.job.village = '';
@@ -516,11 +642,38 @@ export function setupEventListeners() {
       await withBusy(form.querySelector('[type="submit"]'), async () => {
         const name = String(fd.get('name') || '').trim();
         const village = String(fd.get('village') || '').trim();
-        const data = await api('/api/tokens', {
+        const payload = {
           serviceId: state.tokenForm.serviceId,
           name,
           village,
-        });
+        };
+
+        const data = await api('/api/tokens', payload);
+        if (data && data.offline) {
+          const nextNo = state.data.tokens.nextNo;
+          state.data.tokens.nextNo += 1;
+          enqueueOfflineAction('token', { ...payload, no: nextNo, at: Date.now() });
+
+          state.data.tokens.waiting.push({
+            id: 'offline-' + crypto.randomUUID(),
+            no: nextNo,
+            name: name || 'Customer',
+            village: village || '',
+            serviceId: payload.serviceId,
+            grossWeight: 0,
+            lossG: 0,
+            netWeight: 0,
+            status: 'waiting',
+            at: Date.now(),
+          });
+
+          saveOfflineSnapshot(state.data);
+          form.reset();
+          window.__appRender?.();
+          toast(`Token #${nextNo} issued (offline)`);
+          return;
+        }
+
         if (data) {
           applyState(data.state);
           form.reset();
@@ -539,7 +692,27 @@ export function setupEventListeners() {
         };
         const id = fd.get('id');
         if (id) payload.id = id;
+
         const data = await api('/api/customers', payload);
+        if (data && data.offline) {
+          enqueueOfflineAction('customer', payload);
+          if (!id) {
+            state.data.customers.push({
+              id: 'offline-' + crypto.randomUUID(),
+              name: payload.name,
+              village: payload.village,
+              phone: payload.phone,
+              balancePaise: 0,
+              lastAt: Date.now(),
+            });
+          }
+          saveOfflineSnapshot(state.data);
+          closeModal();
+          window.__appRender?.();
+          toast('Customer saved (offline)');
+          return;
+        }
+
         if (data) {
           applyState(data.state);
           closeModal();
@@ -551,11 +724,47 @@ export function setupEventListeners() {
 
     if (kind === 'payment') {
       await withBusy(form.querySelector('[type="submit"]'), async () => {
-        const data = await api('/api/payments', {
+        const payload = {
           customerId: fd.get('customerId'),
           amount: Number(fd.get('amount')),
           note: String(fd.get('note') || '').trim(),
-        });
+        };
+
+        const data = await api('/api/payments', payload);
+        if (data && data.offline) {
+          const offlineId = 'offline-' + crypto.randomUUID();
+          const amountPaise = Math.round(payload.amount * 100);
+          const cust = state.data.customers.find((c) => c.id === payload.customerId);
+          const now = Date.now();
+
+          enqueueOfflineAction('payment', { ...payload, offlineId, at: now });
+
+          state.data.entries.unshift({
+            id: offlineId,
+            kind: 'payment',
+            customerId: payload.customerId,
+            name: cust ? cust.name : 'Customer',
+            village: cust ? cust.village : '',
+            grossWeight: 0,
+            lossG: 0,
+            netWeight: 0,
+            amountPaise,
+            paid: true,
+            note: payload.note,
+            at: now,
+          });
+
+          if (cust) cust.balancePaise -= amountPaise;
+          state.data.stats.cashPaise += amountPaise;
+          state.data.stats.outstandingPaise -= amountPaise;
+
+          saveOfflineSnapshot(state.data);
+          closeModal();
+          window.__appRender?.();
+          toast('Payment recorded (offline)');
+          return;
+        }
+
         if (data) {
           applyState(data.state);
           closeModal();

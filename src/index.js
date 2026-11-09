@@ -8,6 +8,7 @@ import { createToken, setTokenStatus, deleteToken } from './controllers/tokenCon
 import { customerDetail, saveCustomer, deleteCustomer } from './controllers/customerController.js';
 import { saveService, deleteService } from './controllers/serviceController.js';
 import { saveSettings, exportData } from './controllers/settingsController.js';
+import { syncBatch } from './controllers/syncController.js';
 
 export default {
   async fetch(request, env) {
@@ -49,6 +50,7 @@ async function route(request, env, url) {
   if (path === '/api/state' && method === 'GET') {
     return json({ ok: true, state: await buildState(env, business.id, range) });
   }
+  if (path === '/api/sync' && method === 'POST') return syncBatch(request, env, business, range);
   if (path === '/api/jobs' && method === 'POST') return createJob(request, env, business, range);
   if (path === '/api/payments' && method === 'POST') return createPayment(request, env, business, range);
   if (path === '/api/tokens' && method === 'POST') return createToken(request, env, business, range);

@@ -1,5 +1,5 @@
 // Service Worker for Chakki Book (Grinder Hub) PWA
-const CACHE_NAME = 'chakkibook-v2.1';
+const CACHE_NAME = 'chakkibook-v2.2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -7,6 +7,7 @@ const STATIC_ASSETS = [
   '/app.js',
   '/manifest.json',
   '/icon.svg',
+  '/js/sync.js',
   '/js/state.js',
   '/js/i18n.js',
   '/js/api.js',
@@ -54,7 +55,7 @@ self.addEventListener('fetch', (event) => {
 
   event.respondWith(
     caches.match(event.request).then((cached) => {
-      // Fetch fresh version in background and return cached if available
+      // Fetch fresh version in background and update cache
       const networkFetch = fetch(event.request).then((response) => {
         if (response && response.status === 200) {
           const clone = response.clone();

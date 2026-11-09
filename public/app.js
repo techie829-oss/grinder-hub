@@ -1,11 +1,4 @@
-/* ============================================================
-   चक्की बुक (GrinderHub) — Modular Client Entrypoint
-   - Multi-tenant client architecture
-   - Multi-language support (Hindi, English, Marathi, Gujarati)
-   - 2-Entity Verification (Name + Village)
-   - PWA & Capacitor Android APK ready
-   ============================================================ */
-
+// Main Application Entrypoint
 import { state, root } from './js/state.js';
 import { viewAuth } from './js/views/authView.js';
 import { viewDashboard } from './js/views/dashboardView.js';
@@ -17,6 +10,7 @@ import { viewSettings } from './js/views/settingsView.js';
 import { viewShell } from './js/components/shell.js';
 import { setupEventListeners } from './js/events.js';
 import { loadState } from './js/api.js';
+import { initSyncEngine, updateSyncIndicator } from './js/sync.js';
 
 export function render() {
   if (!state.data) {
@@ -48,12 +42,14 @@ export function render() {
   }
 
   root.innerHTML = viewShell(content);
+  updateSyncIndicator();
 }
 
 // Expose render function for reactive state updates
 window.__appRender = render;
 
 // Boot application
+initSyncEngine();
 setupEventListeners();
 render();
 loadState();
