@@ -3,6 +3,18 @@ import { state, toastEl } from './state.js';
 import { closeModal } from './components/modals.js';
 import { saveOfflineSnapshot, loadOfflineSnapshot, syncOfflineQueue, isOnline } from './sync.js';
 
+export const LIVE_SERVER_URL = 'https://chakki-book.rohitkmarch96.workers.dev';
+
+export function getApiUrl(path) {
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  const isCapacitor = typeof window !== 'undefined' && (
+    window.Capacitor !== undefined ||
+    window.location.protocol === 'capacitor:' ||
+    window.location.hostname === 'localhost'
+  );
+  return isCapacitor ? `${LIVE_SERVER_URL}${path}` : path;
+}
+
 let toastTimer = null;
 export function toast(msg) {
   toastEl.textContent = msg;
@@ -13,12 +25,13 @@ export function toast(msg) {
 
 export async function api(path, body) {
   let res;
+  const targetUrl = getApiUrl(path);
   try {
-    res = await fetch(path, {
+    res = await fetch(targetUrl, {
       method: body === undefined ? 'GET' : 'POST',
       headers: body === undefined ? {} : { 'content-type': 'application/json' },
       body: body === undefined ? undefined : JSON.stringify(body),
-      credentials: 'same-origin',
+      credentials: 'include',
     });
   } catch (err) {
     // Network unreachable

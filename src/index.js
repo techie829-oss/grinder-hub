@@ -13,6 +13,19 @@ import { syncBatch } from './controllers/syncController.js';
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    if (request.method === 'OPTIONS') {
+      const origin = request.headers.get('origin') || '*';
+      return new Response(null, {
+        status: 204,
+        headers: {
+          'access-control-allow-origin': origin,
+          'access-control-allow-credentials': 'true',
+          'access-control-allow-methods': 'GET, POST, OPTIONS',
+          'access-control-allow-headers': 'content-type, cookie',
+          'access-control-max-age': '86400',
+        },
+      });
+    }
     if (!url.pathname.startsWith('/api/')) {
       return env.ASSETS.fetch(request);
     }

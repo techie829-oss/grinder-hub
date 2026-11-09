@@ -9,17 +9,30 @@ const SECURITY_HEADERS = {
   'referrer-policy': 'strict-origin-when-cross-origin',
 };
 
-export function json(data, status = 200, extraHeaders = {}) {
+export function json(data, status = 200, extraHeaders = {}, request = null) {
+  let cors = {};
+  if (request) {
+    const origin = request.headers.get('origin');
+    if (origin && (origin === 'https://localhost' || origin === 'capacitor://localhost' || origin.startsWith('http://localhost'))) {
+      cors = {
+        'access-control-allow-origin': origin,
+        'access-control-allow-credentials': 'true',
+        'access-control-allow-methods': 'GET, POST, OPTIONS',
+        'access-control-allow-headers': 'content-type, cookie',
+      };
+    }
+  }
   return new Response(JSON.stringify(data), {
     status,
     headers: {
       ...SECURITY_HEADERS,
+      ...cors,
       ...extraHeaders,
     },
   });
 }
 
-export const bad = (error, status = 400) => json({ error, ok: false }, status);
+export const bad = (error, status = 400, extraHeaders = {}, request = null) => json({ error, ok: false }, status, extraHeaders, request);
 
 export async function readJson(request) {
   try {
@@ -42,13 +55,20 @@ export function getCookie(request, name) {
 }
 
 export function sessionCookie(token, url, maxAge) {
-  const secure = url.protocol === 'https:' ? '; Secure' : '';
-  return `${COOKIE}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure}`;
+  const secure = url.protocol === 'https:' ? '; Secure; SameSite=None' : '; SameSite=Lax';
+  return `${COOKIE}=${encodeURIComponent(token)}; Path=/; HttpOnly${secure}; Max-Age=${maxAge}`;
 }
 
 export function sameOrigin(request, url) {
   const origin = request.headers.get('origin');
   if (!origin) return true;
+  if (
+    origin === 'https://localhost' ||
+    origin === 'capacitor://localhost' ||
+    origin.startsWith('http://localhost')
+  ) {
+    return true;
+  }
   try {
     return new URL(origin).origin === url.origin;
   } catch (err) {

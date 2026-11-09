@@ -9,4 +9,4 @@ binding = "ASSETS"
 [[d1_databases]]
 binding = "DB"
 database_name = "chakki-book"
-database_id = "8f3e2a6c-1b4d-4c8e-9f21-7a5b3c9d0e11"
+database_id = "48ff8a7f-62c9-45b0-b6db-126141ba7aa6"
