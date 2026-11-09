@@ -2,3 +2,12 @@ node_modules/
 .wrangler/
 .dev.vars
 *.log
+
+# Android build outputs & local caches
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+*.apk
+*.aab

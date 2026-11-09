@@ -1,0 +1,20 @@
+{
+  "name": "चक्की बुक — हर दुकान का अपना हिसाब",
+  "short_name": "चक्की बुक",
+  "description": "आटा चक्की, मसाला पिसाई, तेल घानी और छोटे काम-धंधे के लिए टोकन, हिसाब और उधार का सिस्टम।",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f5f6fa",
+  "theme_color": "#4f46e5",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
+

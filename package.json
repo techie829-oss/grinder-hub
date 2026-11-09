@@ -7,9 +7,17 @@
   "scripts": {
     "dev": "wrangler dev --port 8787 --local",
     "db:init": "wrangler d1 execute chakki-book --local --file=schema.sql",
-    "check": "node --check src/worker.js && node --check public/app.js"
+    "check": "node --check src/worker.js && node --check public/app.js",
+    "android:add": "npx cap add android",
+    "android:sync": "npx cap sync android",
+    "android:build": "cd android && ./gradlew assembleDebug"
   },
   "devDependencies": {
     "wrangler": "^4"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/cli": "^8.6.0",
+    "@capacitor/core": "^8.6.0"
   }
 }

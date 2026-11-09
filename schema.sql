@@ -1,5 +1,5 @@
--- चक्की बुक — multi-tenant schema (D1 / SQLite)
--- हर पंक्ति business_id से बँधी है; सारी क्वेरी सत्र से मिले business_id पर सीमित रहती हैं।
+-- ChakkiBook / GrinderHub — Multi-tenant schema (Cloudflare D1 / SQLite)
+-- Every row is scoped to a business_id; all queries are isolated by authenticated business_id.
 
 CREATE TABLE IF NOT EXISTS businesses (
   id           TEXT PRIMARY KEY,
@@ -27,6 +27,8 @@ CREATE TABLE IF NOT EXISTS services (
   name         TEXT NOT NULL,
   unit         TEXT NOT NULL DEFAULT 'kg',
   rate_paise   INTEGER NOT NULL DEFAULT 0,
+  loss_rate_g  REAL NOT NULL DEFAULT 0,
+  katoti_g     REAL NOT NULL DEFAULT 0,
   active       INTEGER NOT NULL DEFAULT 1,
   sort         INTEGER NOT NULL DEFAULT 0
 );
@@ -53,6 +55,10 @@ CREATE TABLE IF NOT EXISTS entries (
   name         TEXT NOT NULL DEFAULT '',
   village      TEXT NOT NULL DEFAULT '',
   qty          REAL,
+  loss_g       REAL NOT NULL DEFAULT 0,
+  katoti_g     REAL NOT NULL DEFAULT 0,
+  net_weight   REAL,
+  net_qty      REAL,
   rate_paise   INTEGER,
   amount_paise INTEGER NOT NULL,
   paid         INTEGER NOT NULL DEFAULT 1,
@@ -72,6 +78,11 @@ CREATE TABLE IF NOT EXISTS tokens (
   name         TEXT NOT NULL DEFAULT '',
   village      TEXT NOT NULL DEFAULT '',
   service_id   TEXT,
+  qty          REAL DEFAULT 0,
+  loss_g       REAL NOT NULL DEFAULT 0,
+  katoti_g     REAL NOT NULL DEFAULT 0,
+  net_weight   REAL DEFAULT 0,
+  net_qty      REAL DEFAULT 0,
   status       TEXT NOT NULL DEFAULT 'waiting',
   created_at   INTEGER NOT NULL
 );

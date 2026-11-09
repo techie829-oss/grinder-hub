@@ -1,0 +1,11 @@
+{
+  "appId": "com.solidrix.chakkibook",
+  "appName": "चक्की बुक (Grinder Hub)",
+  "webDir": "public",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https",
+    "cleartext": true
+  }
+}
+

@@ -1,0 +1,110 @@
+import { readJson, json, bad } from '../utils/response.js';
+import { clean, normalizePhone, normName, normVillage } from '../utils/helpers.js';
+import { buildState } from '../services/stateService.js';
+
+export async function customerDetail(request, env, business, url) {
+  const id = clean(url.searchParams.get('id'), 40);
+  const customer = await env.DB.prepare('SELECT id, name, village, phone FROM customers WHERE id = ? AND business_id = ?')
+    .bind(id, business.id)
+    .first();
+  if (!customer) return bad('ग्राहक नहीं मिला', 404);
+
+  const rows = await env.DB.prepare(
+    `SELECT e.id, e.kind, e.qty, COALESCE(e.katoti_g, 0) AS katoti_g, e.net_qty, e.rate_paise, e.amount_paise, e.paid, e.note, e.token_no,
+            e.created_at, s.name AS service_name, s.unit AS unit
+       FROM entries e LEFT JOIN services s ON s.id = e.service_id AND s.business_id = e.business_id
+      WHERE e.business_id = ? AND e.customer_id = ?
+      ORDER BY e.created_at DESC LIMIT 200`
+  )
+    .bind(business.id, id)
+    .all();
+
+  return json({
+    ok: true,
+    customer: { id: customer.id, name: customer.name, village: customer.village || '', phone: customer.phone || '' },
+    entries: rows.results.map((e) => ({
+      id: e.id,
+      kind: e.kind,
+      qty: e.qty,
+      katotiG: Number(e.katoti_g) || 0,
+      netQty: e.net_qty != null ? Number(e.net_qty) : (e.qty ? Math.max(0, e.qty - ((Number(e.katoti_g) || 0) / 1000)) : null),
+      ratePaise: e.rate_paise,
+      amountPaise: e.amount_paise,
+      paid: !!e.paid,
+      note: e.note || '',
+      tokenNo: e.token_no,
+      serviceName: e.service_name || '',
+      unit: e.unit || 'kg',
+      at: e.created_at,
+    })),
+  });
+}
+
+export async function saveCustomer(request, env, business, range) {
+  const body = await readJson(request);
+  const id = clean(body.id, 40);
+  const name = clean(body.name, 60);
+  const village = clean(body.village, 60);
+  const phone = normalizePhone(body.phone);
+  if (name.length < 2) return bad('ग्राहक का नाम लिखें');
+
+  const key = normName(name);
+  const vKey = normVillage(village);
+
+  if (id) {
+    const existing = await env.DB.prepare('SELECT id FROM customers WHERE id = ? AND business_id = ?')
+      .bind(id, business.id)
+      .first();
+    if (!existing) return bad('ग्राहक नहीं मिला', 404);
+
+    const conflict = await env.DB.prepare(
+      'SELECT id FROM customers WHERE business_id = ? AND name_key = ? AND village_key = ? AND id <> ?'
+    )
+      .bind(business.id, key, vKey, id)
+      .first();
+    if (conflict) return bad('इस नाम और गाँव का ग्राहक पहले से मौजूद है');
+
+    await env.DB.prepare(
+      'UPDATE customers SET name = ?, name_key = ?, village = ?, village_key = ?, phone = ? WHERE id = ? AND business_id = ?'
+    )
+      .bind(name, key, village, vKey, phone, id, business.id)
+      .run();
+  } else {
+    const exists = await env.DB.prepare(
+      'SELECT id FROM customers WHERE business_id = ? AND name_key = ? AND village_key = ?'
+    )
+      .bind(business.id, key, vKey)
+      .first();
+    if (exists) return bad('इस नाम और गाँव का ग्राहक पहले से मौजूद है');
+
+    await env.DB.prepare(
+      'INSERT INTO customers (id, business_id, name, name_key, village, village_key, phone, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+    )
+      .bind(crypto.randomUUID(), business.id, name, key, village, vKey, phone, Date.now())
+      .run();
+  }
+
+  return json({ ok: true, state: await buildState(env, business.id, range) });
+}
+
+export async function deleteCustomer(request, env, business, range) {
+  const body = await readJson(request);
+  const id = clean(body.id, 40);
+
+  const balanceRow = await env.DB.prepare(
+    `SELECT COALESCE(SUM(CASE WHEN kind = 'job' AND paid = 0 THEN amount_paise
+                             WHEN kind = 'payment' THEN -amount_paise ELSE 0 END), 0) AS balance_paise
+       FROM entries WHERE business_id = ? AND customer_id = ?`
+  ).bind(business.id, id).first();
+
+  if (balanceRow && balanceRow.balance_paise !== 0) {
+    return bad('इस ग्राहक का हिसाब बाकी है, पहले हिसाब चुकता करें');
+  }
+
+  await env.DB.batch([
+    env.DB.prepare('UPDATE entries SET customer_id = NULL WHERE business_id = ? AND customer_id = ?').bind(business.id, id),
+    env.DB.prepare('DELETE FROM customers WHERE id = ? AND business_id = ?').bind(id, business.id),
+  ]);
+
+  return json({ ok: true, state: await buildState(env, business.id, range) });
+}
