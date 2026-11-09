@@ -285,3 +285,4 @@ export async function printThermalBill(entry) {
 
   await sendRawData(builder.getBytes());
 }
+

@@ -21,14 +21,17 @@ export const unitOf = (unit) => UNIT_LABEL[unit] || 'kg';
 export const phoneFmt = (p) => (p && p.length === 10 ? `${p.slice(0, 5)} ${p.slice(5)}` : p || '');
 
 export function dateTxt(ts) {
-  const d = new Date(ts);
+  const d = ts ? new Date(ts) : new Date();
+  if (isNaN(d.getTime())) return '';
   const lang = getLanguage() === 'en' ? 'en-IN' : 'hi-IN';
   return d.toLocaleDateString(lang, { day: 'numeric', month: 'short' });
 }
 
 export function timeTxt(ts) {
+  const d = ts ? new Date(ts) : new Date();
+  if (isNaN(d.getTime())) return '';
   const lang = getLanguage() === 'en' ? 'en-IN' : 'hi-IN';
-  return new Date(ts).toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' });
 }
 
 export function relTxt(ts) {

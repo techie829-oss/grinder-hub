@@ -36,6 +36,10 @@ export async function startQrScanner(videoElement, canvasElement, onScan) {
     }
   }
 
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    throw new Error('Camera is not supported on this device/browser');
+  }
+
   try {
     mediaStream = await navigator.mediaDevices.getUserMedia({
       video: {
@@ -142,3 +146,4 @@ export function parseTokenQr(rawValue) {
 
   return { type: 'raw', value: val };
 }
+

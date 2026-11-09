@@ -160,3 +160,4 @@ export async function disconnectScale() {
   weightCharacteristic = null;
   notifyWeight(0, false);
 }
+

@@ -162,3 +162,4 @@ export function parseMillVoiceCommand(rawTranscript) {
     serviceId: detectedService ? detectedService.id : null,
   };
 }
+

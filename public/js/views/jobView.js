@@ -3,6 +3,7 @@ import { state } from '../state.js';
 import { inr, unitOf, esc } from '../utils/formatters.js';
 import { serviceCards } from '../components/rows.js';
 import { t } from '../i18n.js';
+import { isScaleConnected, getLiveWeight } from '../hardware/scaleBluetooth.js';
 
 export function currentService() {
   const data = state.data;
@@ -15,6 +16,9 @@ export function viewJob() {
   const job = state.job;
   const svc = currentService();
   const unit = svc ? unitOf(svc.unit) : 'kg';
+
+  const scaleConnected = isScaleConnected();
+  const liveWt = getLiveWeight();
 
   const grossWeight = Number(job.qty) || 0;
   const ratePerUnit = Number(job.rate) || 0;
@@ -90,7 +94,7 @@ export function viewJob() {
         <span>📷</span> <span>Scale OCR</span>
       </button>
       <button type="button" class="btn btn-sm btn-ghost" data-act="hw-scale-bt" style="flex:1;min-width:110px;display:flex;align-items:center;justify-content:center;gap:6px" title="Connect Bluetooth digital scale">
-        <span>⚖️</span> <span id="hw-bt-label">Scale BT</span>
+        <span>⚖️</span> <span id="hw-bt-label">${scaleConnected ? 'Scale ON' : 'Scale BT'}</span>
       </button>
       <button type="button" class="btn btn-sm btn-ghost" data-act="hw-voice-mic" style="flex:1;min-width:110px;display:flex;align-items:center;justify-content:center;gap:6px" title="Hands-free voice order in Hindi/English">
         <span>🎙️</span> <span>Voice</span>
@@ -100,13 +104,13 @@ export function viewJob() {
       </button>
     </div>
 
-    <div id="scale-live-meter" style="display:none;background:var(--brand-soft);border:1.5px solid var(--brand);padding:10px 14px;border-radius:12px;margin-bottom:12px;justify-content:space-between;align-items:center">
+    <div id="scale-live-meter" style="display:${scaleConnected ? 'flex' : 'none'};background:var(--brand-soft);border:1.5px solid var(--brand);padding:10px 14px;border-radius:12px;margin-bottom:12px;justify-content:space-between;align-items:center">
       <div style="display:flex;align-items:center;gap:8px">
         <span class="sync-dot online"></span>
         <span style="font-weight:700;color:var(--brand);font-size:0.9rem">Live Scale:</span>
-        <span id="scale-live-val" style="font-size:1.3rem;font-weight:800;font-family:monospace;color:var(--brand)">0.00 kg</span>
+        <span id="scale-live-val" style="font-size:1.3rem;font-weight:800;font-family:monospace;color:var(--brand)">${liveWt.weight ? liveWt.weight.toFixed(2) : '0.00'} kg</span>
       </div>
-      <button type="button" class="btn btn-sm btn-primary" id="btn-lock-scale-wt">Lock Weight</button>
+      <button type="button" class="btn btn-sm btn-primary" data-act="hw-lock-scale-wt" id="btn-lock-scale-wt">Lock Weight</button>
     </div>
 
     <div class="grid-3 mt-14" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px">

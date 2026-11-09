@@ -29,6 +29,10 @@ export async function startScaleCamera(videoElement, canvasElement, resultElemen
   consecutiveMatches = 0;
   lastDetectedWeight = null;
 
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    throw new Error('Camera is not supported on this device/browser');
+  }
+
   try {
     mediaStream = await navigator.mediaDevices.getUserMedia({
       video: {
@@ -268,3 +272,4 @@ function recognize7Segment(data, w, h, x1, x2) {
   const key = `${a}${b}${c}${d}${e}${f}${g}`;
   return SEGMENT_DIGITS[key] || null;
 }
+

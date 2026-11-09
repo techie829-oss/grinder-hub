@@ -193,6 +193,20 @@ export function setupEventListeners() {
         }
         break;
 
+      case 'hw-lock-scale-wt': {
+        const { weight } = getLiveWeight();
+        if (weight > 0) {
+          state.job.qty = String(weight);
+          const qtyInput = document.getElementById('j-qty');
+          if (qtyInput) qtyInput.value = state.job.qty;
+          recalcJob();
+          toast(`Locked weight: ${weight} kg ✓`);
+        } else {
+          toast('Scale reading is 0.00 kg. Place bag on scale.');
+        }
+        break;
+      }
+
       case 'hw-voice-mic':
         openVoiceOrderModal((parsed) => {
           if (parsed.name) state.job.name = parsed.name;

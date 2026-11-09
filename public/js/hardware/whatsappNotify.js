@@ -51,3 +51,4 @@ export function sendAataReadyNotification(tokenRow) {
   const msg = lines.join('\n');
   openWhatsApp(msg, phone);
 }
+
