@@ -1,3 +1,4 @@
+// Customer Directory & Ledger Detail Controller
 import { readJson, json, bad } from '../utils/response.js';
 import { clean, normalizePhone, normName, normVillage } from '../utils/helpers.js';
 import { buildState } from '../services/stateService.js';
@@ -10,7 +11,8 @@ export async function customerDetail(request, env, business, url) {
   if (!customer) return bad('ग्राहक नहीं मिला', 404);
 
   const rows = await env.DB.prepare(
-    `SELECT e.id, e.kind, e.qty, COALESCE(e.katoti_g, 0) AS katoti_g, e.net_qty, e.rate_paise, e.amount_paise, e.paid, e.note, e.token_no,
+    `SELECT e.id, e.kind, COALESCE(e.gross_weight, 0) AS gross_weight, COALESCE(e.loss_g, 0) AS loss_g,
+            e.net_weight, e.rate_paise, e.amount_paise, e.paid, e.note, e.token_no,
             e.created_at, s.name AS service_name, s.unit AS unit
        FROM entries e LEFT JOIN services s ON s.id = e.service_id AND s.business_id = e.business_id
       WHERE e.business_id = ? AND e.customer_id = ?
@@ -25,9 +27,9 @@ export async function customerDetail(request, env, business, url) {
     entries: rows.results.map((e) => ({
       id: e.id,
       kind: e.kind,
-      qty: e.qty,
-      katotiG: Number(e.katoti_g) || 0,
-      netQty: e.net_qty != null ? Number(e.net_qty) : (e.qty ? Math.max(0, e.qty - ((Number(e.katoti_g) || 0) / 1000)) : null),
+      grossWeight: e.gross_weight,
+      lossG: Number(e.loss_g) || 0,
+      netWeight: e.net_weight != null ? Number(e.net_weight) : (e.gross_weight ? Math.max(0, e.gross_weight - ((Number(e.loss_g) || 0) / 1000)) : null),
       ratePaise: e.rate_paise,
       amountPaise: e.amount_paise,
       paid: !!e.paid,

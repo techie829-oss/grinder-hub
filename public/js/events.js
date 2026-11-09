@@ -26,7 +26,7 @@ export function recalcJob() {
 
   const grossWeight = Number(qtyEl.value) || 0;
   const rateVal = Number(rateEl.value) || 0;
-  const lossRateVal = lossRateEl ? (Number(lossRateEl.value) || 0) : (svc ? Number(svc.lossRateG || svc.katotiG || 0) : 0);
+  const lossRateVal = lossRateEl ? (Number(lossRateEl.value) || 0) : (svc ? Number(svc.lossRateG || 0) : 0);
 
   state.job.qty = qtyEl.value;
   state.job.rate = rateEl.value;
@@ -52,7 +52,7 @@ export function pickService(target, id) {
   if (target === 'job') {
     state.job.serviceId = id;
     state.job.rate = String(svc.ratePaise / 100);
-    state.job.lossRateG = String(svc.lossRateG || svc.katotiG || 0);
+    state.job.lossRateG = String(svc.lossRateG || 0);
 
     document.querySelectorAll('[data-act="pick-svc"][data-target="job"]').forEach((b) => {
       b.classList.toggle('is-on', b.dataset.id === id);
@@ -200,7 +200,7 @@ export function setupEventListeners() {
           const svc = state.data.services.find((s) => s.id === tok.serviceId);
           if (svc) {
             state.job.rate = String(svc.ratePaise / 100);
-            state.job.lossRateG = String(svc.lossRateG || svc.katotiG || 0);
+            state.job.lossRateG = String(svc.lossRateG || 0);
           }
         }
         if (tok.qty) state.job.qty = String(tok.qty);
@@ -500,7 +500,7 @@ export function setupEventListeners() {
 
         const svc = currentService();
         state.job.rate = svc ? String(svc.ratePaise / 100) : '';
-        state.job.lossRateG = svc ? String(svc.lossRateG || svc.katotiG || 0) : '0';
+        state.job.lossRateG = svc ? String(svc.lossRateG || 0) : '0';
         window.__appRender?.();
 
         if (data.entryId) {

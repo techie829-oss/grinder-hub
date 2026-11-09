@@ -60,8 +60,8 @@ export function viewReports() {
         </thead>
         <tbody>
           ${stats.byService.map((row) => {
-            const lossG = row.lossG || row.katotiG || 0;
-            const netWeight = row.netWeight != null ? row.netWeight : row.netQty;
+            const lossG = row.lossG || 0;
+            const netWeight = row.netWeight;
             return `
             <tr>
               <td>${esc(row.name)}</td>

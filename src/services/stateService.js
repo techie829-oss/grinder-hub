@@ -1,4 +1,4 @@
-// Aggregated Multi-tenant Business State Service
+// Aggregated Business State Service (Normalized & Strict Schema)
 import { RANGES, rangeStart, rangeEnd, dayKey } from '../utils/helpers.js';
 
 export async function buildState(env, businessId, range) {
@@ -15,7 +15,7 @@ export async function buildState(env, businessId, range) {
   const results = await env.DB.batch([
     // 0: services
     env.DB.prepare(
-      `SELECT id, name, unit, rate_paise, COALESCE(loss_rate_g, katoti_g, 0) AS loss_rate_g, sort
+      `SELECT id, name, unit, rate_paise, COALESCE(loss_rate_g, 0) AS loss_rate_g, sort
          FROM services WHERE business_id = ? AND active = 1 ORDER BY sort, name`
     ).bind(businessId),
     // 1: customers
@@ -32,8 +32,8 @@ export async function buildState(env, businessId, range) {
     ).bind(businessId),
     // 2: recent entries for range
     env.DB.prepare(
-      `SELECT e.id, e.kind, e.customer_id, e.name, COALESCE(e.village, '') AS village, e.qty,
-              COALESCE(e.loss_g, e.katoti_g, 0) AS loss_g, COALESCE(e.net_weight, e.net_qty) AS net_weight,
+      `SELECT e.id, e.kind, e.customer_id, e.name, COALESCE(e.village, '') AS village,
+              COALESCE(e.gross_weight, 0) AS gross_weight, COALESCE(e.loss_g, 0) AS loss_g, e.net_weight,
               e.rate_paise, e.amount_paise, e.paid, e.note, e.token_no, e.created_at,
               s.name AS service_name, s.unit AS unit
          FROM entries e
@@ -45,8 +45,8 @@ export async function buildState(env, businessId, range) {
     // 3: tokens today
     env.DB.prepare(
       `SELECT id, no, name, COALESCE(village, '') AS village, service_id,
-              COALESCE(qty, 0) AS qty, COALESCE(loss_g, katoti_g, 0) AS loss_g,
-              COALESCE(net_weight, net_qty, 0) AS net_weight, status, created_at
+              COALESCE(gross_weight, 0) AS gross_weight, COALESCE(loss_g, 0) AS loss_g,
+              COALESCE(net_weight, 0) AS net_weight, status, created_at
          FROM tokens WHERE business_id = ? AND day = ? ORDER BY no`
     ).bind(businessId, day),
     // 4: summary stats for range
@@ -56,17 +56,16 @@ export async function buildState(env, businessId, range) {
               COALESCE(SUM(CASE WHEN kind = 'job' AND paid = 1 THEN amount_paise ELSE 0 END), 0) AS cash_jobs,
               COALESCE(SUM(CASE WHEN kind = 'payment' THEN amount_paise ELSE 0 END), 0) AS recovered,
               COALESCE(SUM(CASE WHEN kind = 'job' AND paid = 0 THEN amount_paise ELSE 0 END), 0) AS credit,
-              COALESCE(SUM(CASE WHEN kind = 'job' THEN qty ELSE 0 END), 0) AS qty,
-              COALESCE(SUM(CASE WHEN kind = 'job' THEN COALESCE(loss_g, katoti_g, 0) ELSE 0 END), 0) AS loss_g,
-              COALESCE(SUM(CASE WHEN kind = 'job' THEN COALESCE(net_weight, net_qty, 0) ELSE 0 END), 0) AS net_weight
+              COALESCE(SUM(CASE WHEN kind = 'job' THEN gross_weight ELSE 0 END), 0) AS gross_weight,
+              COALESCE(SUM(CASE WHEN kind = 'job' THEN loss_g ELSE 0 END), 0) AS loss_g,
+              COALESCE(SUM(CASE WHEN kind = 'job' THEN net_weight ELSE 0 END), 0) AS net_weight
          FROM entries WHERE business_id = ? AND ${entriesTimeCondition.replace(/e\./g, '')}`
     ).bind(...entriesTimeBinds),
     // 5: breakdown by service for range
     env.DB.prepare(
-      `SELECT e.service_id AS id, COALESCE(s.name, 'हटाई गई सेवा') AS name, COALESCE(s.unit, 'kg') AS unit,
-              COUNT(*) AS count, COALESCE(SUM(e.qty), 0) AS qty,
-              COALESCE(SUM(COALESCE(e.loss_g, e.katoti_g, 0)), 0) AS loss_g,
-              COALESCE(SUM(COALESCE(e.net_weight, e.net_qty, 0)), 0) AS net_weight,
+      `SELECT e.service_id AS id, COALESCE(s.name, 'Other') AS name, COALESCE(s.unit, 'kg') AS unit,
+              COUNT(*) AS count, COALESCE(SUM(e.gross_weight), 0) AS gross_weight,
+              COALESCE(SUM(e.loss_g), 0) AS loss_g, COALESCE(SUM(e.net_weight), 0) AS net_weight,
               COALESCE(SUM(e.amount_paise), 0) AS amount_paise
          FROM entries e LEFT JOIN services s ON s.id = e.service_id AND s.business_id = e.business_id
         WHERE e.business_id = ? AND ${entriesTimeCondition} AND e.kind = 'job'
@@ -85,7 +84,6 @@ export async function buildState(env, businessId, range) {
     unit: s.unit,
     ratePaise: s.rate_paise,
     lossRateG: Number(s.loss_rate_g) || 0,
-    katotiG: Number(s.loss_rate_g) || 0,
   }));
 
   const customers = results[1].results.map((c) => ({
@@ -99,18 +97,16 @@ export async function buildState(env, businessId, range) {
 
   const entries = results[2].results.map((e) => {
     const lossG = Number(e.loss_g) || 0;
-    const netWeight = e.net_weight != null ? Number(e.net_weight) : (e.qty ? Math.max(0, e.qty - (lossG / 1000)) : null);
+    const netWeight = e.net_weight != null ? Number(e.net_weight) : (e.gross_weight ? Math.max(0, e.gross_weight - (lossG / 1000)) : null);
     return {
       id: e.id,
       kind: e.kind,
       customerId: e.customer_id,
       name: e.name || '',
       village: e.village || '',
-      qty: e.qty,
+      grossWeight: e.gross_weight,
       lossG,
-      katotiG: lossG,
       netWeight,
-      netQty: netWeight,
       ratePaise: e.rate_paise,
       amountPaise: e.amount_paise,
       paid: !!e.paid,
@@ -122,24 +118,18 @@ export async function buildState(env, businessId, range) {
     };
   });
 
-  const tokensToday = results[3].results.map((t) => {
-    const lossG = Number(t.loss_g) || 0;
-    const netWeight = Number(t.net_weight) || 0;
-    return {
-      id: t.id,
-      no: t.no,
-      name: t.name,
-      village: t.village || '',
-      serviceId: t.service_id,
-      qty: Number(t.qty) || 0,
-      lossG,
-      katotiG: lossG,
-      netWeight,
-      netQty: netWeight,
-      status: t.status,
-      at: t.created_at,
-    };
-  });
+  const tokensToday = results[3].results.map((t) => ({
+    id: t.id,
+    no: t.no,
+    name: t.name,
+    village: t.village || '',
+    serviceId: t.service_id,
+    grossWeight: Number(t.gross_weight) || 0,
+    lossG: Number(t.loss_g) || 0,
+    netWeight: Number(t.net_weight) || 0,
+    status: t.status,
+    at: t.created_at,
+  }));
 
   const s = results[4].results[0] || {};
   const counter = results[6].results[0];
@@ -184,11 +174,9 @@ export async function buildState(env, businessId, range) {
       salePaise: s.sale || 0,
       cashPaise: (s.cash_jobs || 0) + (s.recovered || 0),
       creditPaise: s.credit || 0,
-      qty: s.qty || 0,
+      grossWeight: s.gross_weight || 0,
       lossG: s.loss_g || 0,
-      katotiG: s.loss_g || 0,
       netWeight: s.net_weight || 0,
-      netQty: s.net_weight || 0,
       outstandingPaise,
       outstandingCount,
       byService: results[5].results.map((r) => ({
@@ -196,11 +184,9 @@ export async function buildState(env, businessId, range) {
         name: r.name,
         unit: r.unit,
         count: r.count,
-        qty: r.qty,
+        grossWeight: r.gross_weight,
         lossG: r.loss_g || 0,
-        katotiG: r.loss_g || 0,
         netWeight: r.net_weight || 0,
-        netQty: r.net_weight || 0,
         amountPaise: r.amount_paise,
       })),
     },

@@ -12,8 +12,8 @@ export function printReceipt(entry) {
   const nameShow = customer ? customer.name : (entry.name || 'Customer');
   const villageShow = customer ? (customer.village || '') : (entry.village || '');
 
-  const lossG = entry.lossG || entry.katotiG || 0;
-  const netWeight = entry.netWeight != null ? entry.netWeight : entry.netQty;
+  const lossG = entry.lossG || 0;
+  const netWeight = entry.netWeight;
   const hasLoss = !isPayment && (lossG > 0 || netWeight != null);
 
   printEl.innerHTML = `

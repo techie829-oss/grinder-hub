@@ -77,8 +77,8 @@ export function renderCustomerModal() {
     <div class="row-list">
       ${current.entries.length
         ? current.entries.map((e) => {
-            const lossG = e.lossG || e.katotiG || 0;
-            const netWeight = e.netWeight != null ? e.netWeight : e.netQty;
+            const lossG = e.lossG || 0;
+            const netWeight = e.netWeight;
             const hasLoss = e.kind !== 'payment' && (lossG > 0 || netWeight != null);
             return `
             <div class="row-item">
@@ -135,8 +135,8 @@ export function showJobDone(payload) {
   const nameDisplay = (customer ? customer.name : entry?.name) || 'Customer';
   const villageDisplay = (customer ? customer.village : entry?.village) || '';
 
-  const lossG = entry ? (entry.lossG || entry.katotiG || 0) : 0;
-  const netWeight = entry ? (entry.netWeight != null ? entry.netWeight : entry.netQty) : null;
+  const lossG = entry ? (entry.lossG || 0) : 0;
+  const netWeight = entry ? entry.netWeight : null;
   const hasLoss = entry && (lossG > 0 || netWeight != null);
 
   showModal(`

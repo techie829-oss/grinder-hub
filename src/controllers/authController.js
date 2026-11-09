@@ -1,4 +1,4 @@
-// Multi-tenant Authentication Controller (Signup, Login, Logout, Password Change)
+// Multi-tenant Authentication Controller
 import { readJson, json, bad, sameOrigin, sessionCookie, getCookie, COOKIE } from '../utils/response.js';
 import { clean, normalizePhone } from '../utils/helpers.js';
 import { randomBytes, hex, pbkdf2, safeEqual, sha256Hex } from '../utils/crypto.js';
@@ -6,7 +6,6 @@ import { throttleKey, blocked, noteFail, clearThrottle } from '../middleware/thr
 import { createSession } from '../middleware/auth.js';
 import { buildState } from '../services/stateService.js';
 
-// Standard flour mill products catalog seeded on shop registration
 export const DEFAULT_SERVICES = [
   { name: 'गेहूँ पिसाई (Wheat)', unit: 'kg', ratePaise: 300, lossRateG: 15 },
   { name: 'मक्का पिसाई (Maize)', unit: 'kg', ratePaise: 350, lossRateG: 20 },
@@ -45,8 +44,8 @@ export async function signup(request, env, url) {
   await env.DB.batch(
     DEFAULT_SERVICES.map((item, index) =>
       env.DB.prepare(
-        'INSERT INTO services (id, business_id, name, unit, rate_paise, loss_rate_g, katoti_g, active, sort) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)'
-      ).bind(crypto.randomUUID(), businessId, item.name, item.unit, item.ratePaise, item.lossRateG, item.lossRateG, index)
+        'INSERT INTO services (id, business_id, name, unit, rate_paise, loss_rate_g, active, sort) VALUES (?, ?, ?, ?, ?, ?, 1, ?)'
+      ).bind(crypto.randomUUID(), businessId, item.name, item.unit, item.ratePaise, item.lossRateG, index)
     )
   );
 

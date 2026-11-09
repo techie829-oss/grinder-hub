@@ -21,8 +21,8 @@ export function entryRow(entry, options = {}) {
     </div>`;
   }
 
-  const lossG = entry.lossG || entry.katotiG || 0;
-  const netWeight = entry.netWeight != null ? entry.netWeight : entry.netQty;
+  const lossG = entry.lossG || 0;
+  const netWeight = entry.netWeight;
   const lossDetail = (lossG > 0 || netWeight != null)
     ? `<span class="tiny-chip" style="background:#fff7ed;color:#ea580c">-${lossG}g</span>` +
       (netWeight ? `<span class="tiny-chip" style="background:#f0fdf4;color:#16a34a">${qtyFmt(netWeight)} ${unitOf(entry.unit)}</span>` : '')
@@ -33,7 +33,7 @@ export function entryRow(entry, options = {}) {
     <span class="avatar small">${esc((entry.name || entry.serviceName || 'C').trim().charAt(0))}</span>
     <span class="grow">
       <span class="row-title ellipsis">
-        ${entry.serviceName ? esc(entry.serviceName) : 'Order'} · ${qtyFmt(entry.qty)} ${unitOf(entry.unit)}
+        ${entry.serviceName ? esc(entry.serviceName) : 'Order'} · ${qtyFmt(entry.grossWeight)} ${unitOf(entry.unit)}
         ${lossDetail}
       </span>
       <span class="row-sub">${esc(entry.name || 'Walk-in')}${entry.village ? ' (' + esc(entry.village) + ')' : ''} · ${dateTxt(entry.at)}${entry.tokenNo ? ' · #' + entry.tokenNo : ''}</span>
@@ -47,8 +47,8 @@ export function entryRow(entry, options = {}) {
 export function queueRow(tokenRow, isServing) {
   const svc = tokenRow.serviceId ? state.data.services.find((s) => s.id === tokenRow.serviceId) : null;
   const svcName = svc ? esc(svc.name) : '';
-  const lossG = tokenRow.lossG || tokenRow.katotiG || 0;
-  const netWeight = tokenRow.netWeight != null ? tokenRow.netWeight : tokenRow.netQty;
+  const lossG = tokenRow.lossG || 0;
+  const netWeight = tokenRow.netWeight;
   const lossTxt = lossG > 0 ? ` · -${lossG}g` : '';
   const netTxt = netWeight > 0 ? ` · ${qtyFmt(netWeight)} ${unitOf(svc ? svc.unit : 'kg')}` : '';
 
@@ -62,7 +62,7 @@ export function queueRow(tokenRow, isServing) {
       </span>
       <span class="row-sub">
         ${isServing ? t('servingNow') : relTxt(tokenRow.at)}
-        ${tokenRow.qty ? ` · ${qtyFmt(tokenRow.qty)} ${unitOf(svc ? svc.unit : 'kg')}` : ''}
+        ${tokenRow.grossWeight ? ` · ${qtyFmt(tokenRow.grossWeight)} ${unitOf(svc ? svc.unit : 'kg')}` : ''}
         ${lossTxt}${netTxt}
       </span>
     </span>
@@ -101,7 +101,7 @@ export function serviceCards(target) {
   const data = state.data;
   const chosen = target === 'job' ? state.job.serviceId : state.tokenForm.serviceId;
   return data.services.map((s) => {
-    const lossRateG = s.lossRateG || s.katotiG || 0;
+    const lossRateG = s.lossRateG || 0;
     return `
     <button type="button" class="svc-card${chosen === s.id ? ' is-on' : ''}"
       data-act="pick-svc" data-target="${target}" data-id="${s.id}">

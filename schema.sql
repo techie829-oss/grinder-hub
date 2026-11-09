@@ -1,5 +1,5 @@
--- ChakkiBook / GrinderHub — Multi-tenant schema (Cloudflare D1 / SQLite)
--- Every row is scoped to a business_id; all queries are isolated by authenticated business_id.
+-- Chakki Book (Grinder Hub) — Multi-tenant schema (Cloudflare D1 / SQLite)
+-- Strict, normalized schema with zero duplicate columns.
 
 CREATE TABLE IF NOT EXISTS businesses (
   id           TEXT PRIMARY KEY,
@@ -28,7 +28,6 @@ CREATE TABLE IF NOT EXISTS services (
   unit         TEXT NOT NULL DEFAULT 'kg',
   rate_paise   INTEGER NOT NULL DEFAULT 0,
   loss_rate_g  REAL NOT NULL DEFAULT 0,
-  katoti_g     REAL NOT NULL DEFAULT 0,
   active       INTEGER NOT NULL DEFAULT 1,
   sort         INTEGER NOT NULL DEFAULT 0
 );
@@ -54,11 +53,9 @@ CREATE TABLE IF NOT EXISTS entries (
   service_id   TEXT,
   name         TEXT NOT NULL DEFAULT '',
   village      TEXT NOT NULL DEFAULT '',
-  qty          REAL,
+  gross_weight REAL,
   loss_g       REAL NOT NULL DEFAULT 0,
-  katoti_g     REAL NOT NULL DEFAULT 0,
   net_weight   REAL,
-  net_qty      REAL,
   rate_paise   INTEGER,
   amount_paise INTEGER NOT NULL,
   paid         INTEGER NOT NULL DEFAULT 1,
@@ -78,11 +75,9 @@ CREATE TABLE IF NOT EXISTS tokens (
   name         TEXT NOT NULL DEFAULT '',
   village      TEXT NOT NULL DEFAULT '',
   service_id   TEXT,
-  qty          REAL DEFAULT 0,
+  gross_weight REAL DEFAULT 0,
   loss_g       REAL NOT NULL DEFAULT 0,
-  katoti_g     REAL NOT NULL DEFAULT 0,
   net_weight   REAL DEFAULT 0,
-  net_qty      REAL DEFAULT 0,
   status       TEXT NOT NULL DEFAULT 'waiting',
   created_at   INTEGER NOT NULL
 );

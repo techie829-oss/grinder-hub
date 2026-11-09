@@ -31,7 +31,7 @@ export async function issueToken(env, businessId, name, village, serviceId, gros
     name: name || 'ग्राहक',
     village: village || '',
     serviceId: serviceId || null,
-    qty: Number(grossWeight) || 0,
+    grossWeight: Number(grossWeight) || 0,
     lossG: Number(totalLossG) || 0,
     netWeight: Number(netWeight) || 0,
     status: anyServing ? 'waiting' : 'serving',
@@ -39,8 +39,8 @@ export async function issueToken(env, businessId, name, village, serviceId, gros
   };
 
   await env.DB.prepare(
-    `INSERT INTO tokens (id, business_id, day, no, name, village, service_id, qty, loss_g, katoti_g, net_weight, net_qty, status, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO tokens (id, business_id, day, no, name, village, service_id, gross_weight, loss_g, net_weight, status, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   )
     .bind(
       token.id,
@@ -50,10 +50,8 @@ export async function issueToken(env, businessId, name, village, serviceId, gros
       token.name,
       token.village,
       token.serviceId,
-      token.qty,
+      token.grossWeight,
       token.lossG,
-      token.lossG,
-      token.netWeight,
       token.netWeight,
       token.status,
       token.at

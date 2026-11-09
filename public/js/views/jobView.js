@@ -20,7 +20,7 @@ export function viewJob() {
   const ratePerUnit = Number(job.rate) || 0;
   const lossRatePerKg = job.lossRateG !== '' && job.lossRateG !== undefined
     ? Number(job.lossRateG)
-    : (svc ? Number(svc.lossRateG || svc.katotiG || 0) : 0);
+    : (svc ? Number(svc.lossRateG || 0) : 0);
 
   const totalLossG = svc && svc.unit === 'kg' ? Math.round(grossWeight * lossRatePerKg) : 0;
   const netWeight = svc && svc.unit === 'kg' ? Math.max(0, grossWeight - (totalLossG / 1000)) : grossWeight;
@@ -98,7 +98,7 @@ export function viewJob() {
       <div class="field">
         <label for="j-loss-rate" id="j-loss-rate-label">${t('lossRateLabel', { unit })}</label>
         <input id="j-loss-rate" name="lossRateG" type="number" inputmode="decimal" step="1" min="0"
-          value="${esc(job.lossRateG !== '' ? job.lossRateG : (svc ? (svc.lossRateG || svc.katotiG || 0) : 0))}" placeholder="0">
+          value="${esc(job.lossRateG !== '' ? job.lossRateG : (svc ? (svc.lossRateG || 0) : 0))}" placeholder="0">
       </div>
     </div>
 

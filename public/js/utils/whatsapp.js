@@ -13,8 +13,8 @@ export function entryWaText(entry) {
   if (entry.kind === 'payment') {
     lines.push(`Payment Received: *${inr(entry.amountPaise)}*`);
   } else {
-    const lossG = entry.lossG || entry.katotiG || 0;
-    const netWeight = entry.netWeight != null ? entry.netWeight : entry.netQty;
+    const lossG = entry.lossG || 0;
+    const netWeight = entry.netWeight;
 
     lines.push(`Product: *${entry.serviceName}*`);
     lines.push(`Gross Weight: ${qtyFmt(entry.qty)} ${unitOf(entry.unit)}`);

@@ -8,14 +8,13 @@ export async function createJob(request, env, business, range) {
   const body = await readJson(request);
   const serviceId = clean(body.serviceId, 40);
   const svc = await env.DB.prepare(
-    `SELECT id, name, unit, rate_paise, COALESCE(loss_rate_g, katoti_g, 0) AS loss_rate_g
-       FROM services WHERE id = ? AND business_id = ? AND active = 1`
+    'SELECT id, name, unit, rate_paise, COALESCE(loss_rate_g, 0) AS loss_rate_g FROM services WHERE id = ? AND business_id = ? AND active = 1'
   )
     .bind(serviceId, business.id)
     .first();
   if (!svc) return bad('सेवा या अनाज चुनें');
 
-  const grossWeight = Number(body.qty || body.grossWeight);
+  const grossWeight = Number(body.grossWeight != null ? body.grossWeight : body.qty);
   if (!Number.isFinite(grossWeight) || grossWeight <= 0) return bad('वज़न या मात्रा भरें');
   if (grossWeight > 100000) return bad('मात्रा बहुत ज़्यादा है');
 
@@ -80,10 +79,9 @@ export async function createJob(request, env, business, range) {
   let tokenNo = body.tokenNo ? Number(body.tokenNo) : null;
   if (body.tokenId) {
     await env.DB.prepare(
-      `UPDATE tokens SET status = 'done', qty = ?, loss_g = ?, katoti_g = ?, net_weight = ?, net_qty = ?
-        WHERE id = ? AND business_id = ?`
+      "UPDATE tokens SET status = 'done', gross_weight = ?, loss_g = ?, net_weight = ? WHERE id = ? AND business_id = ?"
     )
-      .bind(grossWeight, totalLossG, totalLossG, netWeight, netWeight, clean(body.tokenId, 40), business.id)
+      .bind(grossWeight, totalLossG, netWeight, clean(body.tokenId, 40), business.id)
       .run();
   }
   if (body.withToken) {
@@ -94,9 +92,9 @@ export async function createJob(request, env, business, range) {
   const entryId = crypto.randomUUID();
   const now = Date.now();
   await env.DB.prepare(
-    `INSERT INTO entries (id, business_id, customer_id, kind, service_id, name, village, qty, loss_g, katoti_g, net_weight, net_qty,
+    `INSERT INTO entries (id, business_id, customer_id, kind, service_id, name, village, gross_weight, loss_g, net_weight,
        rate_paise, amount_paise, paid, note, token_no, day, created_at)
-     VALUES (?, ?, ?, 'job', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+     VALUES (?, ?, ?, 'job', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   )
     .bind(
       entryId,
@@ -107,8 +105,6 @@ export async function createJob(request, env, business, range) {
       village,
       grossWeight,
       totalLossG,
-      totalLossG,
-      netWeight,
       netWeight,
       ratePaise,
       amountPaise,

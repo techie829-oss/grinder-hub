@@ -52,7 +52,7 @@ export function viewSettings() {
     <p class="tiny muted" style="margin-bottom:12px">Configure product name, grinding rate (₹/unit) and wastage loss deduction (g/unit).</p>
     <div class="row-list">
       ${data.services.map((s) => {
-        const lossRateG = s.lossRateG || s.katotiG || 0;
+        const lossRateG = s.lossRateG || 0;
         return `
         <form class="row-item" data-form="service" style="align-items:flex-start;gap:8px;flex-wrap:wrap">
           <input type="hidden" name="id" value="${s.id}">

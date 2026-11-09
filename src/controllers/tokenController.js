@@ -10,8 +10,7 @@ export async function createToken(request, env, business, range) {
   let svc = null;
   if (serviceId) {
     svc = await env.DB.prepare(
-      `SELECT id, unit, rate_paise, COALESCE(loss_rate_g, katoti_g, 0) AS loss_rate_g
-         FROM services WHERE id = ? AND business_id = ? AND active = 1`
+      'SELECT id, unit, rate_paise, COALESCE(loss_rate_g, 0) AS loss_rate_g FROM services WHERE id = ? AND business_id = ? AND active = 1'
     )
       .bind(serviceId, business.id)
       .first();
@@ -20,7 +19,7 @@ export async function createToken(request, env, business, range) {
 
   const name = clean(body.name, 60);
   const village = clean(body.village, 60);
-  const grossWeight = Number(body.qty || body.grossWeight) || 0;
+  const grossWeight = Number(body.grossWeight != null ? body.grossWeight : body.qty) || 0;
   const lossRateG = body.lossRateG !== undefined ? Number(body.lossRateG) : (svc ? Number(svc.loss_rate_g || 0) : 0);
   const totalLossG = body.totalLossG !== undefined ? Number(body.totalLossG) : (grossWeight ? Math.round(grossWeight * lossRateG) : 0);
   const netWeight = body.netWeight !== undefined ? Number(body.netWeight) : (grossWeight ? Math.max(0, grossWeight - (totalLossG / 1000)) : 0);
