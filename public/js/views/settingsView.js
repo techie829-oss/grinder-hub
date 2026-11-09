@@ -21,6 +21,16 @@ export function viewSettings() {
     <div class="mt-8">${langSelector()}</div>
   </section>
 
+  <section class="card">
+    <div class="section-head">
+      <h2 class="section-title">⚙️ Hardware & Machine Integration</h2>
+    </div>
+    <p class="tiny muted" style="margin-bottom:12px">Connect wireless Bluetooth weighing scale & 58mm/80mm thermal POS slip printer directly without cables.</p>
+    <button type="button" class="btn btn-soft" data-act="open-hw-modal">
+      <span>Manage Devices (Scale & Printer)</span>
+    </button>
+  </section>
+
   <form class="card" data-form="settings">
     <div class="section-head"><h2 class="section-title">${t('shopDetails')}</h2></div>
     <div class="field">

@@ -70,6 +70,8 @@ export function queueRow(tokenRow, isServing) {
     ${isServing
       ? `<button class="btn btn-sm btn-soft" data-act="token-done" data-id="${tokenRow.id}">${t('done')}</button>`
       : `<button class="btn btn-sm btn-soft" data-act="token-start" data-id="${tokenRow.id}">${t('call')}</button>`}
+    <button type="button" class="icon-btn" data-act="token-notify-wa" data-id="${tokenRow.id}" title="WhatsApp 'Aata Ready' Notification">💬</button>
+    <button type="button" class="icon-btn" data-act="token-print-pos" data-id="${tokenRow.id}" title="Thermal POS Print">🖨️</button>
     <button type="button" class="icon-btn" data-act="token-cancel" data-id="${tokenRow.id}" aria-label="Cancel">✕</button>
   </div>`;
 }

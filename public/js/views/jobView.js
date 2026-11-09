@@ -84,6 +84,31 @@ export function viewJob() {
       <strong>${matchedCustomer ? (matchedCustomer.balancePaise > 0 ? inr(matchedCustomer.balancePaise) + ' ' + t('dueTag') : (matchedCustomer.balancePaise < 0 ? inr(-matchedCustomer.balancePaise) + ' ' + t('advTag') : t('settledTag'))) : ''}</strong>
     </div>
 
+    <!-- Machine Automation & Hardware Bar -->
+    <div class="hardware-quick-bar" style="display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 8px">
+      <button type="button" class="btn btn-sm btn-ghost" data-act="hw-scale-ocr" style="flex:1;min-width:110px;display:flex;align-items:center;justify-content:center;gap:6px" title="Read digital scale display with camera">
+        <span>📷</span> <span>Scale OCR</span>
+      </button>
+      <button type="button" class="btn btn-sm btn-ghost" data-act="hw-scale-bt" style="flex:1;min-width:110px;display:flex;align-items:center;justify-content:center;gap:6px" title="Connect Bluetooth digital scale">
+        <span>⚖️</span> <span id="hw-bt-label">Scale BT</span>
+      </button>
+      <button type="button" class="btn btn-sm btn-ghost" data-act="hw-voice-mic" style="flex:1;min-width:110px;display:flex;align-items:center;justify-content:center;gap:6px" title="Hands-free voice order in Hindi/English">
+        <span>🎙️</span> <span>Voice</span>
+      </button>
+      <button type="button" class="btn btn-sm btn-ghost" data-act="hw-scan-qr" style="flex:1;min-width:110px;display:flex;align-items:center;justify-content:center;gap:6px" title="Scan Token QR Code">
+        <span>📱</span> <span>Scan QR</span>
+      </button>
+    </div>
+
+    <div id="scale-live-meter" style="display:none;background:var(--brand-soft);border:1.5px solid var(--brand);padding:10px 14px;border-radius:12px;margin-bottom:12px;justify-content:space-between;align-items:center">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="sync-dot online"></span>
+        <span style="font-weight:700;color:var(--brand);font-size:0.9rem">Live Scale:</span>
+        <span id="scale-live-val" style="font-size:1.3rem;font-weight:800;font-family:monospace;color:var(--brand)">0.00 kg</span>
+      </div>
+      <button type="button" class="btn btn-sm btn-primary" id="btn-lock-scale-wt">Lock Weight</button>
+    </div>
+
     <div class="grid-3 mt-14" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px">
       <div class="field">
         <label for="j-qty" id="j-qty-label">${t('qtyLabel', { unit })}</label>

@@ -11,6 +11,16 @@ import { currentService } from './views/jobView.js';
 import { showAuthError } from './views/authView.js';
 import { setLanguage, t } from './i18n.js';
 import { enqueueOfflineAction, syncOfflineQueue, saveOfflineSnapshot } from './sync.js';
+import {
+  openScaleOcrModal,
+  openQrScannerModal,
+  openVoiceOrderModal,
+  openHardwareDevicesModal,
+  closeHardwareModal,
+} from './hardware/hardwareModal.js';
+import { connectScale, disconnectScale, isScaleConnected, subscribeWeight, getLiveWeight } from './hardware/scaleBluetooth.js';
+import { printThermalToken, printThermalBill, isPrinterConnected } from './hardware/thermalPrinter.js';
+import { sendAataReadyNotification } from './hardware/whatsappNotify.js';
 
 export function recalcJob() {
   const qtyEl = document.getElementById('j-qty');
@@ -143,6 +153,141 @@ export function setupEventListeners() {
         state.job.tokenId = null;
         state.job.tokenNo = null;
         window.__appRender?.();
+        break;
+
+      // --- Hardware & Machine Automation Actions ---
+      case 'hw-scale-ocr':
+        openScaleOcrModal((lockedWeight) => {
+          state.job.qty = String(lockedWeight);
+          const qtyInput = document.getElementById('j-qty');
+          if (qtyInput) qtyInput.value = state.job.qty;
+          recalcJob();
+          toast(`Scale reading locked: ${lockedWeight} kg ✓`);
+        });
+        break;
+
+      case 'hw-scale-bt':
+        if (!isScaleConnected()) {
+          try {
+            const name = await connectScale();
+            toast(`Connected: ${name} ✓`);
+            const meter = document.getElementById('scale-live-meter');
+            const valEl = document.getElementById('scale-live-val');
+            const lbl = document.getElementById('hw-bt-label');
+            if (meter) meter.style.display = 'flex';
+            if (lbl) lbl.textContent = 'Scale ON';
+
+            subscribeWeight((wt, stable) => {
+              if (valEl) valEl.textContent = `${wt.toFixed(2)} kg`;
+            });
+          } catch (err) {
+            toast(`Scale error: ${err.message}`);
+          }
+        } else {
+          await disconnectScale();
+          const meter = document.getElementById('scale-live-meter');
+          const lbl = document.getElementById('hw-bt-label');
+          if (meter) meter.style.display = 'none';
+          if (lbl) lbl.textContent = 'Scale BT';
+          toast('Scale disconnected');
+        }
+        break;
+
+      case 'hw-voice-mic':
+        openVoiceOrderModal((parsed) => {
+          if (parsed.name) state.job.name = parsed.name;
+          if (parsed.village) state.job.village = parsed.village;
+          if (parsed.qty) state.job.qty = String(parsed.qty);
+          if (parsed.serviceId) {
+            state.job.serviceId = parsed.serviceId;
+            const svc = state.data.services.find((s) => s.id === parsed.serviceId);
+            if (svc) {
+              state.job.rate = String(svc.ratePaise / 100);
+              state.job.lossRateG = String(svc.lossRateG || 0);
+            }
+          }
+          window.__appRender?.();
+          recalcJob();
+          toast(`Voice order: ${parsed.name || ''} ${parsed.qty ? parsed.qty + 'kg' : ''} ✓`);
+        });
+        break;
+
+      case 'hw-scan-qr':
+        openQrScannerModal((parsed) => {
+          if (parsed.type === 'token') {
+            const tok = state.data.tokens.serving?.no === parsed.tokenNo
+              ? state.data.tokens.serving
+              : state.data.tokens.waiting.find((t) => t.no === parsed.tokenNo);
+            if (tok) {
+              state.job.tokenId = tok.id;
+              state.job.tokenNo = tok.no;
+              state.job.name = tok.name;
+              state.job.village = tok.village || '';
+              if (tok.serviceId) {
+                state.job.serviceId = tok.serviceId;
+                const svc = state.data.services.find((s) => s.id === tok.serviceId);
+                if (svc) {
+                  state.job.rate = String(svc.ratePaise / 100);
+                  state.job.lossRateG = String(svc.lossRateG || 0);
+                }
+              }
+              if (tok.grossWeight) state.job.qty = String(tok.grossWeight);
+              goTo('job');
+              toast(`Loaded Token #${parsed.tokenNo} ✓`);
+            } else {
+              toast(`Token #${parsed.tokenNo} not in active queue`);
+            }
+          } else if (parsed.type === 'customer') {
+            state.job.name = parsed.name;
+            state.job.village = parsed.village;
+            goTo('job');
+            toast(`Customer: ${parsed.name} (${parsed.village})`);
+          } else {
+            toast(`Scanned: ${parsed.value}`);
+          }
+        });
+        break;
+
+      case 'token-notify-wa': {
+        const tok = state.data.tokens.serving?.id === el.dataset.id
+          ? state.data.tokens.serving
+          : state.data.tokens.waiting.find((x) => x.id === el.dataset.id);
+        if (tok) {
+          sendAataReadyNotification(tok);
+        }
+        break;
+      }
+
+      case 'token-print-pos': {
+        const tok = state.data.tokens.serving?.id === el.dataset.id
+          ? state.data.tokens.serving
+          : state.data.tokens.waiting.find((x) => x.id === el.dataset.id);
+        if (tok) {
+          if (isPrinterConnected()) {
+            try {
+              await printThermalToken(tok);
+              toast('Token slip printed on Bluetooth POS ✓');
+            } catch (err) {
+              toast('Printer error: ' + err.message);
+            }
+          } else {
+            printReceipt({
+              kind: 'token',
+              name: tok.name,
+              village: tok.village,
+              tokenNo: tok.no,
+              qty: tok.grossWeight,
+              lossG: tok.lossG,
+              netWeight: tok.netWeight,
+              at: tok.at,
+            });
+          }
+        }
+        break;
+      }
+
+      case 'open-hw-modal':
+        openHardwareDevicesModal();
         break;
 
       case 'token-done':
@@ -297,6 +442,23 @@ export function setupEventListeners() {
       case 'print-entry': {
         const e = findEntry(el.dataset.id);
         if (e) printReceipt(e);
+        break;
+      }
+
+      case 'pos-print-entry': {
+        const e = findEntry(el.dataset.id);
+        if (e) {
+          if (isPrinterConnected()) {
+            try {
+              await printThermalBill(e);
+              toast('Bill printed on Bluetooth POS ✓');
+            } catch (err) {
+              toast('Printer error: ' + err.message);
+            }
+          } else {
+            printReceipt(e);
+          }
+        }
         break;
       }
 

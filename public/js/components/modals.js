@@ -154,8 +154,9 @@ export function showJobDone(payload) {
       ${token ? `<div class="mt-8"><span class="token-chip">Token #${token.no}</span></div>` : ''}
       ${customer && customer.balancePaise > 0 ? `<div class="mt-8"><span class="badge amber">Total Due ${inr(customer.balancePaise)}</span></div>` : ''}
     </div>
-    <div class="sheet-actions">
+    <div class="sheet-actions" style="display:flex;gap:8px;flex-wrap:wrap">
       <button type="button" class="btn btn-ghost" data-act="print-entry" data-id="${entryId}">${t('printSlip')}</button>
+      <button type="button" class="btn btn-ghost" data-act="pos-print-entry" data-id="${entryId}">🖨️ POS Print</button>
       <button type="button" class="btn btn-ghost" data-act="wa-entry" data-id="${entryId}">${t('shareWhatsApp')}</button>
     </div>
     <button type="button" class="btn btn-primary btn-block" data-act="close-modal">${t('okBtn')}</button>
