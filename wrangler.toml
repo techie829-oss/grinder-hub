@@ -1,0 +1,12 @@
+name = "chakki-book"
+main = "src/worker.js"
+compatibility_date = "2026-11-01"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "chakki-book"
+database_id = "8f3e2a6c-1b4d-4c8e-9f21-7a5b3c9d0e11"
