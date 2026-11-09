@@ -51,11 +51,12 @@ const state = {
   view: 'dashboard',
   range: 'today',
   q: '',
+  custFilter: 'all',
   data: null,
   customer: null,
   busy: false,
-  job: { serviceId: null, qty: '', rate: '', paid: true, name: '', phone: '', note: '', withToken: false },
-  tokenForm: { serviceId: null },
+  job: { serviceId: null, qty: '', rate: '', paid: true, name: '', village: '', phone: '', note: '', withToken: false, tokenId: null, tokenNo: null },
+  tokenForm: { serviceId: null, name: '', village: '' },
   auth: { mode: 'login', error: '' },
 };
 
@@ -71,7 +72,13 @@ const esc = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, (m) => (
 const amountFmt = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 });
 const decFmt = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 });
 
-const inr = (paise, decimals) => '₹' + (decimals ? decFmt : amountFmt).format((Number(paise) || 0) / 100);
+const inr = (paise, forceDecimals) => {
+  const num = (Number(paise) || 0) / 100;
+  if (forceDecimals || num % 1 !== 0) {
+    return '₹' + num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  return '₹' + num.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+};
 const qtyFmt = (q) => decFmt.format(Number(q) || 0);
 const unitOf = (unit) => UNIT_LABEL[unit] || 'किलो';
 const phoneFmt = (p) => (p && p.length === 10 ? `${p.slice(0, 5)} ${p.slice(5)}` : p || '');
@@ -354,7 +361,7 @@ function tokenCard() {
     <div>
       <div class="token-eyebrow">${serving ? 'अभी चल रहा टोकन' : 'टोकन बोर्ड'}</div>
       <div class="token-no${serving ? '' : ' is-empty'}">${serving ? serving.no : '—'}</div>
-      <div class="token-who">${serving ? esc(serving.name) : 'अभी कोई टोकन नहीं चल रहा'}</div>
+      <div class="token-who">${serving ? esc(serving.name) + (serving.village ? ` <span class="tiny-chip">${esc(serving.village)}</span>` : '') : 'अभी कोई टोकन नहीं चल रहा'}</div>
       <div class="token-stats">
         <div><b>${t.waiting.length}</b>लाइन में</div>
         <div><b>${t.done}</b>पूरे हुए</div>
@@ -362,6 +369,7 @@ function tokenCard() {
       </div>
     </div>
     <div class="token-actions">
+      ${serving ? `<button class="btn btn-primary" data-act="token-to-job" data-id="${serving.id}">+ बिल बनाएँ</button>` : ''}
       ${serving ? `<button class="btn btn-gold" data-act="token-done" data-id="${serving.id}">पूरा हुआ ✓</button>` : ''}
       ${t.waiting.length ? `<button class="btn btn-soft" data-act="token-next">अगला बुलाएँ →</button>` : ''}
       <button class="btn btn-ghost" data-act="goto" data-view="token">टोकन बोर्ड</button>
@@ -381,7 +389,7 @@ function entryRow(e, opts) {
       <span class="avatar small pay">₹</span>
       <span class="grow">
         <span class="row-title">भुगतान मिला</span>
-        <span class="row-sub">${esc(e.name || 'ग्राहक')} · ${dateTxt(e.at)} · ${timeTxt(e.at)}</span>
+        <span class="row-sub">${esc(e.name || 'ग्राहक')}${e.village ? ' (' + esc(e.village) + ')' : ''} · ${dateTxt(e.at)} · ${timeTxt(e.at)}</span>
       </span>
       <span class="row-amt amt-plus">+${inr(e.amountPaise)}</span>
       ${del}
@@ -393,7 +401,7 @@ function entryRow(e, opts) {
     <span class="avatar small">${esc((e.name || e.serviceName || 'क').trim().charAt(0))}</span>
     <span class="grow">
       <span class="row-title ellipsis">${e.serviceName ? esc(e.serviceName) : 'काम'} · ${qtyFmt(e.qty)} ${unitOf(e.unit)}</span>
-      <span class="row-sub">${esc(e.name || 'बिना नाम')} · ${dateTxt(e.at)}${e.tokenNo ? ' · टोकन #' + e.tokenNo : ''}</span>
+      <span class="row-sub">${esc(e.name || 'बिना नाम')}${e.village ? ' (' + esc(e.village) + ')' : ''} · ${dateTxt(e.at)}${e.tokenNo ? ' · टोकन #' + e.tokenNo : ''}</span>
     </span>
     <span class="badge ${e.paid ? 'green' : 'amber'}">${e.paid ? 'नगद' : 'उधार'}</span>
     <span class="row-amt">${inr(e.amountPaise)}</span>
@@ -406,9 +414,10 @@ function queueRow(t, isServing) {
   <div class="row-item">
     <span class="queue-no${isServing ? ' serving' : ''}">${t.no}</span>
     <span class="grow">
-      <span class="row-title ellipsis">${esc(t.name)}</span>
+      <span class="row-title ellipsis">${esc(t.name)}${t.village ? ` <span class="tiny-chip">${esc(t.village)}</span>` : ''}</span>
       <span class="row-sub">${isServing ? 'चल रहा है' : relTxt(t.at)}</span>
     </span>
+    <button class="btn btn-sm btn-primary" data-act="token-to-job" data-id="${t.id}">+ बिल</button>
     ${isServing
       ? `<button class="btn btn-sm btn-soft" data-act="token-done" data-id="${t.id}">पूरा</button>`
       : `<button class="btn btn-sm btn-soft" data-act="token-start" data-id="${t.id}">बुलाएँ</button>`}
@@ -503,9 +512,15 @@ function viewTokens() {
       <div class="section-head"><h2 class="section-title">नया टोकन दें</h2></div>
       <div class="service-grid">${serviceCards('token')}</div>
       <form data-form="token">
-        <div class="field">
-          <label for="t-name">ग्राहक का नाम (वैकल्पिक)</label>
-          <input id="t-name" name="name" maxlength="60" placeholder="जैसे: रमेश" autocomplete="off">
+        <div class="two-col">
+          <div class="field">
+            <label for="t-name">ग्राहक का नाम</label>
+            <input id="t-name" name="name" maxlength="60" placeholder="जैसे: रमेश" autocomplete="off">
+          </div>
+          <div class="field">
+            <label for="t-village">गाँव / मोहल्ला</label>
+            <input id="t-village" name="village" maxlength="60" placeholder="जैसे: रामपुर" autocomplete="off">
+          </div>
         </div>
         <button class="btn btn-primary btn-block" type="submit">टोकन #${t.nextNo} जारी करें</button>
       </form>
@@ -541,6 +556,16 @@ function viewJob() {
   const amountPaise = Math.round((Number(job.qty) || 0) * (Number(job.rate) || 0) * 100);
   const unit = svc ? unitOf(svc.unit) : 'इकाई';
 
+  const matchedCust = d.customers.find((c) => {
+    if (!job.name) return false;
+    const nameMatch = c.name.toLowerCase() === job.name.trim().toLowerCase();
+    if (!nameMatch) return false;
+    if (job.village) {
+      return (c.village || '').toLowerCase() === job.village.trim().toLowerCase();
+    }
+    return true;
+  });
+
   return `
   <div class="page-head">
     <div>
@@ -550,6 +575,12 @@ function viewJob() {
   </div>
 
   <form class="card" data-form="job">
+    ${job.tokenNo ? `
+    <div class="sheet-head" style="margin-bottom:14px;background:var(--brand-soft);padding:10px 14px;border-radius:12px;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-weight:700;color:var(--brand)">टोकन #${job.tokenNo} का बिल</span>
+      <button type="button" class="btn btn-sm btn-ghost" data-act="clear-job-token">✕ टोकन हटाएँ</button>
+    </div>` : ''}
+
     <div class="section-head"><h2 class="section-title">सेवा चुनें</h2></div>
     <div class="service-grid">${serviceCards('job')}</div>
 
@@ -557,17 +588,33 @@ function viewJob() {
       <div class="field">
         <label for="j-name">ग्राहक का नाम</label>
         <input id="j-name" name="name" list="cust-names" maxlength="60" value="${esc(job.name)}"
-          placeholder="उधार के लिए ज़रूरी" autocomplete="off">
-        <datalist id="cust-names">${d.customers.map((c) => `<option value="${esc(c.name)}"></option>`).join('')}</datalist>
+          placeholder="जैसे: रमेश" autocomplete="off">
+        <datalist id="cust-names">
+          ${d.customers.map((c) => `<option value="${esc(c.name)}">${c.village ? esc(c.village) : 'गाँव नहीं'}${c.phone ? ' · ' + c.phone : ''}</option>`).join('')}
+        </datalist>
       </div>
       <div class="field">
-        <label for="j-phone">फोन (वैकल्पिक)</label>
-        <input id="j-phone" name="phone" type="tel" inputmode="numeric" maxlength="10"
-          value="${esc(job.phone)}" placeholder="10 अंक">
+        <label for="j-village">गाँव / मोहल्ला</label>
+        <input id="j-village" name="village" list="cust-villages" maxlength="60" value="${esc(job.village || '')}"
+          placeholder="जैसे: रामपुर" autocomplete="off">
+        <datalist id="cust-villages">
+          ${[...new Set(d.customers.map((c) => c.village).filter(Boolean))].map((v) => `<option value="${esc(v)}"></option>`).join('')}
+        </datalist>
       </div>
     </div>
 
-    <div class="two-col">
+    <div class="field">
+      <label for="j-phone">फोन (वैकल्पिक)</label>
+      <input id="j-phone" name="phone" type="tel" inputmode="numeric" maxlength="10"
+        value="${esc(job.phone)}" placeholder="10 अंक">
+    </div>
+
+    <div id="cust-balance-banner" class="cust-banner ${matchedCust ? (matchedCust.balancePaise > 0 ? 'due' : (matchedCust.balancePaise < 0 ? 'adv' : 'zero')) : ''}" style="${matchedCust ? '' : 'display:none'}">
+      <span>${matchedCust ? (matchedCust.village ? `<strong>${esc(matchedCust.name)} (${esc(matchedCust.village)})</strong>` : `<strong>${esc(matchedCust.name)}</strong>`) + ' का पिछला हिसाब:' : ''}</span>
+      <strong>${matchedCust ? (matchedCust.balancePaise > 0 ? inr(matchedCust.balancePaise) + ' बाकी' : (matchedCust.balancePaise < 0 ? inr(-matchedCust.balancePaise) + ' जमा' : 'बराबर ✓')) : ''}</strong>
+    </div>
+
+    <div class="two-col mt-14">
       <div class="field">
         <label for="j-qty" id="j-qty-label">मात्रा (${unit})</label>
         <input id="j-qty" name="qty" type="number" inputmode="decimal" step="0.01" min="0"
@@ -598,9 +645,10 @@ function viewJob() {
       <input id="j-note" name="note" maxlength="120" value="${esc(job.note)}" placeholder="जैसे: बारीक पिसाई">
     </div>
 
+    ${job.tokenNo ? '' : `
     <label class="check">
       <input type="checkbox" name="withToken"${job.withToken ? ' checked' : ''}> इस काम का टोकन भी जारी करें
-    </label>
+    </label>`}
 
     <button class="btn btn-primary btn-block" type="submit">हिसाब में जोड़ें</button>
   </form>`;
@@ -610,17 +658,21 @@ function viewJob() {
 
 function filteredCustomers() {
   const q = state.q.trim().toLowerCase();
+  const filter = state.custFilter || 'all';
   return state.data.customers.filter((c) => {
+    if (filter === 'due' && c.balancePaise <= 0) return false;
+    if (filter === 'adv' && c.balancePaise >= 0) return false;
+    if (filter === 'zero' && c.balancePaise !== 0) return false;
     if (!q) return true;
-    return c.name.toLowerCase().includes(q) || String(c.phone || '').includes(q);
+    return c.name.toLowerCase().includes(q) || (c.village && c.village.toLowerCase().includes(q)) || String(c.phone || '').includes(q);
   });
 }
 
 function customerRows(list) {
   if (!list.length) {
     return state.data.customers.length
-      ? emptyBlock('कोई ग्राहक नहीं मिला', 'नाम या फोन के कुछ अंक लिखकर देखें।')
-      : emptyBlock('अभी कोई ग्राहक नहीं', 'नया काम जोड़ते समय नाम लिखें — ग्राहक अपने आप बन जाएगा।');
+      ? emptyBlock('कोई ग्राहक नहीं मिला', 'नाम, गाँव या फोन के कुछ अंक लिखकर देखें।')
+      : emptyBlock('अभी कोई ग्राहक नहीं', 'नया ग्राहक जोड़ें या नया काम जोड़ते समय नाम और गाँव लिखें।');
   }
   return list.map((c) => {
     const cls = c.balancePaise > 0 ? 'due' : (c.balancePaise < 0 ? 'adv' : 'zero');
@@ -631,7 +683,7 @@ function customerRows(list) {
     <button type="button" class="row-item" data-act="open-cust" data-id="${c.id}">
       <span class="avatar">${esc(c.name.trim().charAt(0) || '?')}</span>
       <span class="grow">
-        <span class="row-title ellipsis">${esc(c.name)}</span>
+        <span class="row-title ellipsis">${esc(c.name)}${c.village ? ` <span class="tiny-chip">${esc(c.village)}</span>` : ''}</span>
         <span class="row-sub">${c.phone ? phoneFmt(c.phone) : 'फोन नहीं'}${c.lastAt ? ' · ' + relTxt(c.lastAt) : ''}</span>
       </span>
       <span class="bal ${cls}">${text}</span>
@@ -641,21 +693,31 @@ function customerRows(list) {
 
 function viewCustomers() {
   const d = state.data;
+  const cf = state.custFilter || 'all';
   return `
   <div class="page-head">
     <div>
       <h1 class="page-title">ग्राहक</h1>
       <p class="page-sub">${d.customers.length} ग्राहक · कुल ${inr(d.stats.outstandingPaise)} लेना है</p>
     </div>
-    <button class="btn btn-ghost btn-sm" data-act="goto" data-view="job">+ नया काम</button>
+    <div class="btn-row">
+      <button class="btn btn-primary btn-sm" data-act="new-cust">+ नया ग्राहक</button>
+      <button class="btn btn-ghost btn-sm" data-act="goto" data-view="job">+ नया काम</button>
+    </div>
   </div>
 
   <div class="card">
-    <input id="cust-search" class="input" placeholder="नाम या फोन से खोजें" value="${esc(state.q)}"
+    <input id="cust-search" class="input" placeholder="नाम, गाँव या फोन से खोजें" value="${esc(state.q)}"
       autocomplete="off" aria-label="ग्राहक खोजें">
+    <div class="filter-chips">
+      <button type="button" class="chip${cf === 'all' ? ' is-on' : ''}" data-act="cust-filter" data-val="all">सभी</button>
+      <button type="button" class="chip${cf === 'due' ? ' is-on' : ''}" data-act="cust-filter" data-val="due">बाकी (उधार)</button>
+      <button type="button" class="chip${cf === 'adv' ? ' is-on' : ''}" data-act="cust-filter" data-val="adv">जमा (एडवांस)</button>
+      <button type="button" class="chip${cf === 'zero' ? ' is-on' : ''}" data-act="cust-filter" data-val="zero">हिसाब बराबर</button>
+    </div>
     <div id="cust-list" class="row-list mt-8">${customerRows(filteredCustomers())}</div>
   </div>
-  <p class="tiny mt-8">किसी ग्राहक पर टैप करें — उधार, भुगतान और रसीद वहीं मिलेगी।</p>`;
+  <p class="tiny mt-8">किसी ग्राहक पर टैप करें — उधार, भुगतान, रसीद या जानकारी एडिट करने का विकल्प वहीं मिलेगा।</p>`;
 }
 
 /* ------------------------------- reports ------------------------------ */
@@ -818,6 +880,21 @@ function viewSettings() {
     </div>
   </section>
 
+  <form class="card" data-form="password">
+    <div class="section-head"><h2 class="section-title">पासवर्ड बदलें</h2></div>
+    <div class="two-col">
+      <div class="field">
+        <label for="pwd-cur">मौजूदा पासवर्ड</label>
+        <input id="pwd-cur" name="currentPassword" type="password" placeholder="मौजूदा पासवर्ड" required>
+      </div>
+      <div class="field">
+        <label for="pwd-new">नया पासवर्ड</label>
+        <input id="pwd-new" name="newPassword" type="password" minlength="6" placeholder="कम से कम 6 अक्षर" required>
+      </div>
+    </div>
+    <button class="btn btn-soft" type="submit">पासवर्ड बदलें</button>
+  </form>
+
   <section class="card">
     <div class="section-head"><h2 class="section-title">खाता</h2></div>
     <div class="row-list">
@@ -868,10 +945,14 @@ function renderCustomerModal() {
   showModal(`
     <div class="sheet-head">
       <div>
-        <h3>${esc(c.customer.name)}</h3>
+        <h3>${esc(c.customer.name)}${c.customer.village ? ` <span class="tiny-chip">${esc(c.customer.village)}</span>` : ''}</h3>
         <div class="muted">${c.customer.phone ? phoneFmt(c.customer.phone) : 'फोन नहीं'} · ${c.entries.length} एंट्री</div>
       </div>
-      <button class="icon-btn" data-act="close-modal" aria-label="बंद करें">✕</button>
+      <div style="display:flex;align-items:center;gap:6px">
+        <button class="btn btn-sm btn-ghost" data-act="edit-cust" data-id="${c.customer.id}">एडिट</button>
+        ${balance === 0 ? `<button class="btn btn-sm btn-ghost" data-act="del-cust" data-id="${c.customer.id}" style="color:var(--red)">हटाएँ</button>` : ''}
+        <button class="icon-btn" data-act="close-modal" aria-label="बंद करें">✕</button>
+      </div>
     </div>
 
     <div class="bal-panel ${cls}">
@@ -889,7 +970,7 @@ function renderCustomerModal() {
         </div>
         <div class="field">
           <label for="p-note">नोट (वैकल्पिक)</label>
-          <input id="p-note" name="note" maxlength="120" placeholder="जैसे: नगद">
+          <input id="p-note" name="note" maxlength="120" placeholder="जैसे: नगद / ऑनलाइन">
         </div>
       </div>
       <button class="btn btn-primary btn-block" type="submit">भुगतान दर्ज करें</button>
@@ -912,9 +993,37 @@ function renderCustomerModal() {
             </span>
             <span class="row-amt${e.kind === 'payment' ? ' amt-plus' : ''}">${e.kind === 'payment' ? '+' : ''}${inr(e.amountPaise)}</span>
             <button type="button" class="icon-btn" data-act="print-entry" data-id="${e.id}" aria-label="रसीद">🧾</button>
+            <button type="button" class="icon-btn" data-act="wa-entry" data-id="${e.id}" aria-label="WhatsApp">📱</button>
+            <button type="button" class="icon-btn" data-act="del-entry-modal" data-id="${e.id}" data-cust="${c.customer.id}" aria-label="हटाएँ">✕</button>
           </div>`).join('')
         : emptyBlock('कोई एंट्री नहीं', 'इस ग्राहक का पहला काम जोड़ें।')}
     </div>
+  `);
+}
+
+function openCustomerEditModal(cust) {
+  const isNew = !cust;
+  showModal(`
+    <div class="sheet-head">
+      <h3>${isNew ? 'नया ग्राहक जोड़ें' : 'ग्राहक की जानकारी बदलें'}</h3>
+      <button class="icon-btn" data-act="close-modal" aria-label="बंद करें">✕</button>
+    </div>
+    <form data-form="customer-save">
+      <input type="hidden" name="id" value="${cust ? cust.id : ''}">
+      <div class="field">
+        <label for="ec-name">ग्राहक का नाम <span class="req">*</span></label>
+        <input id="ec-name" name="name" maxlength="60" value="${esc(cust ? cust.name : '')}" placeholder="जैसे: रमेश" required autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="ec-village">गाँव / मोहल्ला / पता</label>
+        <input id="ec-village" name="village" maxlength="60" value="${esc(cust ? (cust.village || '') : '')}" placeholder="जैसे: रामपुर" autocomplete="off">
+      </div>
+      <div class="field">
+        <label for="ec-phone">मोबाइल नंबर</label>
+        <input id="ec-phone" name="phone" type="tel" inputmode="numeric" maxlength="10" value="${esc(cust ? (cust.phone || '') : '')}" placeholder="10 अंकों का नंबर">
+      </div>
+      <button class="btn btn-primary btn-block mt-14" type="submit">${isNew ? 'ग्राहक जोड़ें' : 'सेव करें'}</button>
+    </form>
   `);
 }
 
@@ -922,6 +1031,8 @@ function showJobDone(data) {
   const { entryId, token, state: snapshot } = data;
   const entry = snapshot.entries.find((e) => e.id === entryId);
   const customer = entry && entry.customerId ? snapshot.customers.find((c) => c.id === entry.customerId) : null;
+  const nameDisplay = (customer ? customer.name : entry?.name) || 'ग्राहक';
+  const villageDisplay = (customer ? customer.village : entry?.village) || '';
 
   showModal(`
     <div class="done-mark">✓</div>
@@ -929,7 +1040,7 @@ function showJobDone(data) {
     <div class="done-card">
       <div class="done-amount">${inr(entry ? entry.amountPaise : 0)}</div>
       <div class="muted">${entry ? esc(entry.serviceName) + ' · ' + qtyFmt(entry.qty) + ' ' + unitOf(entry.unit) : ''}</div>
-      <div class="muted">${entry ? (entry.paid ? 'नगद मिला' : 'उधार') : ''}${customer ? ' · ' + esc(customer.name) : ''}</div>
+      <div class="muted">${entry ? (entry.paid ? 'नगद मिला' : 'उधार') : ''} · ${esc(nameDisplay)}${villageDisplay ? ' (' + esc(villageDisplay) + ')' : ''}</div>
       ${token ? `<div class="mt-8"><span class="token-chip">टोकन #${token.no}</span></div>` : ''}
       ${customer && customer.balancePaise > 0 ? `<div class="mt-8"><span class="badge amber">बाकी ${inr(customer.balancePaise)}</span></div>` : ''}
     </div>
@@ -952,6 +1063,7 @@ function findEntry(id) {
       return {
         ...c,
         name: state.customer.customer.name,
+        village: state.customer.customer.village,
         customerId: state.customer.customer.id,
       };
     }
@@ -966,6 +1078,8 @@ function printReceipt(entry) {
   const balance = cust ? cust.balancePaise : null;
   const isPayment = entry.kind === 'payment';
   const note = b.note || 'धन्यवाद — दोबारा आइए 🙏';
+  const nameShow = cust ? cust.name : (entry.name || 'ग्राहक');
+  const villageShow = cust ? (cust.village || '') : (entry.village || '');
 
   printEl.innerHTML = `
     <div class="receipt">
@@ -975,7 +1089,7 @@ function printReceipt(entry) {
       <div class="r-line"></div>
       <div class="r-row"><span>दिनांक</span><span>${dateTxt(entry.at)} ${timeTxt(entry.at)}</span></div>
       ${entry.tokenNo ? `<div class="r-row"><span>टोकन</span><span>#${entry.tokenNo}</span></div>` : ''}
-      ${cust ? `<div class="r-row"><span>ग्राहक</span><span>${esc(cust.name)}</span></div>` : (entry.name ? `<div class="r-row"><span>ग्राहक</span><span>${esc(entry.name)}</span></div>` : '')}
+      <div class="r-row"><span>ग्राहक</span><span>${esc(nameShow)}${villageShow ? ' (' + esc(villageShow) + ')' : ''}</span></div>
       <div class="r-line"></div>
       ${isPayment
         ? `<div class="r-row"><span>भुगतान मिला</span><span>${inr(entry.amountPaise)}</span></div>`
@@ -994,8 +1108,10 @@ function printReceipt(entry) {
 function entryWaText(entry) {
   const b = state.data.business;
   const cust = entry.customerId ? state.data.customers.find((c) => c.id === entry.customerId) : null;
+  const nameShow = cust ? cust.name : (entry.name || 'ग्राहक');
+  const villageShow = cust ? (cust.village || '') : (entry.village || '');
   const lines = [`*${b.name}*`, `${dateTxt(entry.at)} ${timeTxt(entry.at)}`, ''];
-  if (cust) lines.push(`ग्राहक: ${cust.name}`);
+  lines.push(`ग्राहक: ${nameShow}${villageShow ? ' (' + villageShow + ')' : ''}`);
   if (entry.kind === 'payment') {
     lines.push(`भुगतान मिला: ${inr(entry.amountPaise)}`);
   } else {
@@ -1139,6 +1255,82 @@ document.addEventListener('click', async (ev) => {
       break;
     }
 
+    case 'token-to-job': {
+      const t = state.data.tokens.waiting.find((x) => x.id === id) || (state.data.tokens.serving && state.data.tokens.serving.id === id ? state.data.tokens.serving : null);
+      if (!t) return;
+      state.job.tokenId = t.id;
+      state.job.tokenNo = t.no;
+      state.job.name = t.name && t.name !== 'ग्राहक' ? t.name : '';
+      state.job.village = t.village || '';
+      if (t.serviceId && state.data.services.some((s) => s.id === t.serviceId)) {
+        state.job.serviceId = t.serviceId;
+        const svc = state.data.services.find((s) => s.id === t.serviceId);
+        if (svc) state.job.rate = String(svc.ratePaise / 100);
+      }
+      state.view = 'job';
+      render();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      break;
+    }
+
+    case 'clear-job-token':
+      state.job.tokenId = null;
+      state.job.tokenNo = null;
+      render();
+      break;
+
+    case 'cust-filter':
+      state.custFilter = el.dataset.val;
+      {
+        const box = document.getElementById('cust-list');
+        if (box) box.innerHTML = customerRows(filteredCustomers());
+        document.querySelectorAll('[data-act="cust-filter"]').forEach((b) => {
+          b.classList.toggle('is-on', b.dataset.val === state.custFilter);
+        });
+      }
+      break;
+
+    case 'new-cust':
+      openCustomerEditModal(null);
+      break;
+
+    case 'edit-cust': {
+      const c = state.data.customers.find((x) => x.id === id);
+      if (c) openCustomerEditModal(c);
+      break;
+    }
+
+    case 'del-cust': {
+      const c = state.data.customers.find((x) => x.id === id);
+      if (!c) return;
+      if (!window.confirm(`क्या ग्राहक "${c.name}" को हटाना चाहते हैं?`)) return;
+      await withBusy(el, async () => {
+        const data = await api('/api/customers/delete', { id });
+        if (data) {
+          applyState(data.state);
+          closeModal();
+          toast('ग्राहक हटा दिया गया');
+        }
+      });
+      break;
+    }
+
+    case 'del-entry-modal': {
+      const entryId = id;
+      const custId = el.dataset.cust;
+      if (!window.confirm('यह एंट्री हटाएँ? हिसाब बदल जाएगा।')) return;
+      await withBusy(el, async () => {
+        const data = await api('/api/entries/delete', { id: entryId });
+        if (data) {
+          state.data = data.state;
+          render();
+          await openCustomer(custId);
+          toast('एंट्री हट गई');
+        }
+      });
+      break;
+    }
+
     case 'token-cancel':
       if (!window.confirm('यह टोकन रद्द करें?')) return;
       await withBusy(el, async () => {
@@ -1162,7 +1354,10 @@ document.addEventListener('click', async (ev) => {
       const c = state.data.customers.find((x) => x.id === id);
       if (!c) return;
       state.job.name = c.name;
+      state.job.village = c.village || '';
       state.job.phone = c.phone || '';
+      state.job.tokenId = null;
+      state.job.tokenNo = null;
       state.view = 'job';
       closeModal();
       render();
@@ -1240,6 +1435,40 @@ document.addEventListener('input', (ev) => {
 
   if (t.id === 'j-qty' || t.id === 'j-rate') {
     recalcJob();
+    return;
+  }
+
+  if (t.id === 'j-name' || t.id === 'j-village') {
+    const nameEl = document.getElementById('j-name');
+    const villageEl = document.getElementById('j-village');
+    const phoneEl = document.getElementById('j-phone');
+    const bannerEl = document.getElementById('cust-balance-banner');
+    if (nameEl && bannerEl && state.data) {
+      const nameVal = nameEl.value.trim().toLowerCase();
+      const villageVal = villageEl ? villageEl.value.trim().toLowerCase() : '';
+      const matched = state.data.customers.find((c) => {
+        if (!nameVal) return false;
+        const nMatch = c.name.toLowerCase() === nameVal;
+        if (!nMatch) return false;
+        if (villageVal) {
+          return (c.village || '').toLowerCase() === villageVal;
+        }
+        return true;
+      });
+      if (matched) {
+        if (villageEl && !villageEl.value && matched.village) villageEl.value = matched.village;
+        if (phoneEl && !phoneEl.value && matched.phone) phoneEl.value = matched.phone;
+        const cls = matched.balancePaise > 0 ? 'due' : (matched.balancePaise < 0 ? 'adv' : 'zero');
+        const text = matched.balancePaise > 0
+          ? inr(matched.balancePaise) + ' बाकी'
+          : (matched.balancePaise < 0 ? inr(-matched.balancePaise) + ' जमा' : 'बराबर ✓');
+        bannerEl.className = 'cust-banner ' + cls;
+        bannerEl.style.display = 'flex';
+        bannerEl.innerHTML = `<span><strong>${esc(matched.name)}${matched.village ? ' (' + esc(matched.village) + ')' : ''}</strong> का पिछला हिसाब:</span><strong>${text}</strong>`;
+      } else {
+        bannerEl.style.display = 'none';
+      }
+    }
   }
 });
 
@@ -1292,6 +1521,7 @@ document.addEventListener('submit', async (ev) => {
     if (submitBtn) submitBtn.disabled = true;
 
     state.job.name = String(fd.get('name') || '').trim();
+    state.job.village = String(fd.get('village') || '').trim();
     state.job.phone = String(fd.get('phone') || '').trim();
     state.job.note = String(fd.get('note') || '').trim();
     state.job.paid = fd.get('paid') !== 'no';
@@ -1303,9 +1533,12 @@ document.addEventListener('submit', async (ev) => {
       rate: Number(fd.get('rate')),
       paid: state.job.paid,
       name: state.job.name,
+      village: state.job.village,
       phone: state.job.phone,
       note: state.job.note,
       withToken: state.job.withToken,
+      tokenId: state.job.tokenId,
+      tokenNo: state.job.tokenNo,
     });
 
     state.busy = false;
@@ -1315,10 +1548,13 @@ document.addEventListener('submit', async (ev) => {
       state.data = data.state;
       state.job.qty = '';
       state.job.name = '';
+      state.job.village = '';
       state.job.phone = '';
       state.job.note = '';
       state.job.paid = true;
       state.job.withToken = false;
+      state.job.tokenId = null;
+      state.job.tokenNo = null;
       const svc = currentService();
       state.job.rate = svc ? String(svc.ratePaise / 100) : '';
       render();
@@ -1331,6 +1567,7 @@ document.addEventListener('submit', async (ev) => {
     await withBusy(form.querySelector('[type="submit"]'), async () => {
       const data = await api('/api/tokens', {
         name: fd.get('name'),
+        village: fd.get('village'),
         serviceId: state.tokenForm.serviceId,
       });
       if (data) {
@@ -1354,6 +1591,39 @@ document.addEventListener('submit', async (ev) => {
         render();
         await openCustomer(customerId);
         toast('भुगतान दर्ज हुआ');
+      }
+    });
+    return;
+  }
+
+  if (kind === 'customer-save') {
+    await withBusy(form.querySelector('[type="submit"]'), async () => {
+      const id = fd.get('id');
+      const data = await api('/api/customers/save', {
+        id: id || undefined,
+        name: fd.get('name'),
+        village: fd.get('village'),
+        phone: fd.get('phone'),
+      });
+      if (data) {
+        applyState(data.state);
+        closeModal();
+        toast(id ? 'ग्राहक की जानकारी सेव हो गई' : 'नया ग्राहक जुड़ गया');
+      }
+    });
+    return;
+  }
+
+  if (kind === 'password') {
+    await withBusy(form.querySelector('[type="submit"]'), async () => {
+      const data = await api('/api/password', {
+        currentPassword: fd.get('currentPassword'),
+        newPassword: fd.get('newPassword'),
+      });
+      if (data) {
+        applyState(data.state);
+        form.reset();
+        toast('पासवर्ड बदल दिया गया ✓');
       }
     });
     return;

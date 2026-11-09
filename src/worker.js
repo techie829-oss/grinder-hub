@@ -20,11 +20,30 @@ const RANGES = ['today', 'week', 'month', 'all'];
 
 const enc = new TextEncoder();
 
+let schemaInitialized = false;
+async function ensureSchema(env) {
+  if (schemaInitialized) return;
+  try {
+    await env.DB.exec("ALTER TABLE customers ADD COLUMN village TEXT NOT NULL DEFAULT '';");
+  } catch (e) {}
+  try {
+    await env.DB.exec("ALTER TABLE customers ADD COLUMN village_key TEXT NOT NULL DEFAULT '';");
+  } catch (e) {}
+  try {
+    await env.DB.exec("ALTER TABLE entries ADD COLUMN village TEXT NOT NULL DEFAULT '';");
+  } catch (e) {}
+  try {
+    await env.DB.exec("ALTER TABLE tokens ADD COLUMN village TEXT NOT NULL DEFAULT '';");
+  } catch (e) {}
+  schemaInitialized = true;
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (!url.pathname.startsWith('/api/')) return env.ASSETS.fetch(request);
     try {
+      await ensureSchema(env);
       return await route(request, env, url);
     } catch (err) {
       console.error('api_failure', (err && err.stack) || String(err));
@@ -65,6 +84,10 @@ function normalizePhone(v) {
 }
 
 function normName(v) {
+  return clean(v, 60).toLowerCase();
+}
+
+function normVillage(v) {
   return clean(v, 60).toLowerCase();
 }
 
@@ -232,7 +255,7 @@ async function buildState(env, businessId, range) {
       'SELECT id, name, unit, rate_paise, sort FROM services WHERE business_id = ? AND active = 1 ORDER BY sort, name'
     ).bind(businessId),
     env.DB.prepare(
-      `SELECT c.id, c.name, c.phone, c.created_at,
+      `SELECT c.id, c.name, COALESCE(c.village, '') AS village, c.phone, c.created_at,
               COALESCE(SUM(CASE WHEN e.kind = 'job' AND e.paid = 0 THEN e.amount_paise
                                 WHEN e.kind = 'payment' THEN -e.amount_paise ELSE 0 END), 0) AS balance_paise,
               MAX(e.created_at) AS last_at
@@ -243,7 +266,7 @@ async function buildState(env, businessId, range) {
         ORDER BY balance_paise DESC, last_at DESC`
     ).bind(businessId),
     env.DB.prepare(
-      `SELECT e.id, e.kind, e.customer_id, e.name, e.qty, e.rate_paise, e.amount_paise,
+      `SELECT e.id, e.kind, e.customer_id, e.name, COALESCE(e.village, '') AS village, e.qty, e.rate_paise, e.amount_paise,
               e.paid, e.note, e.token_no, e.created_at, s.name AS service_name, s.unit AS unit
          FROM entries e
          LEFT JOIN services s ON s.id = e.service_id AND s.business_id = e.business_id
@@ -252,7 +275,7 @@ async function buildState(env, businessId, range) {
         LIMIT 400`
     ).bind(businessId, from),
     env.DB.prepare(
-      'SELECT id, no, name, service_id, status, created_at FROM tokens WHERE business_id = ? AND day = ? ORDER BY no'
+      `SELECT id, no, name, COALESCE(village, '') AS village, service_id, status, created_at FROM tokens WHERE business_id = ? AND day = ? ORDER BY no`
     ).bind(businessId, day),
     env.DB.prepare(
       `SELECT COUNT(CASE WHEN kind = 'job' THEN 1 END) AS jobs,
@@ -266,7 +289,7 @@ async function buildState(env, businessId, range) {
     env.DB.prepare(
       `SELECT e.service_id AS id, COALESCE(s.name, 'हटाई गई सेवा') AS name, COALESCE(s.unit, 'kg') AS unit,
               COUNT(*) AS count, COALESCE(SUM(e.qty), 0) AS qty, COALESCE(SUM(e.amount_paise), 0) AS amount_paise
-         FROM entries e LEFT JOIN services s ON s.id = e.service_id
+         FROM entries e LEFT JOIN services s ON s.id = e.service_id AND s.business_id = e.business_id
         WHERE e.business_id = ? AND e.created_at >= ? AND e.kind = 'job'
         GROUP BY e.service_id
         ORDER BY amount_paise DESC`
@@ -285,6 +308,7 @@ async function buildState(env, businessId, range) {
   const customers = results[1].results.map((c) => ({
     id: c.id,
     name: c.name,
+    village: c.village || '',
     phone: c.phone || '',
     balancePaise: c.balance_paise || 0,
     lastAt: c.last_at || null,
@@ -295,6 +319,7 @@ async function buildState(env, businessId, range) {
     kind: e.kind,
     customerId: e.customer_id,
     name: e.name || '',
+    village: e.village || '',
     qty: e.qty,
     ratePaise: e.rate_paise,
     amountPaise: e.amount_paise,
@@ -310,6 +335,7 @@ async function buildState(env, businessId, range) {
     id: t.id,
     no: t.no,
     name: t.name,
+    village: t.village || '',
     serviceId: t.service_id,
     status: t.status,
     at: t.created_at,
@@ -390,7 +416,7 @@ async function nextTokenNo(env, businessId, day) {
   return (max ? max.n : 0) + 1;
 }
 
-async function issueToken(env, businessId, name, serviceId) {
+async function issueToken(env, businessId, name, village, serviceId) {
   const day = dayKey();
   const no = await nextTokenNo(env, businessId, day);
   const anyServing = await env.DB.prepare(
@@ -402,14 +428,15 @@ async function issueToken(env, businessId, name, serviceId) {
     id: crypto.randomUUID(),
     no,
     name: name || 'ग्राहक',
+    village: village || '',
     serviceId: serviceId || null,
     status: anyServing ? 'waiting' : 'serving',
     at: Date.now(),
   };
   await env.DB.prepare(
-    'INSERT INTO tokens (id, business_id, day, no, name, service_id, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+    'INSERT INTO tokens (id, business_id, day, no, name, village, service_id, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
   )
-    .bind(token.id, businessId, day, token.no, token.name, token.serviceId, token.status, token.at)
+    .bind(token.id, businessId, day, token.no, token.name, token.village, token.serviceId, token.status, token.at)
     .run();
   return token;
 }
@@ -446,6 +473,9 @@ async function route(request, env, url) {
   if (path === '/api/settings' && method === 'POST') return saveSettings(request, env, business, range);
   if (path === '/api/entries/delete' && method === 'POST') return deleteEntry(request, env, business, range);
   if (path === '/api/customer' && method === 'GET') return customerDetail(request, env, business, url);
+  if (path === '/api/customers/save' && method === 'POST') return saveCustomer(request, env, business, range);
+  if (path === '/api/customers/delete' && method === 'POST') return deleteCustomer(request, env, business, range);
+  if (path === '/api/password' && method === 'POST') return changePassword(request, env, business, range);
   if (path === '/api/export' && method === 'GET') return exportData(env, business);
 
   return bad('रास्ता नहीं मिला', 404);
@@ -560,6 +590,7 @@ async function createJob(request, env, business, range) {
 
   const paid = body.paid ? 1 : 0;
   const name = clean(body.name, 60);
+  const village = clean(body.village, 60);
   const phone = normalizePhone(body.phone);
   const note = clean(body.note, 120);
   if (!paid && !name) return bad('उधार के लिए ग्राहक का नाम ज़रूरी है');
@@ -567,8 +598,11 @@ async function createJob(request, env, business, range) {
   let customerId = null;
   if (name) {
     const key = normName(name);
-    const found = await env.DB.prepare('SELECT id, phone FROM customers WHERE business_id = ? AND name_key = ?')
-      .bind(business.id, key)
+    const vKey = normVillage(village);
+    const found = await env.DB.prepare(
+      'SELECT id, phone, village FROM customers WHERE business_id = ? AND name_key = ? AND village_key = ?'
+    )
+      .bind(business.id, key, vKey)
       .first();
     if (found) {
       customerId = found.id;
@@ -581,15 +615,15 @@ async function createJob(request, env, business, range) {
       customerId = crypto.randomUUID();
       try {
         await env.DB.prepare(
-          'INSERT INTO customers (id, business_id, name, name_key, phone, created_at) VALUES (?, ?, ?, ?, ?, ?)'
+          'INSERT INTO customers (id, business_id, name, name_key, village, village_key, phone, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
         )
-          .bind(customerId, business.id, name, key, phone, Date.now())
+          .bind(customerId, business.id, name, key, village, vKey, phone, Date.now())
           .run();
       } catch (err) {
         const again = await env.DB.prepare(
-          'SELECT id FROM customers WHERE business_id = ? AND name_key = ?'
+          'SELECT id FROM customers WHERE business_id = ? AND name_key = ? AND village_key = ?'
         )
-          .bind(business.id, key)
+          .bind(business.id, key, vKey)
           .first();
         if (!again) throw err;
         customerId = again.id;
@@ -598,18 +632,25 @@ async function createJob(request, env, business, range) {
   }
 
   let token = null;
+  let tokenNo = body.tokenNo ? Number(body.tokenNo) : null;
+  if (body.tokenId) {
+    await env.DB.prepare("UPDATE tokens SET status = 'done' WHERE id = ? AND business_id = ?")
+      .bind(clean(body.tokenId, 40), business.id)
+      .run();
+  }
   if (body.withToken) {
-    token = await issueToken(env, business.id, name || 'ग्राहक', svc.id);
+    token = await issueToken(env, business.id, name || 'ग्राहक', village || '', svc.id);
+    tokenNo = token.no;
   }
 
   const entryId = crypto.randomUUID();
   const now = Date.now();
   await env.DB.prepare(
-    `INSERT INTO entries (id, business_id, customer_id, kind, service_id, name, qty, rate_paise,
+    `INSERT INTO entries (id, business_id, customer_id, kind, service_id, name, village, qty, rate_paise,
        amount_paise, paid, note, token_no, day, created_at)
-     VALUES (?, ?, ?, 'job', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+     VALUES (?, ?, ?, 'job', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   )
-    .bind(entryId, business.id, customerId, svc.id, name, qty, ratePaise, amountPaise, paid, note, token ? token.no : null, dayKey(now), now)
+    .bind(entryId, business.id, customerId, svc.id, name, village, qty, ratePaise, amountPaise, paid, note, tokenNo, dayKey(now), now)
     .run();
 
   const state = await buildState(env, business.id, range);
@@ -619,7 +660,7 @@ async function createJob(request, env, business, range) {
 async function createPayment(request, env, business, range) {
   const body = await readJson(request);
   const customerId = clean(body.customerId, 40);
-  const customer = await env.DB.prepare('SELECT id, name FROM customers WHERE id = ? AND business_id = ?')
+  const customer = await env.DB.prepare('SELECT id, name, village FROM customers WHERE id = ? AND business_id = ?')
     .bind(customerId, business.id)
     .first();
   if (!customer) return bad('ग्राहक नहीं मिला', 404);
@@ -630,10 +671,10 @@ async function createPayment(request, env, business, range) {
 
   const now = Date.now();
   await env.DB.prepare(
-    `INSERT INTO entries (id, business_id, customer_id, kind, name, amount_paise, paid, note, day, created_at)
-     VALUES (?, ?, ?, 'payment', ?, ?, 1, ?, ?, ?)`
+    `INSERT INTO entries (id, business_id, customer_id, kind, name, village, amount_paise, paid, note, day, created_at)
+     VALUES (?, ?, ?, 'payment', ?, ?, ?, 1, ?, ?, ?)`
   )
-    .bind(crypto.randomUUID(), business.id, customer.id, customer.name, amountPaise, clean(body.note, 120), dayKey(now), now)
+    .bind(crypto.randomUUID(), business.id, customer.id, customer.name, customer.village || '', amountPaise, clean(body.note, 120), dayKey(now), now)
     .run();
 
   return json({ ok: true, state: await buildState(env, business.id, range) });
@@ -649,7 +690,9 @@ async function createToken(request, env, business, range) {
       .first();
     if (!svc) return bad('सेवा नहीं मिली');
   }
-  const token = await issueToken(env, business.id, clean(body.name, 60) || 'ग्राहक', svc ? svc.id : null);
+  const name = clean(body.name, 60);
+  const village = clean(body.village, 60);
+  const token = await issueToken(env, business.id, name || 'ग्राहक', village || '', svc ? svc.id : null);
   return json({ ok: true, token, state: await buildState(env, business.id, range) });
 }
 
@@ -753,7 +796,7 @@ async function deleteEntry(request, env, business, range) {
 
 async function customerDetail(request, env, business, url) {
   const id = clean(url.searchParams.get('id'), 40);
-  const customer = await env.DB.prepare('SELECT id, name, phone FROM customers WHERE id = ? AND business_id = ?')
+  const customer = await env.DB.prepare('SELECT id, name, village, phone FROM customers WHERE id = ? AND business_id = ?')
     .bind(id, business.id)
     .first();
   if (!customer) return bad('ग्राहक नहीं मिला', 404);
@@ -770,7 +813,7 @@ async function customerDetail(request, env, business, url) {
 
   return json({
     ok: true,
-    customer: { id: customer.id, name: customer.name, phone: customer.phone || '' },
+    customer: { id: customer.id, name: customer.name, village: customer.village || '', phone: customer.phone || '' },
     entries: rows.results.map((e) => ({
       id: e.id,
       kind: e.kind,
@@ -787,11 +830,102 @@ async function customerDetail(request, env, business, url) {
   });
 }
 
+async function saveCustomer(request, env, business, range) {
+  const body = await readJson(request);
+  const id = clean(body.id, 40);
+  const name = clean(body.name, 60);
+  const village = clean(body.village, 60);
+  const phone = normalizePhone(body.phone);
+  if (name.length < 2) return bad('ग्राहक का नाम लिखें');
+
+  const key = normName(name);
+  const vKey = normVillage(village);
+
+  if (id) {
+    const existing = await env.DB.prepare('SELECT id FROM customers WHERE id = ? AND business_id = ?')
+      .bind(id, business.id)
+      .first();
+    if (!existing) return bad('ग्राहक नहीं मिला', 404);
+
+    const conflict = await env.DB.prepare(
+      'SELECT id FROM customers WHERE business_id = ? AND name_key = ? AND village_key = ? AND id <> ?'
+    )
+      .bind(business.id, key, vKey, id)
+      .first();
+    if (conflict) return bad('इस नाम और गाँव का ग्राहक पहले से मौजूद है');
+
+    await env.DB.prepare(
+      'UPDATE customers SET name = ?, name_key = ?, village = ?, village_key = ?, phone = ? WHERE id = ? AND business_id = ?'
+    )
+      .bind(name, key, village, vKey, phone, id, business.id)
+      .run();
+  } else {
+    const exists = await env.DB.prepare(
+      'SELECT id FROM customers WHERE business_id = ? AND name_key = ? AND village_key = ?'
+    )
+      .bind(business.id, key, vKey)
+      .first();
+    if (exists) return bad('इस नाम और गाँव का ग्राहक पहले से मौजूद है');
+
+    await env.DB.prepare(
+      'INSERT INTO customers (id, business_id, name, name_key, village, village_key, phone, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+    )
+      .bind(crypto.randomUUID(), business.id, name, key, village, vKey, phone, Date.now())
+      .run();
+  }
+
+  return json({ ok: true, state: await buildState(env, business.id, range) });
+}
+
+async function deleteCustomer(request, env, business, range) {
+  const body = await readJson(request);
+  const id = clean(body.id, 40);
+
+  const balanceRow = await env.DB.prepare(
+    `SELECT COALESCE(SUM(CASE WHEN kind = 'job' AND paid = 0 THEN amount_paise
+                             WHEN kind = 'payment' THEN -amount_paise ELSE 0 END), 0) AS balance_paise
+       FROM entries WHERE business_id = ? AND customer_id = ?`
+  ).bind(business.id, id).first();
+
+  if (balanceRow && balanceRow.balance_paise !== 0) {
+    return bad('इस ग्राहक का हिसाब बाकी है, पहले हिसाब चुकता करें');
+  }
+
+  await env.DB.batch([
+    env.DB.prepare('UPDATE entries SET customer_id = NULL WHERE business_id = ? AND customer_id = ?').bind(business.id, id),
+    env.DB.prepare('DELETE FROM customers WHERE id = ? AND business_id = ?').bind(id, business.id),
+  ]);
+
+  return json({ ok: true, state: await buildState(env, business.id, range) });
+}
+
+async function changePassword(request, env, business, range) {
+  const body = await readJson(request);
+  const currentPassword = String(body.currentPassword || '');
+  const newPassword = String(body.newPassword || '');
+  if (!currentPassword || !newPassword) return bad('मौजूदा और नया पासवर्ड भरें');
+  if (newPassword.length < 6) return bad('नया पासवर्ड कम से कम 6 अक्षर का रखें');
+
+  const biz = await env.DB.prepare('SELECT pass_hash, salt FROM businesses WHERE id = ?').bind(business.id).first();
+  if (!biz) return bad('खाता नहीं मिला', 404);
+
+  const hash = await pbkdf2(currentPassword, biz.salt);
+  if (!safeEqual(hash, biz.pass_hash)) return bad('मौजूदा पासवर्ड गलत है', 400);
+
+  const newSalt = hex(randomBytes(16));
+  const newHash = await pbkdf2(newPassword, newSalt);
+  await env.DB.prepare('UPDATE businesses SET pass_hash = ?, salt = ? WHERE id = ?')
+    .bind(newHash, newSalt, business.id)
+    .run();
+
+  return json({ ok: true, state: await buildState(env, business.id, range) });
+}
+
 async function exportData(env, business) {
   const [biz, services, customers, entries, tokens] = await env.DB.batch([
     env.DB.prepare('SELECT id, name, phone, address, upi, note, created_at FROM businesses WHERE id = ?').bind(business.id),
     env.DB.prepare('SELECT id, name, unit, rate_paise, active FROM services WHERE business_id = ?').bind(business.id),
-    env.DB.prepare('SELECT id, name, phone, created_at FROM customers WHERE business_id = ?').bind(business.id),
+    env.DB.prepare('SELECT id, name, village, phone, created_at FROM customers WHERE business_id = ?').bind(business.id),
     env.DB.prepare('SELECT * FROM entries WHERE business_id = ? ORDER BY created_at').bind(business.id),
     env.DB.prepare('SELECT * FROM tokens WHERE business_id = ? ORDER BY day DESC, no').bind(business.id),
   ]);
