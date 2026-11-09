@@ -80,8 +80,8 @@ export const state = {
   auth: { mode: 'login', error: '' },
 };
 
-export const root = document.getElementById('root');
-export const modalRoot = document.getElementById('modal');
+export const root = typeof document !== 'undefined' ? document.getElementById('root') : null;
+export const modalRoot = typeof document !== 'undefined' ? document.getElementById('modal') : null;
 export const modalEl = modalRoot;
-export const toastEl = document.getElementById('toast');
-export const printEl = document.getElementById('print');
+export const toastEl = typeof document !== 'undefined' ? document.getElementById('toast') : null;
+export const printEl = typeof document !== 'undefined' ? document.getElementById('print') : null;

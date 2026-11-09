@@ -644,7 +644,7 @@ export const TRANSLATIONS = {
   }
 };
 
-let currentLang = localStorage.getItem('cb_lang') || 'hi';
+let currentLang = (typeof localStorage !== 'undefined' && localStorage.getItem ? localStorage.getItem('cb_lang') : null) || 'hi';
 
 export function getLanguage() {
   return currentLang;
