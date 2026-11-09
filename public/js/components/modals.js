@@ -6,12 +6,12 @@ import { t } from '../i18n.js';
 
 export function showModal(html) {
   modalRoot.innerHTML = `<div class="sheet-backdrop"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`;
-  document.body.classList.add('no-scroll');
+  if (document.body) document.body.classList.add('no-scroll');
 }
 
 export function closeModal() {
   modalRoot.innerHTML = '';
-  document.body.classList.remove('no-scroll');
+  if (document.body) document.body.classList.remove('no-scroll');
   state.customer = null;
 }
 

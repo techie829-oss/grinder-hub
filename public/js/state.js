@@ -82,5 +82,6 @@ export const state = {
 
 export const root = document.getElementById('root');
 export const modalRoot = document.getElementById('modal');
+export const modalEl = modalRoot;
 export const toastEl = document.getElementById('toast');
 export const printEl = document.getElementById('print');
