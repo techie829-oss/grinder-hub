@@ -5,7 +5,7 @@ import { LANGUAGES, getLanguage, t } from '../i18n.js';
 export function langSelector() {
   const cur = getLanguage();
   return `
-    <select class="input lang-select" data-act="change-lang" aria-label="${t('languageSelect')}" style="width:auto;padding:5px 10px;font-size:12px;font-weight:600;border-radius:10px;background:#fff">
+    <select class="input lang-select" data-act="change-lang" aria-label="${t('languageSelect')}" style="width:auto;padding:6px 12px;font-size:12.5px;font-weight:650;border-radius:10px;background:#fff;border:1px solid #d5d8e4;box-shadow:0 1px 3px rgba(17,18,37,0.08);cursor:pointer;color:#1e1e2f">
       ${LANGUAGES.map((l) => `<option value="${l.code}"${l.code === cur ? ' selected' : ''}>${l.label}</option>`).join('')}
     </select>`;
 }

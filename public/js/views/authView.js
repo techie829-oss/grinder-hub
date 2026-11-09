@@ -36,7 +36,7 @@ export function viewAuth() {
     </aside>
 
     <main class="auth-panel">
-      <div style="display:flex;justify-content:flex-end;margin-bottom:12px">${langSelector()}</div>
+      <div class="auth-lang-wrap">${langSelector()}</div>
       <div class="auth-card">
         <h1>${isLogin ? t('welcomeBack') : t('addShop')}</h1>
         <p class="muted">${isLogin ? t('loginSub') : t('signupSub')}</p>
