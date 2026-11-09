@@ -1,10 +1,11 @@
 // Service Worker for Chakki Book (Grinder Hub) PWA
-const CACHE_NAME = 'chakkibook-v2.3';
+const CACHE_NAME = 'chakkibook-v3.1';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/styles.css',
   '/app.js',
+  '/app.js?v=3.1',
   '/manifest.json',
   '/icon.svg',
   '/js/sync.js',
@@ -60,21 +61,24 @@ self.addEventListener('fetch', (event) => {
   // Never cache API requests
   if (url.pathname.startsWith('/api/')) return;
 
+  // Network-First with Offline Cache Fallback
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      // Fetch fresh version in background and update cache
-      const networkFetch = fetch(event.request).then((response) => {
+    fetch(event.request)
+      .then((response) => {
         if (response && response.status === 200) {
           const clone = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
         }
         return response;
-      }).catch(() => {
-        if (event.request.mode === 'navigate') {
-          return caches.match('/index.html');
-        }
-      });
-      return cached || networkFetch;
-    })
+      })
+      .catch(() => {
+        return caches.match(event.request).then((cached) => {
+          if (cached) return cached;
+          if (event.request.mode === 'navigate') {
+            return caches.match('/index.html');
+          }
+          return new Response('Offline', { status: 503, statusText: 'Offline' });
+        });
+      })
   );
 });

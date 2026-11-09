@@ -24,13 +24,36 @@
   <div id="modal"></div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <div id="print" class="print-area"></div>
-  <script type="module" src="/app.js"></script>
+  <script type="module" src="/app.js?v=3.1"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch(() => {});
+        navigator.serviceWorker.register('/sw.js?v=3.1').then(reg => {
+          reg.update();
+        }).catch(() => {});
       });
     }
+
+    // Auto-recovery: If boot screen hangs for more than 3.5s due to stale browser cache, self-heal
+    setTimeout(() => {
+      const bootEl = document.querySelector('.boot');
+      if (bootEl && !window.__appBooted) {
+        console.warn('Boot freeze detected. Clearing stale cache and auto-reloading...');
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(regs => {
+            for (let r of regs) r.unregister();
+          });
+        }
+        if ('caches' in window) {
+          caches.keys().then(keys => {
+            for (let k of keys) caches.delete(k);
+          });
+        }
+        setTimeout(() => {
+          window.location.search = '?fresh=' + Date.now();
+        }, 500);
+      }
+    }, 3500);
   </script>
 </body>
 </html>

@@ -13,6 +13,7 @@ import { loadState } from './js/api.js';
 import { initSyncEngine, updateSyncIndicator } from './js/sync.js';
 
 export function render() {
+  window.__appBooted = true;
   if (!state.data) {
     root.innerHTML = viewAuth();
     return;

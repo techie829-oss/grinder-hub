@@ -3,7 +3,6 @@ import { state } from '../state.js';
 import { inr, unitOf, esc } from '../utils/formatters.js';
 import { serviceCards } from '../components/rows.js';
 import { t } from '../i18n.js';
-import { isScaleConnected, getLiveWeight } from '../hardware/scaleBluetooth.js';
 
 export function currentService() {
   const data = state.data;
@@ -17,8 +16,8 @@ export function viewJob() {
   const svc = currentService();
   const unit = svc ? unitOf(svc.unit) : 'kg';
 
-  const scaleConnected = isScaleConnected();
-  const liveWt = getLiveWeight();
+  const scaleConnected = !!(state.scale && state.scale.connected);
+  const liveWt = (state.scale && state.scale.weight) || 0;
 
   const grossWeight = Number(job.qty) || 0;
   const ratePerUnit = Number(job.rate) || 0;
@@ -108,7 +107,7 @@ export function viewJob() {
       <div style="display:flex;align-items:center;gap:8px">
         <span class="sync-dot online"></span>
         <span style="font-weight:700;color:var(--brand);font-size:0.9rem">Live Scale:</span>
-        <span id="scale-live-val" style="font-size:1.3rem;font-weight:800;font-family:monospace;color:var(--brand)">${liveWt.weight ? liveWt.weight.toFixed(2) : '0.00'} kg</span>
+        <span id="scale-live-val" style="font-size:1.3rem;font-weight:800;font-family:monospace;color:var(--brand)">${liveWt ? Number(liveWt).toFixed(2) : '0.00'} kg</span>
       </div>
       <button type="button" class="btn btn-sm btn-primary" data-act="hw-lock-scale-wt" id="btn-lock-scale-wt">Lock Weight</button>
     </div>

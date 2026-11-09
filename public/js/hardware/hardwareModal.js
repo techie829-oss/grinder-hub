@@ -1,7 +1,7 @@
 // Hardware Interface Modal & Viewfinders
 // Handles Camera Scale OCR, QR Scanner, Bluetooth Scale, and Voice UI
 
-import { modalEl, state } from '../state.js';
+import { modalRoot, state } from '../state.js';
 import { startScaleCamera, stopScaleCamera } from './scaleOcr.js';
 import { startQrScanner, stopQrScanner, parseTokenQr } from './qrScanner.js';
 import { startVoiceRecognition, stopVoiceRecognition, speakText } from './voiceCommander.js';
@@ -12,13 +12,13 @@ export function closeHardwareModal() {
   stopScaleCamera();
   stopQrScanner();
   stopVoiceRecognition();
-  modalEl.classList.remove('open');
-  modalEl.innerHTML = '';
+  modalRoot.classList.remove('open');
+  modalRoot.innerHTML = '';
 }
 
 // 1. Open Camera Scale OCR Viewfinder
 export function openScaleOcrModal(onWeightLocked) {
-  modalEl.innerHTML = `
+  modalRoot.innerHTML = `
     <div class="modal-card hardware-modal" style="max-width:480px;text-align:center;padding:16px">
       <div class="sheet-head" style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">
         <h3 style="margin:0;font-size:1.1rem;display:flex;align-items:center;gap:6px">
@@ -50,7 +50,7 @@ export function openScaleOcrModal(onWeightLocked) {
       </div>
     </div>`;
 
-  modalEl.classList.add('open');
+  modalRoot.classList.add('open');
 
   const video = document.getElementById('scale-ocr-video');
   const canvas = document.getElementById('scale-ocr-canvas');
@@ -82,7 +82,7 @@ export function openScaleOcrModal(onWeightLocked) {
 
 // 2. Open QR / Barcode Scanner Viewfinder
 export function openQrScannerModal(onScanSuccess) {
-  modalEl.innerHTML = `
+  modalRoot.innerHTML = `
     <div class="modal-card hardware-modal" style="max-width:440px;text-align:center;padding:16px">
       <div class="sheet-head" style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center">
         <h3 style="margin:0;font-size:1.1rem;display:flex;align-items:center;gap:6px">
@@ -105,7 +105,7 @@ export function openQrScannerModal(onScanSuccess) {
       <button type="button" class="btn btn-ghost mt-14 btn-block" id="hw-cancel-qr">Close Scanner</button>
     </div>`;
 
-  modalEl.classList.add('open');
+  modalRoot.classList.add('open');
 
   const video = document.getElementById('qr-scan-video');
   const canvas = document.getElementById('qr-scan-canvas');
@@ -125,7 +125,7 @@ export function openQrScannerModal(onScanSuccess) {
 
 // 3. Open Voice Hands-Free Order Modal
 export function openVoiceOrderModal(onVoiceParsed) {
-  modalEl.innerHTML = `
+  modalRoot.innerHTML = `
     <div class="modal-card hardware-modal" style="max-width:440px;text-align:center;padding:20px">
       <div class="sheet-head" style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
         <h3 style="margin:0;font-size:1.1rem;display:flex;align-items:center;gap:6px">
@@ -153,7 +153,7 @@ export function openVoiceOrderModal(onVoiceParsed) {
       </div>
     </div>`;
 
-  modalEl.classList.add('open');
+  modalRoot.classList.add('open');
 
   const statusTxt = document.getElementById('voice-status-txt');
   const transBox = document.getElementById('voice-transcript-box');
@@ -212,7 +212,7 @@ export function openHardwareDevicesModal() {
   const isScaleConn = isScaleConnected();
   const isPrintConn = isPrinterConnected();
 
-  modalEl.innerHTML = `
+  modalRoot.innerHTML = `
     <div class="modal-card hardware-modal" style="max-width:440px;padding:20px">
       <div class="sheet-head" style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
         <h3 style="margin:0;font-size:1.1rem;display:flex;align-items:center;gap:6px">
@@ -248,7 +248,7 @@ export function openHardwareDevicesModal() {
       <button type="button" class="btn btn-ghost btn-block" id="hw-done-dev">Done</button>
     </div>`;
 
-  modalEl.classList.add('open');
+  modalRoot.classList.add('open');
 
   document.getElementById('hw-close-dev').onclick = closeHardwareModal;
   document.getElementById('hw-done-dev').onclick = closeHardwareModal;

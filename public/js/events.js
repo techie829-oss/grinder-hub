@@ -11,16 +11,6 @@ import { currentService } from './views/jobView.js';
 import { showAuthError } from './views/authView.js';
 import { setLanguage, t } from './i18n.js';
 import { enqueueOfflineAction, syncOfflineQueue, saveOfflineSnapshot } from './sync.js';
-import {
-  openScaleOcrModal,
-  openQrScannerModal,
-  openVoiceOrderModal,
-  openHardwareDevicesModal,
-  closeHardwareModal,
-} from './hardware/hardwareModal.js';
-import { connectScale, disconnectScale, isScaleConnected, subscribeWeight, getLiveWeight } from './hardware/scaleBluetooth.js';
-import { printThermalToken, printThermalBill, isPrinterConnected } from './hardware/thermalPrinter.js';
-import { sendAataReadyNotification } from './hardware/whatsappNotify.js';
 
 export function recalcJob() {
   const qtyEl = document.getElementById('j-qty');
@@ -156,7 +146,8 @@ export function setupEventListeners() {
         break;
 
       // --- Hardware & Machine Automation Actions ---
-      case 'hw-scale-ocr':
+      case 'hw-scale-ocr': {
+        const { openScaleOcrModal } = await import('./hardware/hardwareModal.js');
         openScaleOcrModal((lockedWeight) => {
           state.job.qty = String(lockedWeight);
           const qtyInput = document.getElementById('j-qty');
@@ -165,12 +156,17 @@ export function setupEventListeners() {
           toast(`Scale reading locked: ${lockedWeight} kg ✓`);
         });
         break;
+      }
 
-      case 'hw-scale-bt':
+      case 'hw-scale-bt': {
+        const { connectScale, disconnectScale, isScaleConnected, subscribeWeight } = await import('./hardware/scaleBluetooth.js');
         if (!isScaleConnected()) {
           try {
             const name = await connectScale();
             toast(`Connected: ${name} ✓`);
+            if (!state.scale) state.scale = {};
+            state.scale.connected = true;
+
             const meter = document.getElementById('scale-live-meter');
             const valEl = document.getElementById('scale-live-val');
             const lbl = document.getElementById('hw-bt-label');
@@ -178,6 +174,7 @@ export function setupEventListeners() {
             if (lbl) lbl.textContent = 'Scale ON';
 
             subscribeWeight((wt, stable) => {
+              if (state.scale) state.scale.weight = wt;
               if (valEl) valEl.textContent = `${wt.toFixed(2)} kg`;
             });
           } catch (err) {
@@ -185,6 +182,7 @@ export function setupEventListeners() {
           }
         } else {
           await disconnectScale();
+          if (state.scale) state.scale.connected = false;
           const meter = document.getElementById('scale-live-meter');
           const lbl = document.getElementById('hw-bt-label');
           if (meter) meter.style.display = 'none';
@@ -192,8 +190,10 @@ export function setupEventListeners() {
           toast('Scale disconnected');
         }
         break;
+      }
 
       case 'hw-lock-scale-wt': {
+        const { getLiveWeight } = await import('./hardware/scaleBluetooth.js');
         const { weight } = getLiveWeight();
         if (weight > 0) {
           state.job.qty = String(weight);
@@ -207,7 +207,8 @@ export function setupEventListeners() {
         break;
       }
 
-      case 'hw-voice-mic':
+      case 'hw-voice-mic': {
+        const { openVoiceOrderModal } = await import('./hardware/hardwareModal.js');
         openVoiceOrderModal((parsed) => {
           if (parsed.name) state.job.name = parsed.name;
           if (parsed.village) state.job.village = parsed.village;
@@ -225,8 +226,10 @@ export function setupEventListeners() {
           toast(`Voice order: ${parsed.name || ''} ${parsed.qty ? parsed.qty + 'kg' : ''} ✓`);
         });
         break;
+      }
 
-      case 'hw-scan-qr':
+      case 'hw-scan-qr': {
+        const { openQrScannerModal } = await import('./hardware/hardwareModal.js');
         openQrScannerModal((parsed) => {
           if (parsed.type === 'token') {
             const tok = state.data.tokens.serving?.no === parsed.tokenNo
@@ -261,12 +264,14 @@ export function setupEventListeners() {
           }
         });
         break;
+      }
 
       case 'token-notify-wa': {
         const tok = state.data.tokens.serving?.id === el.dataset.id
           ? state.data.tokens.serving
           : state.data.tokens.waiting.find((x) => x.id === el.dataset.id);
         if (tok) {
+          const { sendAataReadyNotification } = await import('./hardware/whatsappNotify.js');
           sendAataReadyNotification(tok);
         }
         break;
@@ -277,6 +282,7 @@ export function setupEventListeners() {
           ? state.data.tokens.serving
           : state.data.tokens.waiting.find((x) => x.id === el.dataset.id);
         if (tok) {
+          const { printThermalToken, isPrinterConnected } = await import('./hardware/thermalPrinter.js');
           if (isPrinterConnected()) {
             try {
               await printThermalToken(tok);
@@ -300,9 +306,11 @@ export function setupEventListeners() {
         break;
       }
 
-      case 'open-hw-modal':
+      case 'open-hw-modal': {
+        const { openHardwareDevicesModal } = await import('./hardware/hardwareModal.js');
         openHardwareDevicesModal();
         break;
+      }
 
       case 'token-done':
         await withBusy(el, async () => {
@@ -462,6 +470,7 @@ export function setupEventListeners() {
       case 'pos-print-entry': {
         const e = findEntry(el.dataset.id);
         if (e) {
+          const { printThermalBill, isPrinterConnected } = await import('./hardware/thermalPrinter.js');
           if (isPrinterConnected()) {
             try {
               await printThermalBill(e);
