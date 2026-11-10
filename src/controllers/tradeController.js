@@ -5,7 +5,7 @@ import { buildState } from '../services/stateService.js';
 
 export async function createTrade(request, env, business, range) {
   const body = await readJson(request);
-  const kind = body.kind === 'purchase' ? 'purchase' : 'sale';
+  const kind = (body.kind === 'purchase' || body.type === 'purchase') ? 'purchase' : 'sale';
 
   const itemName = clean(body.itemName || body.item, 60);
   if (!itemName) {

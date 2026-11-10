@@ -52,38 +52,36 @@ export function viewTokens() {
   <div class="grid-2">
     <!-- Left: New Token Entry (POS Drop-off Form) -->
     <section class="card" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:16px;padding:16px;">
-      <div class="section-head" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div class="section-head" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
         <h2 class="section-title" style="display:flex;align-items:center;gap:6px;font-size:15px;margin:0;">
           <span>🎫</span> <span>${t('newTokenTitle')} (माल जमा पर्ची)</span>
         </h2>
         <span class="tiny-chip" style="background:#e0e7ff;color:#3730a3;font-weight:750;">नंबर #${tObj.nextNo}</span>
       </div>
 
-      <!-- Service Selection -->
-      <div style="font-size:12px;font-weight:700;color:#475569;margin-bottom:6px;">1. सामग्री / सेवा चुनें:</div>
-      <div class="service-grid" style="margin-bottom:12px;">${serviceCards('token')}</div>
+      <!-- 1. Service Selection Grid -->
+      <div class="service-grid" style="margin-bottom:10px;">${serviceCards('token')}</div>
 
       <form data-form="token">
-        <!-- Customer Details Strip -->
-        <div style="font-size:12px;font-weight:700;color:#475569;margin-bottom:6px;">2. ग्राहक का विवरण:</div>
-        <div class="two-col" style="margin-bottom:8px;">
-          <div class="field" style="margin-bottom:0;">
+        <!-- 2. Customer Name & Village (2-in-1 Compact Row) -->
+        <div class="pos-row-2">
+          <div class="pos-field">
             <label for="t-name">${t('customerName')}</label>
             <input id="t-name" name="name" list="token-cust-names" maxlength="60" value="${esc(state.tokenForm.name || '')}" placeholder="जैसे: रमेश" autocomplete="off">
             <datalist id="token-cust-names">${custOptions}</datalist>
           </div>
-          <div class="field" style="margin-bottom:0;">
+          <div class="pos-field">
             <label for="t-village">${t('villageLabel')}</label>
             <input id="t-village" name="village" list="token-cust-villages" maxlength="60" value="${esc(state.tokenForm.village || '')}" placeholder="जैसे: रामपुर" autocomplete="off">
             <datalist id="token-cust-villages">${villageOptions}</datalist>
           </div>
         </div>
 
-        <!-- Phone + Hardware Integration Toolbar -->
-        <div style="display:flex;align-items:flex-end;gap:6px;margin-bottom:12px;">
-          <div class="field" style="flex:1;margin-bottom:0;">
+        <!-- 3. Phone & Quick Hardware Scale Strip -->
+        <div style="display:flex;gap:6px;align-items:flex-end;margin-bottom:8px;">
+          <div class="pos-field" style="flex:1;margin-bottom:0;">
             <label for="t-phone">मोबाइल नंबर (WhatsApp पर्ची हेतु)</label>
-            <input id="t-phone" name="phone" type="tel" inputmode="numeric" maxlength="10" value="${esc(state.tokenForm.phone || '')}" placeholder="10 अंकों का नंबर">
+            <input id="t-phone" name="phone" type="tel" inputmode="numeric" maxlength="10" value="${esc(state.tokenForm.phone || '')}" placeholder="10 Digits">
           </div>
           <div style="display:flex;gap:4px;flex-shrink:0;">
             <button type="button" class="btn btn-sm btn-ghost" data-act="hw-scale-ocr" data-target="token" style="padding:6px 8px;font-size:12px;height:38px;border-radius:10px;" title="Camera Scale OCR">📷 OCR</button>
@@ -92,68 +90,48 @@ export function viewTokens() {
           </div>
         </div>
 
-        <!-- Weight & Loss Deduction Inputs (The Core Requirement) -->
-        <div style="font-size:12px;font-weight:700;color:#475569;margin-bottom:6px;">3. आवक वजन व काट हिसाब:</div>
-        <div class="pos-billing-strip" style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:14px;padding:12px;margin-bottom:10px;">
-          <div class="two-col" style="margin-bottom:8px;">
-            <div class="field" style="margin-bottom:0;">
-              <label for="t-qty" id="t-qty-label" style="font-weight:700;color:#0f172a;">
-                कुल आवक वज़न (${unit}) * ${scaleConnected ? `<span style="color:#15803d;font-weight:750;">● ${liveWt}</span>` : ''}
-              </label>
+        <!-- 4. POS Billing Strip (Weight + Loss Rate = Estimated Fee) -->
+        <div class="pos-billing-strip">
+          <div class="pos-bill-input-group">
+            <div class="pos-bill-field">
+              <label for="t-qty" id="t-qty-label">कुल आवक वज़न (${unit}) * ${scaleConnected ? `<span style="color:#15803d;font-weight:700;">● ${liveWt}</span>` : ''}</label>
               <input id="t-qty" name="qty" type="number" step="any" min="0" inputmode="decimal"
-                value="${state.tokenForm.qty || ''}" placeholder="0.00" required
-                style="font-size:18px;font-weight:800;color:#0f172a;">
+                value="${state.tokenForm.qty || ''}" placeholder="0.00" required>
             </div>
-            <div class="field" style="margin-bottom:0;">
-              <label for="t-loss-rate" id="t-loss-rate-label" style="font-weight:700;color:#ea580c;">
-                काट / घटौती दर (g/${unit})
-              </label>
+            <div class="pos-bill-field">
+              <label for="t-loss-rate" id="t-loss-rate-label">काट दर (g/${unit})</label>
               <input id="t-loss-rate" name="lossRateG" type="number" step="any" min="0" inputmode="numeric"
-                value="${initLossRate}" placeholder="15"
-                style="font-size:18px;font-weight:800;color:#ea580c;">
+                value="${initLossRate}" placeholder="15">
             </div>
           </div>
-
-          <!-- Quick Deduction Preset Pills -->
-          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
-            <span style="font-size:11.5px;color:#64748b;font-weight:700;">काट दर:</span>
-            <button type="button" class="btn btn-xs token-loss-preset" data-loss="0" style="padding:3px 8px;font-size:11px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;font-weight:600;">0g</button>
-            <button type="button" class="btn btn-xs token-loss-preset" data-loss="10" style="padding:3px 8px;font-size:11px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;font-weight:600;">10g</button>
-            <button type="button" class="btn btn-xs token-loss-preset" data-loss="15" style="padding:3px 8px;font-size:11px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;font-weight:600;">15g</button>
-            <button type="button" class="btn btn-xs token-loss-preset" data-loss="20" style="padding:3px 8px;font-size:11px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;font-weight:600;">20g</button>
-            <button type="button" class="btn btn-xs token-loss-preset" data-loss="50" style="padding:3px 8px;font-size:11px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;font-weight:600;">50g</button>
-          </div>
-
-          <!-- Live Output Preview Calculation Strip -->
-          <div style="display:grid;grid-template-columns:1fr 1fr 1.3fr;gap:6px;text-align:center;background:#fff;border:1px solid #cbd5e1;border-radius:10px;padding:8px 4px;margin-top:6px;">
-            <div>
-              <div style="font-size:10.5px;color:#64748b;font-weight:700;">आवक वजन</div>
-              <div id="t-gross-preview" style="font-size:13.5px;font-weight:800;color:#0f172a;margin-top:2px;">
-                ${initQty ? initQty + ' ' + unit : '0 ' + unit}
-              </div>
-            </div>
-            <div>
-              <div style="font-size:10.5px;color:#ea580c;font-weight:700;">कुल काट</div>
-              <div id="t-loss-preview" style="font-size:13.5px;font-weight:800;color:#ea580c;margin-top:2px;">
-                ${initLossG ? '-' + initLossG + ' g' : '0 g'}
-              </div>
-            </div>
-            <div style="background:#f0fdf4;border-radius:6px;padding:2px;">
-              <div style="font-size:10.5px;color:#15803d;font-weight:800;">शुद्ध वापसी माल</div>
-              <div id="t-net-preview" style="font-size:14.5px;font-weight:900;color:#15803d;margin-top:2px;">
-                ${initNet ? qtyFmt(initNet) + ' ' + unit : '0 ' + unit}
-              </div>
-            </div>
-          </div>
-
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:12px;color:#64748b;padding:0 2px;">
-            <span>अनुमानित सेवा शुल्क: <strong id="t-est-preview" style="color:#0f172a;font-size:13px;">${inr(initEstPaise)}</strong></span>
-            <span style="font-size:11px;color:#16a34a;font-weight:600;">✓ बाद में 1-क्लिक में बिल बनेगा</span>
+          <div class="pos-bill-total is-grind" style="min-width:85px;">
+            <div class="pos-total-sub">अनुमानित शुल्क</div>
+            <div class="pos-total-val" id="t-est-preview">${inr(initEstPaise)}</div>
           </div>
         </div>
 
+        <!-- 5. Dedicated Inline Loss / Output Strip -->
+        <div class="pos-loss-strip">
+          <div class="pos-loss-left">
+            <span style="font-weight:750;color:#c2410c;">✂️ काट:</span>
+            <button type="button" class="pos-loss-pill token-loss-preset" data-loss="0">0g</button>
+            <button type="button" class="pos-loss-pill token-loss-preset" data-loss="10">10g</button>
+            <button type="button" class="pos-loss-pill token-loss-preset" data-loss="15">15g</button>
+            <button type="button" class="pos-loss-pill token-loss-preset" data-loss="20">20g</button>
+            <button type="button" class="pos-loss-pill token-loss-preset" data-loss="50">50g</button>
+          </div>
+          <div class="pos-loss-right">
+            <span id="t-loss-preview" style="color:#ea580c;font-weight:700;">${initLossG ? '-' + initLossG + 'g' : '0g'}</span>
+            → <strong id="t-net-preview" style="color:#16a34a;font-size:13.5px;font-weight:900;">${initNet ? qtyFmt(initNet) + ' ' + unit : '0 ' + unit}</strong>
+          </div>
+        </div>
+
+        <div style="font-size:11px;color:#16a34a;font-weight:600;margin:2px 0 8px;text-align:right;">
+          ✓ माल जमा पर्ची बनते ही बाद में 1-क्लिक में बिल बनेगा
+        </div>
+
         <button class="btn btn-primary btn-block" type="submit" style="font-weight:800;padding:12px;font-size:14.5px;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:12px;box-shadow:0 3px 10px rgba(79,70,229,0.25);">
-          <span>🎫</span> <span>${t('issueTokenBtn', { no: tObj.nextNo })} (वजन व काट सहित पर्ची)</span>
+          <span>🎫</span> <span>${t('issueTokenBtn', { no: tObj.nextNo })} (वजन व काट पर्ची जारी करें)</span>
         </button>
       </form>
     </section>
