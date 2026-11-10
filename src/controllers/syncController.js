@@ -49,7 +49,14 @@ async function processJob(env, business, data) {
 
   let ratePaise = Math.round(Number(data.rate) * 100);
   if (!Number.isFinite(ratePaise) || ratePaise < 0) ratePaise = svc.rate_paise;
-  const amountPaise = Math.round(grossWeight * ratePaise);
+  let amountPaise = 0;
+  if (data.amount != null && Number(data.amount) > 0) {
+    amountPaise = Math.round(Number(data.amount) * 100);
+  } else if (data.amountPaise != null && Number(data.amountPaise) > 0) {
+    amountPaise = Math.round(Number(data.amountPaise));
+  } else {
+    amountPaise = Math.round(grossWeight * ratePaise);
+  }
 
   const lossRateG = data.lossRateG !== undefined ? Number(data.lossRateG) : Number(svc.loss_rate_g || 0);
   const totalLossG = data.totalLossG !== undefined
@@ -69,7 +76,7 @@ async function processJob(env, business, data) {
   if (name) {
     const key = normName(name);
     const vKey = normVillage(village);
-    const photo = typeof action.payload?.photo === 'string' ? action.payload.photo.slice(0, 200000) : '';
+    const photo = typeof data.photo === 'string' ? data.photo.slice(0, 200000) : '';
     const found = await env.DB.prepare(
       'SELECT id, phone, photo FROM customers WHERE business_id = ? AND name_key = ? AND village_key = ?'
     )
@@ -174,11 +181,13 @@ async function processToken(env, business, data) {
   const serviceId = clean(data.serviceId, 40);
   const name = clean(data.name, 60);
   const village = clean(data.village, 60);
+  const phone = data.phone ? String(data.phone).replace(/\D/g, '').slice(-10) : '';
+  const note = clean(data.note, 120);
   const grossWeight = Number(data.grossWeight) || 0;
   const totalLossG = Number(data.totalLossG) || 0;
   const netWeight = Number(data.netWeight) || 0;
 
-  await issueToken(env, business.id, name || 'ग्राहक', village || '', serviceId || null, grossWeight, totalLossG, netWeight);
+  await issueToken(env, business.id, name || 'ग्राहक', village || '', serviceId || null, grossWeight, totalLossG, netWeight, phone, note);
 }
 
 async function processTokenStatus(env, business, data) {

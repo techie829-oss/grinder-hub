@@ -44,6 +44,29 @@ export function recalcJob() {
   if (grossPreview) grossPreview.textContent = grossWeight ? `${grossWeight.toFixed(2)} ${unit}` : `0 ${unit}`;
   if (lossPreview) lossPreview.textContent = totalLossG ? `-${totalLossG} g` : '0 g';
   if (netPreview) netPreview.textContent = netWeight ? `${netWeight.toFixed(3)} ${unit}` : `0 ${unit}`;
+
+  const calcHint = document.getElementById('j-calc-hint');
+  if (calcHint) calcHint.textContent = inr(amountPaise);
+
+  const jAmount = document.getElementById('j-amount');
+  if (jAmount && !jAmount.dataset.manual) {
+    jAmount.value = amountPaise ? (amountPaise / 100).toFixed(2).replace(/\.00$/, '') : '';
+    state.job.amount = jAmount.value;
+  }
+
+  // Update round-off helper pills if present
+  const baseRupees = Math.round(amountPaise / 100);
+  const floorRupees = Math.floor(amountPaise / 100);
+  const ceilRupees = Math.ceil(amountPaise / 100);
+  const roundPills = document.querySelectorAll('.round-pill');
+  if (roundPills && roundPills.length >= 3) {
+    roundPills[0].dataset.val = String(floorRupees);
+    roundPills[0].textContent = `₹${floorRupees}`;
+    roundPills[1].dataset.val = String(baseRupees);
+    roundPills[1].textContent = `₹${baseRupees}`;
+    roundPills[2].dataset.val = String(ceilRupees);
+    roundPills[2].textContent = `₹${ceilRupees}`;
+  }
 }
 
 export function recalcToken() {
@@ -213,6 +236,18 @@ export function setupEventListeners() {
       return;
     }
 
+    const roundPill = ev.target.closest('.round-pill');
+    if (roundPill) {
+      const val = roundPill.dataset.val;
+      const jAmt = document.getElementById('j-amount');
+      if (jAmt) {
+        jAmt.value = val;
+        jAmt.dataset.manual = '1';
+      }
+      state.job.amount = val;
+      return;
+    }
+
     const backdrop = ev.target.closest('.sheet-backdrop');
     if (backdrop && ev.target === backdrop) {
       closeModal();
@@ -236,11 +271,15 @@ export function setupEventListeners() {
       case 'auth-mode':
         state.auth.mode = el.dataset.mode || 'login';
         state.auth.error = '';
-        if (state.auth.mode === 'status') {
-          try {
-            history.replaceState(null, '', window.location.pathname);
-          } catch (e) {}
-        }
+        try {
+          if (state.auth.mode === 'status') {
+            window.location.hash = '#status';
+          } else if (state.auth.mode === 'login') {
+            window.location.hash = '#login';
+          } else if (state.auth.mode === 'signup') {
+            window.location.hash = '#signup';
+          }
+        } catch (e) {}
         window.__appRender?.();
         break;
 
@@ -269,8 +308,96 @@ export function setupEventListeners() {
       case 'clear-job-token':
         state.job.tokenId = null;
         state.job.tokenNo = null;
+        state.job.note = '';
+        state.job.amount = '';
         window.__appRender?.();
         break;
+
+      case 'issue-token-from-job': {
+        const qtyVal = parseFloat(document.getElementById('j-qty')?.value) || parseFloat(state.job.qty) || 0;
+        if (!(qtyVal > 0)) {
+          toast('कृपया आवक वजन दर्ज करें', true);
+          document.getElementById('j-qty')?.focus();
+          break;
+        }
+
+        const name = String(document.getElementById('j-name')?.value || state.job.name || '').trim();
+        const village = String(document.getElementById('j-village')?.value || state.job.village || '').trim();
+        const phone = String(document.getElementById('j-phone')?.value || state.job.phone || '').trim();
+        const lossRateG = parseFloat(document.getElementById('j-loss-rate')?.value) || parseFloat(state.job.lossRateG) || 0;
+        const totalLossG = Math.round(qtyVal * lossRateG);
+        const netWeight = Math.max(0, qtyVal - (totalLossG / 1000));
+        const note = String(document.getElementById('j-note')?.value || state.job.note || '').trim();
+
+        const payload = {
+          serviceId: state.job.serviceId,
+          name,
+          village,
+          phone,
+          grossWeight: qtyVal,
+          lossRateG,
+          totalLossG,
+          netWeight,
+          note,
+        };
+
+        await withBusy(el, async () => {
+          const data = await api('/api/tokens', payload);
+          if (data && data.offline) {
+            const nextNo = state.data.tokens.nextNo;
+            state.data.tokens.nextNo += 1;
+            enqueueOfflineAction('token', { ...payload, no: nextNo, at: Date.now() });
+
+            const offTok = {
+              id: 'offline-' + crypto.randomUUID(),
+              no: nextNo,
+              name: name || 'Customer',
+              village: village || '',
+              phone: phone || '',
+              serviceId: payload.serviceId,
+              grossWeight: qtyVal,
+              lossG: totalLossG,
+              netWeight: netWeight,
+              note,
+              status: 'waiting',
+              at: Date.now(),
+            };
+            state.data.tokens.waiting.push(offTok);
+            saveOfflineSnapshot(state.data);
+
+            state.job.name = '';
+            state.job.village = '';
+            state.job.phone = '';
+            state.job.qty = '';
+            state.job.note = '';
+            state.job.amount = '';
+
+            window.__appRender?.();
+            const { openTokenReceiptModal } = await import('./components/modals.js');
+            openTokenReceiptModal(offTok);
+            toast(`टोकन #${nextNo} जारी किया गया (ऑफ़लाइन)`);
+            return;
+          }
+
+          if (data && data.ok) {
+            applyState(data.state);
+            state.job.name = '';
+            state.job.village = '';
+            state.job.phone = '';
+            state.job.qty = '';
+            state.job.note = '';
+            state.job.amount = '';
+
+            window.__appRender?.();
+            if (data.token) {
+              const { openTokenReceiptModal } = await import('./components/modals.js');
+              openTokenReceiptModal(data.token);
+            }
+            toast(`टोकन #${data.token?.no || ''} जारी किया गया!`);
+          }
+        });
+        break;
+      }
 
       // --- Order / Token Status Check Actions ---
       case 'open-status-modal':
@@ -657,6 +784,8 @@ export function setupEventListeners() {
         state.job.name = tok.name === 'Customer' || tok.name === 'ग्राहक' ? '' : tok.name;
         state.job.village = tok.village || '';
         state.job.phone = tok.phone || '';
+        state.job.note = tok.note || '';
+        state.job.amount = '';
         state.job.tokenId = tok.id;
         state.job.tokenNo = tok.no;
         if (tok.serviceId) {
@@ -982,6 +1111,22 @@ export function setupEventListeners() {
 
     if (tEl.id === 'j-qty' || tEl.id === 'j-rate' || tEl.id === 'j-loss-rate') {
       recalcJob();
+      return;
+    }
+
+    if (tEl.id === 'j-amount') {
+      tEl.dataset.manual = '1';
+      state.job.amount = tEl.value;
+      return;
+    }
+
+    if (tEl.id === 'j-note') {
+      state.job.note = tEl.value;
+      return;
+    }
+
+    if (tEl.id === 't-note') {
+      state.tokenForm.note = tEl.value;
       return;
     }
 
@@ -1311,7 +1456,10 @@ export function setupEventListeners() {
       const lossRateG = Number(fd.get('lossRateG') || 0);
       const totalLossG = Math.round(grossWeight * lossRateG);
       const netWeight = Math.max(0, grossWeight - (totalLossG / 1000));
-      const amountPaise = Math.round(grossWeight * rate * 100);
+      const calcPaise = Math.round(grossWeight * rate * 100);
+      const rawAmt = fd.get('amount');
+      const customAmt = rawAmt !== null && rawAmt !== '' ? Number(rawAmt) : NaN;
+      const amountPaise = !isNaN(customAmt) && customAmt >= 0 ? Math.round(customAmt * 100) : calcPaise;
 
       const jobPayload = {
         serviceId: state.job.serviceId,
@@ -1320,6 +1468,8 @@ export function setupEventListeners() {
         lossRateG,
         totalLossG,
         netWeight,
+        amount: !isNaN(customAmt) ? customAmt : undefined,
+        amountPaise,
         paid: state.job.paid,
         name: state.job.name,
         village: state.job.village,
@@ -1389,6 +1539,7 @@ export function setupEventListeners() {
         state.job.village = '';
         state.job.phone = '';
         state.job.note = '';
+        state.job.amount = '';
         state.job.paid = true;
         state.job.withToken = false;
         state.job.tokenId = null;
@@ -1409,6 +1560,7 @@ export function setupEventListeners() {
         state.job.village = '';
         state.job.phone = '';
         state.job.note = '';
+        state.job.amount = '';
         state.job.paid = true;
         state.job.withToken = false;
         state.job.tokenId = null;
@@ -1433,6 +1585,7 @@ export function setupEventListeners() {
         const name = String(fd.get('name') || '').trim();
         const village = String(fd.get('village') || '').trim();
         const phone = String(fd.get('phone') || '').trim();
+        const note = String(fd.get('note') || '').trim();
         const qty = parseFloat(fd.get('qty')) || 0;
         const lossRateG = parseFloat(fd.get('lossRateG')) || 0;
         const totalLossG = qty > 0 ? Math.round(qty * lossRateG) : 0;
@@ -1447,6 +1600,7 @@ export function setupEventListeners() {
           lossRateG,
           totalLossG,
           netWeight,
+          note,
         };
 
         const data = await api('/api/tokens', payload);
@@ -1465,6 +1619,7 @@ export function setupEventListeners() {
             grossWeight: qty,
             lossG: totalLossG,
             netWeight: netWeight,
+            note,
             status: 'waiting',
             at: Date.now(),
           };
@@ -1475,6 +1630,7 @@ export function setupEventListeners() {
           state.tokenForm.name = '';
           state.tokenForm.village = '';
           state.tokenForm.phone = '';
+          state.tokenForm.note = '';
           state.tokenForm.qty = '';
           window.__appRender?.();
           const { openTokenReceiptModal } = await import('./components/modals.js');
@@ -1489,6 +1645,7 @@ export function setupEventListeners() {
           state.tokenForm.name = '';
           state.tokenForm.village = '';
           state.tokenForm.phone = '';
+          state.tokenForm.note = '';
           state.tokenForm.qty = '';
           const { openTokenReceiptModal } = await import('./components/modals.js');
           openTokenReceiptModal(data.token);

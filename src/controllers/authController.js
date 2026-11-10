@@ -7,12 +7,12 @@ import { createSession } from '../middleware/auth.js';
 import { buildState } from '../services/stateService.js';
 
 export const DEFAULT_SERVICES = [
-  { name: 'गेहूँ पिसाई (Wheat)', unit: 'kg', ratePaise: 300, lossRateG: 15 },
-  { name: 'मक्का पिसाई (Maize)', unit: 'kg', ratePaise: 350, lossRateG: 20 },
-  { name: 'चना / बेसन पिसाई (Chana)', unit: 'kg', ratePaise: 400, lossRateG: 15 },
-  { name: 'बाजरा पिसाई (Bajra)', unit: 'kg', ratePaise: 350, lossRateG: 20 },
-  { name: 'ज्वार पिसाई (Jowar)', unit: 'kg', ratePaise: 350, lossRateG: 20 },
-  { name: 'मसाला पिसाई (Spices)', unit: 'kg', ratePaise: 2500, lossRateG: 0 },
+  { name: 'गेहूँ (Wheat)', unit: 'kg', ratePaise: 300, lossRateG: 15 },
+  { name: 'मक्का (Maize)', unit: 'kg', ratePaise: 350, lossRateG: 20 },
+  { name: 'चना / बेसन (Chana)', unit: 'kg', ratePaise: 400, lossRateG: 15 },
+  { name: 'बाजरा (Bajra)', unit: 'kg', ratePaise: 350, lossRateG: 20 },
+  { name: 'ज्वार (Jowar)', unit: 'kg', ratePaise: 350, lossRateG: 20 },
+  { name: 'मसाला (Spices)', unit: 'kg', ratePaise: 2500, lossRateG: 0 },
   { name: 'सरसों तेल घानी (Mustard Oil)', unit: 'ltr', ratePaise: 1500, lossRateG: 0 },
 ];
 

@@ -86,6 +86,9 @@ export async function ensureSchema(env) {
   try {
     await env.DB.exec('ALTER TABLE tokens ADD COLUMN net_weight REAL DEFAULT 0;');
   } catch (e) {}
+  try {
+    await env.DB.exec("ALTER TABLE tokens ADD COLUMN note TEXT NOT NULL DEFAULT '';");
+  } catch (e) {}
 
   // Populate token gross_weight from legacy qty if present
   try {

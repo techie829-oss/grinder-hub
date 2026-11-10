@@ -57,13 +57,17 @@ export function render() {
 window.__appRender = render;
 
 function handleHash() {
-  if (window.location.hash === '#admin') {
+  const hash = window.location.hash;
+  if (hash === '#admin') {
     state.view = 'admin';
     window.__appRender?.();
-  } else if (window.location.hash === '#login') {
+  } else if (hash === '#login') {
     state.auth.mode = 'login';
     window.__appRender?.();
-  } else if (window.location.hash === '#status') {
+  } else if (hash === '#signup') {
+    state.auth.mode = 'signup';
+    window.__appRender?.();
+  } else if (hash === '#status' || !hash) {
     state.auth.mode = 'status';
     window.__appRender?.();
   }

@@ -20,7 +20,14 @@ export async function createJob(request, env, business, range) {
 
   let ratePaise = Math.round(Number(body.rate) * 100);
   if (!Number.isFinite(ratePaise) || ratePaise < 0) ratePaise = svc.rate_paise;
-  const amountPaise = Math.round(grossWeight * ratePaise);
+  let amountPaise = 0;
+  if (body.amount != null && Number(body.amount) > 0) {
+    amountPaise = Math.round(Number(body.amount) * 100);
+  } else if (body.amountPaise != null && Number(body.amountPaise) > 0) {
+    amountPaise = Math.round(Number(body.amountPaise));
+  } else {
+    amountPaise = Math.round(grossWeight * ratePaise);
+  }
   if (!(amountPaise > 0)) return bad('रकम सही नहीं है');
 
   // Loss / wastage deduction calculation

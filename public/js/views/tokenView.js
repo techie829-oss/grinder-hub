@@ -126,6 +126,12 @@ export function viewTokens() {
           </div>
         </div>
 
+        <!-- Note Field -->
+        <div class="pos-field" style="margin-top:6px;margin-bottom:8px;">
+          <label for="t-note" style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:3px;">📝 नोट / माल का विवरण:</label>
+          <input id="t-note" name="note" maxlength="120" value="${esc(state.tokenForm.note || '')}" placeholder="जैसे: 2 कट्टा, सूखा गेहूँ, बारीक">
+        </div>
+
         <div style="font-size:11px;color:#16a34a;font-weight:600;margin:2px 0 8px;text-align:right;">
           ✓ माल जमा पर्ची बनते ही बाद में 1-क्लिक में बिल बनेगा
         </div>

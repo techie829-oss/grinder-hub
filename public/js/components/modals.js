@@ -502,6 +502,12 @@ export function openTokenReceiptModal(tok) {
           <span style="font-size:15px;font-weight:800;color:#1e293b;">${inr(estAmountPaise)}</span>
         </div>
       ` : ''}
+
+      ${tok.note ? `
+        <div style="margin-top:8px;padding-top:6px;border-top:1px dashed #cbd5e1;font-size:12px;color:#334155;">
+          <strong>📝 नोट:</strong> ${esc(tok.note)}
+        </div>
+      ` : ''}
     </div>
 
     <!-- Action Buttons -->

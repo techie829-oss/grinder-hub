@@ -81,7 +81,7 @@ export function viewReports() {
                 ${tok.village ? `<span class="tiny-chip">${esc(tok.village)}</span>` : ''}
               </div>
               <div class="tiny" style="color:#64748b;margin-top:2px;">
-                ${tok.serviceName || 'पिसाई'} ${tok.grossWeight ? `· ${tok.grossWeight}kg (शुद्ध: ${tok.netWeight || tok.grossWeight}kg)` : ''}
+                ${tok.serviceName || 'सुविधा / सेवा'} ${tok.grossWeight ? `· ${tok.grossWeight}kg (शुद्ध: ${tok.netWeight || tok.grossWeight}kg)` : ''}
               </div>
             </div>
             <button type="button" class="btn btn-sm btn-primary" data-act="token-to-job" data-id="${tok.id}" style="padding:6px 12px;font-size:12px;font-weight:750;">

@@ -138,6 +138,7 @@ export async function buildState(env, businessId, range) {
     name: t.name,
     village: t.village || '',
     phone: t.phone || '',
+    note: t.note || '',
     serviceId: t.service_id,
     serviceName: (services.find((s) => s.id === t.service_id) || {}).name || '',
     grossWeight: Number(t.gross_weight) || 0,

@@ -20,12 +20,13 @@ export async function createToken(request, env, business, range) {
   const name = clean(body.name, 60);
   const village = clean(body.village, 60);
   const phone = body.phone ? String(body.phone).replace(/\D/g, '').slice(-10) : '';
+  const note = clean(body.note, 120);
   const grossWeight = Number(body.grossWeight != null ? body.grossWeight : body.qty) || 0;
   const lossRateG = body.lossRateG !== undefined ? Number(body.lossRateG) : (svc ? Number(svc.loss_rate_g || 0) : 0);
   const totalLossG = body.totalLossG !== undefined ? Number(body.totalLossG) : (grossWeight ? Math.round(grossWeight * lossRateG) : 0);
   const netWeight = body.netWeight !== undefined ? Number(body.netWeight) : (grossWeight ? Math.max(0, grossWeight - (totalLossG / 1000)) : 0);
 
-  const token = await issueToken(env, business.id, name || 'ग्राहक', village || '', svc ? svc.id : null, grossWeight, totalLossG, netWeight, phone);
+  const token = await issueToken(env, business.id, name || 'ग्राहक', village || '', svc ? svc.id : null, grossWeight, totalLossG, netWeight, phone, note);
   return json({ ok: true, token, state: await buildState(env, business.id, range) });
 }
 

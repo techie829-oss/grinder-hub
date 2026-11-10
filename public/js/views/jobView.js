@@ -63,13 +63,33 @@ function renderGrindTab(data) {
     return true;
   });
 
+  const tObj = data.tokens || { waiting: [], serving: null, nextNo: 1 };
+  const activeTokens = [tObj.serving, ...(tObj.waiting || [])].filter(Boolean);
+
   return `
   <form class="card pos-card" data-form="job">
+    <!-- Active Token Linked Banner -->
     ${job.tokenNo ? `
-    <div class="sheet-head" style="margin-bottom:8px;background:var(--brand-soft);padding:7px 12px;border-radius:10px;display:flex;justify-content:space-between;align-items:center;">
-      <span style="font-weight:750;color:var(--brand);font-size:12.5px;">${t('tokenJobBadge', { no: job.tokenNo })}</span>
-      <button type="button" class="btn btn-sm btn-ghost" data-act="clear-job-token" style="padding:3px 8px;font-size:11px;">${t('clearToken')}</button>
-    </div>` : ''}
+    <div style="background:#dcfce7;border:1.5px solid #86efac;padding:8px 12px;border-radius:12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
+      <span style="font-weight:750;color:#15803d;font-size:13px;display:flex;align-items:center;gap:6px;">
+        <span>🎫</span> <span>${t('tokenJobBadge', { no: job.tokenNo })}</span>
+      </span>
+      <button type="button" class="btn btn-sm btn-ghost" data-act="clear-job-token" style="padding:3px 8px;font-size:11px;color:#dc2626;font-weight:700;">${t('clearToken')}</button>
+    </div>` : (activeTokens.length > 0 ? `
+    <!-- Quick Token Picker Strip from Queue -->
+    <div style="margin-bottom:10px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:6px 10px;">
+      <div style="font-size:11px;font-weight:700;color:#64748b;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;">
+        <span>🎫 कतार में टोकन (${activeTokens.length}) — बिल बनाने हेतु क्लिक करें:</span>
+        <button type="button" class="btn btn-xs btn-ghost" data-act="goto" data-view="token" style="font-size:10.5px;padding:2px 6px;">बोर्ड देखें →</button>
+      </div>
+      <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;">
+        ${activeTokens.map((tok) => `
+          <button type="button" class="btn btn-xs btn-soft" data-act="token-to-job" data-id="${tok.id}" style="padding:4px 8px;font-size:11.5px;font-weight:750;white-space:nowrap;border:1px solid #cbd5e1;background:#fff;border-radius:8px;">
+            #${tok.no} ${esc(tok.name)} ${tok.grossWeight ? `(${tok.grossWeight}k)` : ''} 🧾
+          </button>
+        `).join('')}
+      </div>
+    </div>` : '')}
 
     <!-- 1. Compact Service Grid -->
     <div class="pos-sec-head">
@@ -130,8 +150,8 @@ function renderGrindTab(data) {
             value="${job.rate}" placeholder="0.00" required>
         </div>
       </div>
-      <div class="pos-bill-total is-grind">
-        <div class="pos-total-sub">कुल सेवा बिल</div>
+      <div class="pos-bill-total is-grind" style="min-width:85px;">
+        <div class="pos-total-sub">हिसाब बना</div>
         <div class="pos-total-val" id="amount-preview">${inr(amountPaise)}</div>
       </div>
     </div>
@@ -155,52 +175,85 @@ function renderGrindTab(data) {
       </div>
     </div>
 
-    <!-- 6. Payment Mode Toggle -->
-    <div class="pos-pay-toggle">
-      <label class="pos-pay-opt"><input type="radio" name="paid" value="yes"${job.paid ? ' checked' : ''}><span>🟢 नकद मिला (Cash Paid)</span></label>
-      <label class="pos-pay-opt"><input type="radio" name="paid" value="no"${job.paid ? '' : ' checked'}><span>🟣 बाकी / उधार (Credit Due)</span></label>
+    <!-- 6. नोट / माल का विवरण (Note UP ABOVE, entered at drop-off time) -->
+    <div class="pos-field" style="margin:6px 0 10px;">
+      <label for="j-note" style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:3px;">📝 नोट / माल का विवरण (माल लेते समय लिखें):</label>
+      <input id="j-note" name="note" maxlength="120" value="${esc(job.note)}" placeholder="जैसे: 2 कट्टा, सूखा गेहूँ, बारीक">
     </div>
 
-    <!-- Udhaar Photo Card -->
-    <div id="udhaar-photo-card" style="display:${job.paid ? 'none' : 'block'};background:#fffbeb;border:1.5px solid #f59e0b;border-radius:12px;padding:10px;margin:8px 0;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-        <span style="font-weight:750;color:#b45309;font-size:12px;">📸 उधार खाता फोटो सत्यापन</span>
-        <span class="tiny-chip" style="background:#fef3c7;color:#92400e;font-size:10px;">सुरक्षित उधार</span>
-      </div>
-      <div style="display:flex;align-items:center;gap:10px;">
-        <div id="job-photo-preview-wrap" style="width:48px;height:48px;border-radius:50%;overflow:hidden;border:2px solid #f59e0b;background:#fff;display:grid;place-items:center;flex-shrink:0;cursor:pointer;" onclick="document.getElementById('job-photo-file').click();">
-          <img id="job-photo-img" src="${matchedCustomer ? esc(matchedCustomer.photo || '') : ''}" style="${matchedCustomer && matchedCustomer.photo ? '' : 'display:none;'}width:100%;height:100%;object-fit:cover;">
-          <span id="job-photo-ph" style="${matchedCustomer && matchedCustomer.photo ? 'display:none;' : ''}font-size:22px;">👤</span>
-        </div>
-        <div style="flex:1;">
-          <div id="job-photo-cust-name" style="font-size:12px;font-weight:750;color:#0f172a;">
-            ${matchedCustomer ? esc(matchedCustomer.name) + (matchedCustomer.village ? ` (${esc(matchedCustomer.village)})` : '') : 'ग्राहक का नाम ऊपर लिखें'}
-          </div>
-          <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
-            <label class="btn btn-sm btn-primary" style="background:#d97706;padding:4px 9px;border-radius:6px;font-weight:700;cursor:pointer;font-size:11px;">
-              <span>📷</span> <span id="job-photo-btn-txt">${matchedCustomer && matchedCustomer.photo ? 'फोटो बदलें' : 'फोटो खींचें'}</span>
-              <input type="file" id="job-photo-file" accept="image/*" capture="user" style="display:none;">
-            </label>
-            <button type="button" class="btn btn-sm btn-ghost" id="job-photo-clear" style="${matchedCustomer && matchedCustomer.photo ? 'display:inline-flex;' : 'display:none;'}color:#dc2626;font-size:11px;padding:3px 6px;">हटाएं</button>
-          </div>
-        </div>
-      </div>
-      <input type="hidden" id="j-photo" name="photo" value="${matchedCustomer ? esc(matchedCustomer.photo || '') : ''}">
-    </div>
-
-    <!-- 7. Note & Token checkbox -->
-    <div class="pos-field" style="margin-bottom:6px;">
-      <input id="j-note" name="note" maxlength="120" value="${esc(job.note)}" placeholder="नोट (वैकल्पिक e.g. बारीक, सूखा माल)">
-    </div>
-
+    <!-- 7. Primary Action: टोकन पर्ची जारी करें (अगर ग्राहक माल छोड़ कर जा रहा है - No Payment Now) -->
     ${job.tokenNo ? '' : `
-    <label class="check" style="margin-bottom:8px;font-size:12px;color:#64748b;">
-      <input type="checkbox" name="withToken"${job.withToken ? ' checked' : ''}> इस काम का टोकन पर्ची भी निकालें
-    </label>`}
-
-    <button class="btn btn-primary btn-block pos-submit-btn" type="submit">
-      ✓ हिसाब में जोड़ें (Save Bill)
+    <button type="button" class="btn btn-block btn-soft" data-act="issue-token-from-job" style="padding:12px;font-size:14px;font-weight:800;background:linear-gradient(135deg, #e0e7ff, #c7d2fe);color:#3730a3;border:1.5px solid #a5b4fc;border-radius:12px;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 2px 8px rgba(99,102,241,0.15);">
+      <span>🎫</span> <span>टोकन पर्ची जारी करें (माल जमा - भुगतान बाद में)</span>
     </button>
+    `}
+
+    <!-- 8. Delivery & Payment Section (माल देते समय / Final Delivery Time) -->
+    <div style="background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:14px;padding:12px;margin-bottom:6px;">
+      <div style="font-size:12.5px;font-weight:800;color:#0f172a;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span>💵 भुगतान व डिलीवरी (माल देते समय)</span>
+        <span style="font-size:11px;color:#64748b;">हिसाब: <strong id="j-calc-hint" style="color:#0f172a;">${inr(amountPaise)}</strong></span>
+      </div>
+
+      <!-- Adjustable Collected Amount Field (e.g. 32 huye to 30 le liye) -->
+      <div style="display:flex;align-items:center;justify-content:space-between;background:#fff;border:1.5px solid #94a3b8;border-radius:10px;padding:8px 12px;margin-bottom:8px;">
+        <div>
+          <div style="font-size:12px;font-weight:750;color:#334155;">वसूल की जाने वाली रकम (₹)</div>
+          <div style="font-size:10px;color:#64748b;">कम/ज्यादा होने पर यहाँ बदलें (e.g. ₹32 का ₹30)</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <span style="font-size:18px;font-weight:800;color:#0f172a;">₹</span>
+          <input id="j-amount" name="amount" type="number" step="any" min="0" inputmode="decimal"
+            value="${job.amount || (amountPaise ? (amountPaise / 100).toFixed(2).replace(/\.00$/, '') : '')}"
+            placeholder="0" style="width:90px;font-size:20px;font-weight:900;color:#0f172a;padding:4px 6px;text-align:right;border:1px solid #cbd5e1;border-radius:8px;">
+        </div>
+      </div>
+
+      <!-- Quick Round-off Helper Pills -->
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+        <span style="font-size:11px;color:#64748b;font-weight:600;">राउंड-ऑफ:</span>
+        <button type="button" class="btn btn-xs round-pill" data-val="${Math.floor(amountPaise/100)}" style="padding:2px 8px;font-size:11px;background:#fff;border:1px solid #cbd5e1;border-radius:6px;font-weight:700;">₹${Math.floor(amountPaise/100)}</button>
+        <button type="button" class="btn btn-xs round-pill" data-val="${Math.round(amountPaise/100)}" style="padding:2px 8px;font-size:11px;background:#fff;border:1px solid #cbd5e1;border-radius:6px;font-weight:700;">₹${Math.round(amountPaise/100)}</button>
+        <button type="button" class="btn btn-xs round-pill" data-val="${Math.ceil(amountPaise/100)}" style="padding:2px 8px;font-size:11px;background:#fff;border:1px solid #cbd5e1;border-radius:6px;font-weight:700;">₹${Math.ceil(amountPaise/100)}</button>
+      </div>
+
+      <!-- Payment Mode Toggle -->
+      <div class="pos-pay-toggle" style="margin-bottom:8px;">
+        <label class="pos-pay-opt"><input type="radio" name="paid" value="yes"${job.paid ? ' checked' : ''}><span>🟢 नकद मिला (Cash)</span></label>
+        <label class="pos-pay-opt"><input type="radio" name="paid" value="no"${job.paid ? '' : ' checked'}><span>🟣 बाकी / उधार (Khata)</span></label>
+      </div>
+
+      <!-- Udhaar Photo Card -->
+      <div id="udhaar-photo-card" style="display:${job.paid ? 'none' : 'block'};background:#fffbeb;border:1.5px solid #f59e0b;border-radius:12px;padding:10px;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+          <span style="font-weight:750;color:#b45309;font-size:12px;">📸 उधार खाता फोटो सत्यापन</span>
+          <span class="tiny-chip" style="background:#fef3c7;color:#92400e;font-size:10px;">सुरक्षित उधार</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div id="job-photo-preview-wrap" style="width:48px;height:48px;border-radius:50%;overflow:hidden;border:2px solid #f59e0b;background:#fff;display:grid;place-items:center;flex-shrink:0;cursor:pointer;" onclick="document.getElementById('job-photo-file').click();">
+            <img id="job-photo-img" src="${matchedCustomer ? esc(matchedCustomer.photo || '') : ''}" style="${matchedCustomer && matchedCustomer.photo ? '' : 'display:none;'}width:100%;height:100%;object-fit:cover;">
+            <span id="job-photo-ph" style="${matchedCustomer && matchedCustomer.photo ? 'display:none;' : ''}font-size:22px;">👤</span>
+          </div>
+          <div style="flex:1;">
+            <div id="job-photo-cust-name" style="font-size:12px;font-weight:750;color:#0f172a;">
+              ${matchedCustomer ? esc(matchedCustomer.name) + (matchedCustomer.village ? ` (${esc(matchedCustomer.village)})` : '') : 'ग्राहक का नाम ऊपर लिखें'}
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
+              <label class="btn btn-sm btn-primary" style="background:#d97706;padding:4px 9px;border-radius:6px;font-weight:700;cursor:pointer;font-size:11px;">
+                <span>📷</span> <span id="job-photo-btn-txt">${matchedCustomer && matchedCustomer.photo ? 'फोटो बदलें' : 'फोटो खींचें'}</span>
+                <input type="file" id="job-photo-file" accept="image/*" capture="user" style="display:none;">
+              </label>
+              <button type="button" class="btn btn-sm btn-ghost" id="job-photo-clear" style="${matchedCustomer && matchedCustomer.photo ? 'display:inline-flex;' : 'display:none;'}color:#dc2626;font-size:11px;padding:3px 6px;">हटाएं</button>
+            </div>
+          </div>
+        </div>
+        <input type="hidden" id="j-photo" name="photo" value="${matchedCustomer ? esc(matchedCustomer.photo || '') : ''}">
+      </div>
+
+      <button class="btn btn-primary btn-block pos-submit-btn" type="submit" style="padding:12px;font-weight:800;font-size:15px;border-radius:12px;">
+        ${job.tokenNo ? `✓ टोकन #${job.tokenNo} बिल पूरा करें व माल दें` : `✓ तुरंत बिल सुरक्षित करें (माल दें)`}
+      </button>
+    </div>
   </form>`;
 }
 

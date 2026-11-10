@@ -81,7 +81,7 @@ export function viewDashboard() {
                   <span class="token-badge" style="width:32px;height:32px;border-radius:8px;background:#e0e7ff;color:#3730a3;font-weight:800;font-size:13px;display:grid;place-items:center;flex-shrink:0;">#${tok.no}</span>
                   <span class="grow" style="min-width:0;">
                     <span class="row-title ellipsis">${esc(tok.name)}${tok.village ? ` <span class="tiny-chip">${esc(tok.village)}</span>` : ''}</span>
-                    <span class="row-sub">${tok.serviceName || 'पिसाई'} ${tok.grossWeight ? '· ' + tok.grossWeight + 'kg' : ''}</span>
+                    <span class="row-sub">${tok.serviceName || 'सुविधा / सेवा'} ${tok.grossWeight ? '· ' + tok.grossWeight + 'kg' : ''}</span>
                   </span>
                   <button type="button" class="btn btn-sm btn-primary" data-act="token-to-job" data-id="${tok.id}" style="padding:5px 10px;font-size:11.5px;font-weight:700;">
                     🧾 बिल बनाएं
