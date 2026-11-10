@@ -1,5 +1,5 @@
 // Token Sequence and Allocation Service
-import { dayKey } from '../utils/helpers.js';
+import { dayKey, normName, normVillage, normalizePhone } from '../utils/helpers.js';
 
 export async function nextTokenNo(env, businessId, day) {
   const row = await env.DB.prepare(
@@ -59,6 +59,38 @@ export async function issueToken(env, businessId, name, village, serviceId, gros
       token.at
     )
     .run();
+
+  // Auto-sync customer to Contacts / Phonebook if name provided
+  if (name && name !== 'ग्राहक' && name !== 'Customer') {
+    try {
+      const key = normName(name);
+      const vKey = normVillage(village || '');
+      const cleanPhone = normalizePhone(phone);
+      const found = await env.DB.prepare(
+        'SELECT id, phone, village FROM customers WHERE business_id = ? AND name_key = ? AND village_key = ?'
+      )
+        .bind(businessId, key, vKey)
+        .first();
+
+      if (found) {
+        if (!found.phone && cleanPhone) {
+          await env.DB.prepare('UPDATE customers SET phone = ? WHERE id = ? AND business_id = ?')
+            .bind(cleanPhone, found.id, businessId)
+            .run();
+        }
+      } else {
+        const custId = crypto.randomUUID();
+        await env.DB.prepare(
+          `INSERT INTO customers (id, business_id, name, name_key, village, village_key, phone, photo, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, '', ?)`
+        )
+          .bind(custId, businessId, name, key, village || '', vKey, cleanPhone, Date.now())
+          .run();
+      }
+    } catch (e) {
+      console.error('Auto-create customer from token error:', e);
+    }
+  }
 
   return token;
 }

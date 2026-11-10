@@ -576,10 +576,12 @@ export function setupEventListeners() {
       case 'token-to-job': {
         const tok = state.data.tokens.serving?.id === el.dataset.id
           ? state.data.tokens.serving
-          : state.data.tokens.waiting.find((x) => x.id === el.dataset.id);
+          : (state.data.tokens.waiting.find((x) => x.id === el.dataset.id) ||
+             (state.data.tokens.doneList || []).find((x) => x.id === el.dataset.id));
         if (!tok) return;
         state.job.name = tok.name === 'Customer' || tok.name === 'ग्राहक' ? '' : tok.name;
         state.job.village = tok.village || '';
+        state.job.phone = tok.phone || '';
         state.job.tokenId = tok.id;
         state.job.tokenNo = tok.no;
         if (tok.serviceId) {
@@ -591,6 +593,7 @@ export function setupEventListeners() {
           }
         }
         if (tok.grossWeight) state.job.qty = String(tok.grossWeight);
+        state.jobTab = 'grind';
         goTo('job');
         break;
       }

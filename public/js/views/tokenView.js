@@ -50,6 +50,38 @@ export function viewTokens() {
       </div>
       ${tObj.done ? `<p class="tiny mt-8">${t('tokenDoneToday', { n: tObj.done })}</p>` : ''}
     </section>
-  </div>`;
+  </div>
+
+  ${(tObj.doneList && tObj.doneList.length) ? `
+  <section class="card mt-14" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:16px;padding:16px;">
+    <div class="section-head" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <h2 class="section-title" style="display:flex;align-items:center;gap:6px;color:#15803d;font-size:15px;margin:0;">
+        <span>✅</span> <span>आज पूरे हुए टोकन व काम (${tObj.doneList.length})</span>
+      </h2>
+      <span class="tiny-chip" style="background:#dcfce7;color:#15803d;font-weight:700;">पूर्ण / Completed</span>
+    </div>
+    <div class="row-list">
+      ${tObj.doneList.map((tok) => `
+        <div class="row-item" style="padding:10px 4px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:10px;">
+          <span class="token-badge" style="width:36px;height:36px;border-radius:10px;background:#e0e7ff;color:#3730a3;font-weight:800;font-size:14px;display:grid;place-items:center;flex-shrink:0;">#${tok.no}</span>
+          <div class="grow" style="min-width:0;">
+            <div style="font-weight:750;font-size:13.5px;color:#0f172a;display:flex;align-items:center;gap:6px;">
+              <span>${esc(tok.name)}</span>
+              ${tok.village ? `<span class="tiny-chip">${esc(tok.village)}</span>` : ''}
+            </div>
+            <div class="tiny" style="color:#64748b;margin-top:2px;">
+              ${tok.serviceName || 'पिसाई'} ${tok.grossWeight ? `· ${tok.grossWeight}kg (शुद्ध: ${tok.netWeight || tok.grossWeight}kg)` : ''}
+              ${tok.phone ? ' · ' + tok.phone : ''}
+            </div>
+          </div>
+          <div style="flex-shrink:0;">
+            <button type="button" class="btn btn-sm btn-primary" data-act="token-to-job" data-id="${tok.id}" style="padding:6px 12px;font-size:12px;font-weight:750;">
+              🧾 बिल बनाएं
+            </button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  </section>` : ''}`;
 }
 

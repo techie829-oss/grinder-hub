@@ -47,7 +47,7 @@ export async function buildState(env, businessId, range) {
     ).bind(...entriesTimeBinds),
     // 3: tokens today
     env.DB.prepare(
-      `SELECT id, no, name, COALESCE(village, '') AS village, service_id,
+      `SELECT id, no, name, COALESCE(village, '') AS village, COALESCE(phone, '') AS phone, service_id,
               COALESCE(gross_weight, 0) AS gross_weight, COALESCE(loss_g, 0) AS loss_g,
               COALESCE(net_weight, 0) AS net_weight, status, created_at
          FROM tokens WHERE business_id = ? AND day = ? ORDER BY no`
@@ -137,7 +137,9 @@ export async function buildState(env, businessId, range) {
     no: t.no,
     name: t.name,
     village: t.village || '',
+    phone: t.phone || '',
     serviceId: t.service_id,
+    serviceName: (services.find((s) => s.id === t.service_id) || {}).name || '',
     grossWeight: Number(t.gross_weight) || 0,
     lossG: Number(t.loss_g) || 0,
     netWeight: Number(t.net_weight) || 0,
@@ -198,6 +200,7 @@ export async function buildState(env, businessId, range) {
       serving: tokensToday.find((t) => t.status === 'serving') || null,
       waiting: tokensToday.filter((t) => t.status === 'waiting'),
       done: tokensToday.filter((t) => t.status === 'done').length,
+      doneList: tokensToday.filter((t) => t.status === 'done').reverse(),
       total: tokensToday.length,
       nextNo: lastNo + 1,
     },

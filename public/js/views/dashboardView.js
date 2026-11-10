@@ -67,17 +67,33 @@ export function viewDashboard() {
       </div>
       ${recent.length
         ? `<div class="row-list">${recent.map((e) => entryRow(e)).join('')}</div>`
-        : emptyBlock('अभी कोई लेनदेन दर्ज नहीं', 'पहला बिल या खरीद जोड़ते ही यहाँ दिखेगा।')}
+        : (d.tokens && d.tokens.doneList && d.tokens.doneList.length
+          ? `<div class="row-list">
+              <div style="font-size:11.5px;font-weight:750;color:#15803d;margin-bottom:8px;">✅ आज पूरे हुए काम (बिल बनाना बाकी):</div>
+              ${d.tokens.doneList.map((tok) => `
+                <div class="row-item" style="padding:8px 0;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:8px;">
+                  <span class="token-badge" style="width:32px;height:32px;border-radius:8px;background:#e0e7ff;color:#3730a3;font-weight:800;font-size:13px;display:grid;place-items:center;flex-shrink:0;">#${tok.no}</span>
+                  <span class="grow" style="min-width:0;">
+                    <span class="row-title ellipsis">${esc(tok.name)}${tok.village ? ` <span class="tiny-chip">${esc(tok.village)}</span>` : ''}</span>
+                    <span class="row-sub">${tok.serviceName || 'पिसाई'} ${tok.grossWeight ? '· ' + tok.grossWeight + 'kg' : ''}</span>
+                  </span>
+                  <button type="button" class="btn btn-sm btn-primary" data-act="token-to-job" data-id="${tok.id}" style="padding:5px 10px;font-size:11.5px;font-weight:700;">
+                    🧾 बिल बनाएं
+                  </button>
+                </div>
+              `).join('')}
+            </div>`
+          : emptyBlock('अभी कोई लेनदेन दर्ज नहीं', 'पहला बिल या खरीद जोड़ते ही यहाँ दिखेगा।'))}
     </section>
 
     <section class="card">
       <div class="section-head">
-        <h2 class="section-title">बाकी उधार (जिनसे लेना है)</h2>
+        <h2 class="section-title">${dues.length ? 'बाकी उधार (जिनसे लेना है)' : 'ग्राहक फोन बुक'}</h2>
         <button class="section-link" data-act="goto" data-view="customers">${t('navCustomers')}</button>
       </div>
-      ${dues.length
+      ${(dues.length ? dues : d.customers.slice(0, 6)).length
         ? `<div class="row-list">
-            ${dues.map((c) => `
+            ${(dues.length ? dues : d.customers.slice(0, 6)).map((c) => `
               <button type="button" class="row-item" data-act="open-cust" data-id="${c.id}">
                 ${c.photo
                   ? `<img src="${c.photo}" class="avatar small" alt="${esc(c.name)}" style="object-fit:cover;border:1px solid #cbd5e1;">`
@@ -86,10 +102,10 @@ export function viewDashboard() {
                   <span class="row-title ellipsis">${esc(c.name)}${c.village ? ` <span class="tiny-chip">${esc(c.village)}</span>` : ''}</span>
                   <span class="row-sub">${c.phone ? c.phone : 'फोन नहीं'}${c.lastAt ? ' · ' + relTxt(c.lastAt) : ''}</span>
                 </span>
-                <span class="bal due">${inr(c.balancePaise)}</span>
+                <span class="bal ${c.balancePaise > 0 ? 'due' : (c.balancePaise < 0 ? 'adv' : 'zero')}">${c.balancePaise !== 0 ? inr(c.balancePaise) : 'बराबर ✓'}</span>
               </button>`).join('')}
           </div>`
-        : emptyBlock('किसी का उधार नहीं', 'सबका हिसाब बराबर है।')}
+        : emptyBlock('अभी कोई ग्राहक दर्ज नहीं', 'टोकन या नया बिल बनाते ही ग्राहक यहाँ दिखेगा।')}
     </section>
   </div>`;
 }
