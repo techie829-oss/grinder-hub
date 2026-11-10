@@ -33,6 +33,7 @@ export const TITLES = {
   customers: 'navCustomers',
   reports: 'navReports',
   settings: 'navSettings',
+  admin: 'navSuperAdmin',
 };
 
 export const ICONS = {
@@ -78,6 +79,16 @@ export const state = {
     netWeight: 0,
   },
   auth: { mode: 'login', error: '' },
+  admin: {
+    authenticated: false,
+    key: '',
+    metrics: null,
+    tenants: [],
+    loading: false,
+    q: '',
+    filter: 'all',
+    error: '',
+  },
 };
 
 export const root = typeof document !== 'undefined' ? document.getElementById('root') : null;

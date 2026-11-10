@@ -76,6 +76,10 @@ export async function login(request, env, url) {
   const hash = await pbkdf2(password, row.salt);
   if (!safeEqual(hash, row.pass_hash)) return invalid();
 
+  if (row.status === 'suspended') {
+    return bad('यह दुकान खाता निलंबित (Suspended) है। कृपया प्लेटफॉर्म एडमिन से संपर्क करें।', 403);
+  }
+
   clearThrottle(key);
   await env.DB.prepare('DELETE FROM sessions WHERE business_id = ? AND expires_at < ?').bind(row.id, Date.now()).run();
   const session = await createSession(env, row.id, url);

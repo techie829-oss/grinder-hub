@@ -37,6 +37,9 @@ export function topbar() {
     ${langSelector()}
     <div class="topbar-cta">
       <button class="btn btn-primary btn-sm" data-act="goto" data-view="job">+ ${t('navJob')}</button>
+      ${d.business.isSuperAdmin || state.admin.authenticated ? `
+        <button class="btn btn-subtle btn-sm" data-act="goto" data-view="admin" title="${t('navSuperAdmin')}" style="color:#b45309;font-weight:700;border:1px solid #fde68a;background:#fffbeb;padding:6px 10px;border-radius:8px;">🛡️ एडमिन</button>
+      ` : ''}
       <button class="icon-btn" data-act="goto" data-view="settings" aria-label="${t('navSettings')}">${ICONS.sliders}</button>
     </div>
   </header>`;
@@ -61,6 +64,12 @@ export function viewShell(content) {
             ${ICONS[n.icon]}<span>${t(n.labelKey)}</span>
             ${n.id === 'token' && waiting ? `<span class="nav-badge">${waiting}</span>` : ''}
           </button>`).join('')}
+        ${d.business.isSuperAdmin || state.admin.authenticated ? `
+          <button type="button" class="nav-item${state.view === 'admin' ? ' is-on' : ''}" data-act="goto" data-view="admin" style="color:#d97706;font-weight:700;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>${t('navSuperAdmin')}</span>
+          </button>
+        ` : ''}
       </nav>
       <div class="side-foot">
         <div class="who">

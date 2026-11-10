@@ -20,6 +20,7 @@ export const TRANSLATIONS = {
     navCustomers: 'ग्राहक',
     navReports: 'रिपोर्ट',
     navSettings: 'सेटिंग',
+    navSuperAdmin: 'सुपर एडमिन',
 
     // Ranges
     rangeToday: 'आज',
@@ -178,6 +179,7 @@ export const TRANSLATIONS = {
     navCustomers: 'Customers',
     navReports: 'Reports',
     navSettings: 'Settings',
+    navSuperAdmin: 'Super Admin',
 
     // Ranges
     rangeToday: 'Today',
@@ -336,6 +338,7 @@ export const TRANSLATIONS = {
     navCustomers: 'ग्राहक',
     navReports: 'अहवाल',
     navSettings: 'सेटिंग्ज',
+    navSuperAdmin: 'सुपर ॲडमिन',
 
     // Ranges
     rangeToday: 'आज',
@@ -494,6 +497,7 @@ export const TRANSLATIONS = {
     navCustomers: 'ગ્રાહક',
     navReports: 'રિપોર્ટ',
     navSettings: 'સેટિંગ',
+    navSuperAdmin: 'સુપર એડમિન',
 
     // Ranges
     rangeToday: 'આજે',

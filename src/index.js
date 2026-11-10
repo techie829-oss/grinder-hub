@@ -9,6 +9,15 @@ import { customerDetail, saveCustomer, deleteCustomer } from './controllers/cust
 import { saveService, deleteService } from './controllers/serviceController.js';
 import { saveSettings, exportData } from './controllers/settingsController.js';
 import { syncBatch } from './controllers/syncController.js';
+import {
+  adminLogin,
+  adminLogout,
+  adminGetTenants,
+  adminSetTenantStatus,
+  adminSetTenantPlan,
+  adminResetTenantPassword,
+  adminImpersonateTenant,
+} from './controllers/adminController.js';
 
 export default {
   async fetch(request, env) {
@@ -55,6 +64,15 @@ async function route(request, env, url) {
   if (path === '/api/login' && method === 'POST') return login(request, env, url);
   if (path === '/api/logout' && method === 'POST') return logout(request, env, url);
 
+  // Super Admin / Tenant Management routes
+  if (path === '/api/admin/login' && method === 'POST') return adminLogin(request, env, url);
+  if (path === '/api/admin/logout' && method === 'POST') return adminLogout(request, env, url);
+  if (path === '/api/admin/tenants' && method === 'GET') return adminGetTenants(request, env);
+  if (path === '/api/admin/tenants/status' && method === 'POST') return adminSetTenantStatus(request, env);
+  if (path === '/api/admin/tenants/plan' && method === 'POST') return adminSetTenantPlan(request, env);
+  if (path === '/api/admin/tenants/reset-password' && method === 'POST') return adminResetTenantPassword(request, env);
+  if (path === '/api/admin/tenants/impersonate' && method === 'POST') return adminImpersonateTenant(request, env, url);
+
   // CSRF validation for state-modifying requests
   if (method !== 'GET' && !sameOrigin(request, url)) {
     return bad('अनुरोध अस्वीकार हुआ (CSRF)', 403);
@@ -63,6 +81,10 @@ async function route(request, env, url) {
   // Session verification & tenant isolation
   const business = await currentBusiness(request, env);
   if (!business) return bad('लॉगिन ज़रूरी है', 401);
+
+  if (business.status === 'suspended' && path !== '/api/state') {
+    return bad('यह दुकान खाता अस्थायी रूप से निलंबित (Suspended) है। कृपया सपोर्ट से संपर्क करें।', 403);
+  }
 
   const range = url.searchParams.get('range') || 'today';
 

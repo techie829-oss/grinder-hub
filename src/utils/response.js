@@ -1,4 +1,5 @@
 export const COOKIE = 'cb_sid';
+export const ADMIN_COOKIE = 'cb_adm';
 export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 const SECURITY_HEADERS = {
@@ -57,6 +58,11 @@ export function getCookie(request, name) {
 export function sessionCookie(token, url, maxAge) {
   const secure = url.protocol === 'https:' ? '; Secure; SameSite=None' : '; SameSite=Lax';
   return `${COOKIE}=${encodeURIComponent(token)}; Path=/; HttpOnly${secure}; Max-Age=${maxAge}`;
+}
+
+export function adminSessionCookie(token, url, maxAge = 7 * 24 * 3600) {
+  const secure = url.protocol === 'https:' ? '; Secure; SameSite=None' : '; SameSite=Lax';
+  return `${ADMIN_COOKIE}=${encodeURIComponent(token)}; Path=/; HttpOnly${secure}; Max-Age=${maxAge}`;
 }
 
 export function sameOrigin(request, url) {

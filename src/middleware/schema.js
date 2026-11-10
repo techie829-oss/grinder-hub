@@ -55,5 +55,19 @@ export async function ensureSchema(env) {
     await env.DB.exec('UPDATE tokens SET gross_weight = qty WHERE (gross_weight IS NULL OR gross_weight = 0) AND qty > 0;');
   } catch (e) {}
 
+  // Businesses: Tenant management columns
+  try {
+    await env.DB.exec("ALTER TABLE businesses ADD COLUMN status TEXT NOT NULL DEFAULT 'active';");
+  } catch (e) {}
+  try {
+    await env.DB.exec("ALTER TABLE businesses ADD COLUMN plan TEXT NOT NULL DEFAULT 'free';");
+  } catch (e) {}
+  try {
+    await env.DB.exec('ALTER TABLE businesses ADD COLUMN is_super_admin INTEGER NOT NULL DEFAULT 0;');
+  } catch (e) {}
+  try {
+    await env.DB.exec('ALTER TABLE businesses ADD COLUMN last_active_at INTEGER NOT NULL DEFAULT 0;');
+  } catch (e) {}
+
   schemaInitialized = true;
 }

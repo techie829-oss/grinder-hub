@@ -1,6 +1,6 @@
 // Centralized DOM Event Listeners & Dispatcher with Offline-First Fallback
 import { state } from './state.js';
-import { api, withBusy, loadState, applyState, toast } from './api.js';
+import { api, withBusy, loadState, applyState, toast, loadAdminData } from './api.js';
 import { inr, unitOf } from './utils/formatters.js';
 import { printReceipt } from './utils/print.js';
 import { entryWaText, openWhatsApp } from './utils/whatsapp.js';
@@ -86,6 +86,17 @@ export function goTo(view) {
   closeModal();
   window.scrollTo({ top: 0, behavior: 'smooth' });
 
+  if (view === 'admin') {
+    window.location.hash = '#admin';
+    loadAdminData();
+    return;
+  }
+  if (window.location.hash === '#admin') {
+    try {
+      history.replaceState(null, '', window.location.pathname + window.location.search);
+    } catch (e) {}
+  }
+
   if (!state.data) {
     window.__appRender?.();
     return;
@@ -144,6 +155,66 @@ export function setupEventListeners() {
         state.job.tokenNo = null;
         window.__appRender?.();
         break;
+
+      // --- Super Admin Platform Actions ---
+      case 'admin-refresh':
+        toast('डेटा ताज़ा हो रहा है...');
+        await loadAdminData();
+        break;
+
+      case 'admin-logout':
+        await api('/api/admin/logout');
+        state.admin.authenticated = false;
+        state.admin.tenants = [];
+        state.admin.metrics = null;
+        toast('सुपर एडमिन लॉगआउट हुआ');
+        goTo('dashboard');
+        break;
+
+      case 'admin-filter':
+        state.admin.filter = el.dataset.filter;
+        window.__appRender?.();
+        break;
+
+      case 'admin-toggle-status': {
+        const businessId = el.dataset.id;
+        const newStatus = el.dataset.status;
+        const res = await api('/api/admin/tenants/status', { businessId, status: newStatus });
+        if (res && res.ok) {
+          toast(res.message || `स्टेटस अपडेट: ${newStatus}`);
+          await loadAdminData();
+        }
+        break;
+      }
+
+      case 'admin-reset-pw': {
+        const businessId = el.dataset.id;
+        const name = el.dataset.name;
+        const newPassword = prompt(`"${name}" के लिए नया पासवर्ड दर्ज करें (कम से कम 6 अक्षर):`);
+        if (!newPassword) return;
+        if (newPassword.trim().length < 6) {
+          toast('पासवर्ड कम से कम 6 अक्षरों का होना चाहिए');
+          return;
+        }
+        const res = await api('/api/admin/tenants/reset-password', { businessId, newPassword: newPassword.trim() });
+        if (res && res.ok) {
+          toast('पासवर्ड सफलतापूर्वक बदला गया ✓');
+        }
+        break;
+      }
+
+      case 'admin-impersonate': {
+        const businessId = el.dataset.id;
+        const name = el.dataset.name;
+        if (!confirm(`क्या आप "${name}" की दुकान में प्रवेश करना चाहते हैं?`)) return;
+        const res = await api('/api/admin/tenants/impersonate', { businessId });
+        if (res && res.ok && res.state) {
+          applyState(res.state);
+          toast(`"${name}" की दुकान खुली ✓`);
+          goTo('dashboard');
+        }
+        break;
+      }
 
       // --- Hardware & Machine Automation Actions ---
       case 'hw-scale-ocr': {
@@ -584,6 +655,12 @@ export function setupEventListeners() {
   document.addEventListener('input', (ev) => {
     const tEl = ev.target;
 
+    if (tEl.dataset.act === 'admin-search' || tEl.id === 'admin-search-input') {
+      state.admin.q = tEl.value;
+      window.__appRender?.();
+      return;
+    }
+
     if (tEl.id === 'cust-search') {
       state.q = tEl.value;
       const box = document.getElementById('cust-list');
@@ -640,6 +717,41 @@ export function setupEventListeners() {
 
   // Global form submit handler
   document.addEventListener('submit', async (ev) => {
+    const adminForm = ev.target.closest('#admin-login-form, form[data-act="admin-login-submit"]');
+    if (adminForm) {
+      ev.preventDefault();
+      const keyInput = document.getElementById('admin-master-key');
+      const masterKey = keyInput ? keyInput.value.trim() : '';
+      if (!masterKey) return;
+      const btn = adminForm.querySelector('button[type="submit"]');
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'प्रमाणित हो रहा है...';
+      }
+      try {
+        const res = await api('/api/admin/login', { masterKey });
+        if (res && res.ok) {
+          state.admin.authenticated = true;
+          state.admin.error = '';
+          toast('सुपर एडमिन सत्यापित हुआ ✓');
+          await loadAdminData();
+        } else {
+          state.admin.authenticated = false;
+          state.admin.error = (res && res.error) || 'अमान्य मास्टर की';
+          window.__appRender?.();
+        }
+      } catch (err) {
+        state.admin.error = 'लॉगिन में त्रुटि हुई';
+        window.__appRender?.();
+      } finally {
+        if (btn && btn.isConnected) {
+          btn.disabled = false;
+          btn.textContent = 'सुपर एडमिन लॉगिन करें';
+        }
+      }
+      return;
+    }
+
     const form = ev.target.closest('form[data-form]');
     if (!form) return;
     ev.preventDefault();

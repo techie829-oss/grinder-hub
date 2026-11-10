@@ -46,6 +46,9 @@ export async function api(path, body) {
   }
 
   if (res.status === 401) {
+    if (path.startsWith('/api/admin/')) {
+      return { ok: false, error: data.error || 'Unauthorized' };
+    }
     state.data = null;
     closeModal();
     window.__appRender?.();
@@ -65,6 +68,23 @@ export function applyState(snapshot) {
     saveOfflineSnapshot(snapshot);
     window.__appRender?.();
   }
+}
+
+export async function loadAdminData() {
+  state.admin.loading = true;
+  window.__appRender?.();
+  const res = await api('/api/admin/tenants');
+  state.admin.loading = false;
+  if (res && res.ok) {
+    state.admin.authenticated = true;
+    state.admin.metrics = res.metrics;
+    state.admin.tenants = res.tenants || [];
+    state.admin.error = '';
+  } else {
+    state.admin.authenticated = false;
+    if (res && res.error) state.admin.error = res.error;
+  }
+  window.__appRender?.();
 }
 
 export async function loadState(range) {

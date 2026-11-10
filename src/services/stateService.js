@@ -75,7 +75,7 @@ export async function buildState(env, businessId, range) {
     // 6: day counter
     env.DB.prepare('SELECT last_no FROM day_counters WHERE business_id = ? AND day = ?').bind(businessId, day),
     // 7: business info
-    env.DB.prepare('SELECT id, name, phone, address, upi, note, created_at FROM businesses WHERE id = ?').bind(businessId),
+    env.DB.prepare('SELECT id, name, phone, address, upi, note, COALESCE(status, \'active\') AS status, COALESCE(plan, \'free\') AS plan, COALESCE(is_super_admin, 0) AS is_super_admin, created_at FROM businesses WHERE id = ?').bind(businessId),
   ]);
 
   const services = results[0].results.map((s) => ({
@@ -155,6 +155,9 @@ export async function buildState(env, businessId, range) {
       address: biz.address || '',
       upi: biz.upi || '',
       note: biz.note || '',
+      status: biz.status || 'active',
+      plan: biz.plan || 'free',
+      isSuperAdmin: Number(biz.is_super_admin) === 1,
       since: biz.created_at,
     },
     services,

@@ -2,15 +2,19 @@
 -- Strict, normalized schema with zero duplicate columns.
 
 CREATE TABLE IF NOT EXISTS businesses (
-  id           TEXT PRIMARY KEY,
-  name         TEXT NOT NULL,
-  phone        TEXT NOT NULL UNIQUE,
-  address      TEXT NOT NULL DEFAULT '',
-  upi          TEXT NOT NULL DEFAULT '',
-  note         TEXT NOT NULL DEFAULT '',
-  pass_hash    TEXT NOT NULL,
-  salt         TEXT NOT NULL,
-  created_at   INTEGER NOT NULL
+  id             TEXT PRIMARY KEY,
+  name           TEXT NOT NULL,
+  phone          TEXT NOT NULL UNIQUE,
+  address        TEXT NOT NULL DEFAULT '',
+  upi            TEXT NOT NULL DEFAULT '',
+  note           TEXT NOT NULL DEFAULT '',
+  status         TEXT NOT NULL DEFAULT 'active',
+  plan           TEXT NOT NULL DEFAULT 'free',
+  is_super_admin INTEGER NOT NULL DEFAULT 0,
+  last_active_at INTEGER DEFAULT 0,
+  pass_hash      TEXT NOT NULL,
+  salt           TEXT NOT NULL,
+  created_at     INTEGER NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS sessions (

@@ -10,3 +10,7 @@ binding = "ASSETS"
 binding = "DB"
 database_name = "chakki-book"
 database_id = "48ff8a7f-62c9-45b0-b6db-126141ba7aa6"
+
+[vars]
+SUPER_ADMIN_KEY = "chakki_admin_2026"
+

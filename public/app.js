@@ -7,6 +7,7 @@ import { viewTokens } from './js/views/tokenView.js';
 import { viewCustomers } from './js/views/customerView.js';
 import { viewReports } from './js/views/reportView.js';
 import { viewSettings } from './js/views/settingsView.js';
+import { viewAdmin } from './js/views/adminView.js';
 import { viewShell } from './js/components/shell.js';
 import { setupEventListeners } from './js/events.js';
 import { loadState } from './js/api.js';
@@ -14,6 +15,12 @@ import { initSyncEngine, updateSyncIndicator } from './js/sync.js';
 
 export function render() {
   window.__appBooted = true;
+
+  if (state.view === 'admin') {
+    root.innerHTML = state.data ? viewShell(viewAdmin()) : viewAdmin();
+    return;
+  }
+
   if (!state.data) {
     root.innerHTML = viewAuth();
     return;
@@ -48,6 +55,15 @@ export function render() {
 
 // Expose render function for reactive state updates
 window.__appRender = render;
+
+function handleHash() {
+  if (window.location.hash === '#admin') {
+    state.view = 'admin';
+    window.__appRender?.();
+  }
+}
+window.addEventListener('hashchange', handleHash);
+handleHash();
 
 // Boot application
 initSyncEngine();

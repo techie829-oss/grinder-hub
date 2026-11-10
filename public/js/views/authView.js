@@ -69,6 +69,9 @@ export function viewAuth() {
           <button class="link-btn" data-act="auth-mode" data-mode="${isLogin ? 'signup' : 'login'}">${isLogin ? t('signupBtn') : t('loginBtn')}</button>
         </p>
         <p class="auth-note">${t('authNote')}</p>
+        <div style="text-align:center;margin-top:14px;">
+          <a href="#admin" data-act="goto" data-view="admin" style="font-size:11.5px;color:#94a3b8;text-decoration:none;">🛡️ प्लेटफॉर्म सुपर एडमिन पोर्टल</a>
+        </div>
       </div>
     </main>
   </div>`;
