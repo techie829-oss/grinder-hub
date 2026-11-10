@@ -3,16 +3,29 @@ import { state, toastEl } from './state.js';
 import { closeModal } from './components/modals.js';
 import { saveOfflineSnapshot, loadOfflineSnapshot, syncOfflineQueue, isOnline } from './sync.js';
 
-export const LIVE_SERVER_URL = 'https://chakki-book.rohitkmarch96.workers.dev';
+export const LIVE_SERVER_URL = 'https://chakkibook.solidrix.com';
 
 export function getApiUrl(path) {
   if (path.startsWith('http://') || path.startsWith('https://')) return path;
   const isCapacitor = typeof window !== 'undefined' && (
     window.Capacitor !== undefined ||
     window.location.protocol === 'capacitor:' ||
-    window.location.hostname === 'localhost'
+    window.location.hostname === 'localhost' ||
+    window.location.origin === 'https://localhost' ||
+    window.location.origin === 'capacitor://localhost'
   );
   return isCapacitor ? `${LIVE_SERVER_URL}${path}` : path;
+}
+
+export function getAuthHeaders() {
+  const headers = {};
+  if (typeof localStorage !== 'undefined') {
+    const token = localStorage.getItem('cb_token');
+    if (token) headers['authorization'] = `Bearer ${token}`;
+    const adm = localStorage.getItem('cb_adm_token');
+    if (adm) headers['x-admin-key'] = adm;
+  }
+  return headers;
 }
 
 let toastTimer = null;
@@ -29,7 +42,10 @@ export async function api(path, body) {
   try {
     res = await fetch(targetUrl, {
       method: body === undefined ? 'GET' : 'POST',
-      headers: body === undefined ? {} : { 'content-type': 'application/json' },
+      headers: {
+        ...getAuthHeaders(),
+        ...(body === undefined ? {} : { 'content-type': 'application/json' }),
+      },
       body: body === undefined ? undefined : JSON.stringify(body),
       credentials: 'include',
     });
@@ -48,6 +64,9 @@ export async function api(path, body) {
   if (res.status === 401) {
     if (path.startsWith('/api/admin/')) {
       return { ok: false, error: data.error || 'Unauthorized' };
+    }
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem('cb_token');
     }
     state.data = null;
     closeModal();

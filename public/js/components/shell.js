@@ -33,6 +33,9 @@ export function topbar() {
     </div>
     <div class="topbar-spacer"></div>
     <button type="button" id="sync-indicator" class="sync-badge" data-act="trigger-sync" title="Sync Status" style="margin-right:6px;border:none;background:none;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;gap:4px"></button>
+    <button type="button" class="btn btn-sm btn-subtle" data-act="open-status-modal" title="टोकन व पिसाई स्टेटस देखें" style="border:1.5px solid #cbd5e1;padding:6px 12px;border-radius:10px;font-weight:700;display:inline-flex;align-items:center;gap:4px;font-size:12px;margin-right:4px;">
+      <span>🔍</span> <span>स्टेटस</span>
+    </button>
     <a href="/chakkibook.apk" download="chakkibook.apk" class="btn btn-sm btn-apk-dl" title="Android ऐप डाउनलोड करें" style="background:linear-gradient(135deg, #10b981, #059669);color:#fff;font-weight:700;display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:10px;text-decoration:none;box-shadow:0 2px 8px rgba(16,185,129,0.25);font-size:12px;white-space:nowrap;margin-right:6px;">
       <span>📥</span> <span>APK डाउनलोड</span>
     </a>
@@ -40,9 +43,6 @@ export function topbar() {
     ${langSelector()}
     <div class="topbar-cta">
       <button class="btn btn-primary btn-sm" data-act="goto" data-view="job">+ ${t('navJob')}</button>
-      ${d.business.isSuperAdmin || state.admin.authenticated ? `
-        <button class="btn btn-subtle btn-sm" data-act="goto" data-view="admin" title="${t('navSuperAdmin')}" style="color:#b45309;font-weight:700;border:1px solid #fde68a;background:#fffbeb;padding:6px 10px;border-radius:8px;">🛡️ एडमिन</button>
-      ` : ''}
       <button class="icon-btn" data-act="goto" data-view="settings" aria-label="${t('navSettings')}">${ICONS.sliders}</button>
     </div>
   </header>`;
@@ -67,12 +67,6 @@ export function viewShell(content) {
             ${ICONS[n.icon]}<span>${t(n.labelKey)}</span>
             ${n.id === 'token' && waiting ? `<span class="nav-badge">${waiting}</span>` : ''}
           </button>`).join('')}
-        ${d.business.isSuperAdmin || state.admin.authenticated ? `
-          <button type="button" class="nav-item${state.view === 'admin' ? ' is-on' : ''}" data-act="goto" data-view="admin" style="color:#d97706;font-weight:700;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            <span>${t('navSuperAdmin')}</span>
-          </button>
-        ` : ''}
       </nav>
       <div class="side-foot">
         <div class="who">

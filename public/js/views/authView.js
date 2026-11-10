@@ -36,7 +36,10 @@ export function viewAuth() {
     </aside>
 
     <main class="auth-panel">
-      <div class="auth-lang-wrap" style="display:flex;align-items:center;gap:10px;">
+      <div class="auth-lang-wrap" style="display:flex;align-items:center;gap:8px;">
+        <button type="button" class="btn btn-sm btn-subtle" data-act="open-status-modal" title="टोकन व पिसाई स्टेटस देखें" style="border:1.5px solid #cbd5e1;padding:6px 12px;border-radius:10px;font-weight:700;display:inline-flex;align-items:center;gap:4px;font-size:12px;white-space:nowrap;background:#fff;">
+          <span>🔍</span> <span>स्टेटस</span>
+        </button>
         <a href="/chakkibook.apk" download="chakkibook.apk" class="btn btn-sm btn-apk-dl" title="Android ऐप डाउनलोड करें" style="background:linear-gradient(135deg, #10b981, #059669);color:#fff;font-weight:700;display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:10px;text-decoration:none;box-shadow:0 2px 8px rgba(16,185,129,0.25);font-size:12px;white-space:nowrap;">
           <span>📥</span> <span>APK डाउनलोड</span>
         </a>

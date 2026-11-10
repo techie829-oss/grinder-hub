@@ -1,12 +1,12 @@
 // Service Worker for Chakki Book (Grinder Hub) PWA
-const CACHE_NAME = 'chakkibook-v2.2.0';
+const CACHE_NAME = 'chakkibook-v2.2.1';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/styles.css',
-  '/styles.css?v=2.2.0',
+  '/styles.css?v=2.2.1',
   '/app.js',
-  '/app.js?v=2.2.0',
+  '/app.js?v=2.2.1',
   '/manifest.json',
   '/icon.svg',
   '/js/sync.js',

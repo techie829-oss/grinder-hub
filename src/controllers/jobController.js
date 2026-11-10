@@ -85,7 +85,7 @@ export async function createJob(request, env, business, range) {
       .run();
   }
   if (body.withToken) {
-    token = await issueToken(env, business.id, name || 'ग्राहक', village || '', svc.id, grossWeight, totalLossG, netWeight);
+    token = await issueToken(env, business.id, name || 'ग्राहक', village || '', svc.id, grossWeight, totalLossG, netWeight, phone || '');
     tokenNo = token.no;
   }
 

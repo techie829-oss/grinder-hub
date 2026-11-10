@@ -16,7 +16,7 @@ export async function nextTokenNo(env, businessId, day) {
   return (max ? max.n : 0) + 1;
 }
 
-export async function issueToken(env, businessId, name, village, serviceId, grossWeight = 0, totalLossG = 0, netWeight = 0) {
+export async function issueToken(env, businessId, name, village, serviceId, grossWeight = 0, totalLossG = 0, netWeight = 0, phone = '') {
   const day = dayKey();
   const no = await nextTokenNo(env, businessId, day);
   const anyServing = await env.DB.prepare(
@@ -30,6 +30,7 @@ export async function issueToken(env, businessId, name, village, serviceId, gros
     no,
     name: name || 'ग्राहक',
     village: village || '',
+    phone: phone || '',
     serviceId: serviceId || null,
     grossWeight: Number(grossWeight) || 0,
     lossG: Number(totalLossG) || 0,
@@ -39,8 +40,8 @@ export async function issueToken(env, businessId, name, village, serviceId, gros
   };
 
   await env.DB.prepare(
-    `INSERT INTO tokens (id, business_id, day, no, name, village, service_id, gross_weight, loss_g, net_weight, status, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO tokens (id, business_id, day, no, name, village, phone, service_id, gross_weight, loss_g, net_weight, status, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   )
     .bind(
       token.id,
@@ -49,6 +50,7 @@ export async function issueToken(env, businessId, name, village, serviceId, gros
       token.no,
       token.name,
       token.village,
+      token.phone,
       token.serviceId,
       token.grossWeight,
       token.lossG,

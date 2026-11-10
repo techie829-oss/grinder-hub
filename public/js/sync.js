@@ -1,6 +1,6 @@
 // Client-Side Offline Storage & Network Synchronization Engine
 import { state } from './state.js';
-import { applyState, toast } from './api.js';
+import { applyState, toast, getApiUrl, getAuthHeaders } from './api.js';
 
 const SNAPSHOT_KEY = 'cb_offline_snapshot';
 const QUEUE_KEY = 'cb_offline_sync_queue';
@@ -74,11 +74,11 @@ export async function syncOfflineQueue() {
   updateSyncIndicator(true);
 
   try {
-    const res = await fetch('/api/sync', {
+    const res = await fetch(getApiUrl('/api/sync'), {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: { 'content-type': 'application/json', ...getAuthHeaders() },
       body: JSON.stringify({ actions: queue }),
-      credentials: 'same-origin',
+      credentials: 'include',
     });
 
     if (res.ok) {

@@ -302,6 +302,9 @@ svg { display: block; }
   top: 24px;
   right: 28px;
   z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 .auth-card { width: 100%; max-width: 392px; }
 .auth-card h1 { font-size: 25px; font-weight: 800; letter-spacing: -.5px; }
@@ -831,8 +834,26 @@ button.row-item:hover { background: #fafaff; }
     font-size: 15px;
   }
   .auth-panel { position: relative; }
-  .auth-lang-wrap { top: 16px; right: 18px; }
+  .auth-lang-wrap {
+    top: 14px;
+    right: 14px;
+    gap: 6px;
+    max-width: calc(100% - 100px);
+    justify-content: flex-end;
+  }
   .auth-card { margin-top: 42px; }
+}
+
+@media (max-width: 480px) {
+  .auth-lang-wrap {
+    top: 12px;
+    right: 10px;
+    gap: 4px;
+  }
+  .auth-lang-wrap .btn-apk-dl {
+    padding: 5px 8px;
+    font-size: 11px;
+  }
 }
 
 @media (max-width: 560px) {

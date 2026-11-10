@@ -179,3 +179,137 @@ export function findEntry(id) {
   }
   return null;
 }
+
+export function openStatusModal(initialTokenNo = '', initialPhone = '') {
+  const isShopOwner = !!state.data;
+  showModal(`
+    <div class="sheet-head" style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e2e8f0;padding-bottom:12px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:24px;">🔍</span>
+        <div>
+          <div class="sheet-title" style="font-size:18px;font-weight:800;color:#0f172a;">टोकन व पिसाई स्टेटस (Order Status)</div>
+          <div style="font-size:12px;color:#64748b;">QR कोड स्कैन करें या मोबाइल नंबर व टोकन नंबर से जाँचें</div>
+        </div>
+      </div>
+      <button type="button" class="icon-btn" data-act="close-modal" aria-label="Close">✕</button>
+    </div>
+
+    <!-- Quick Camera QR Scan Button -->
+    <div style="background:#f8fafc;border:1.5px dashed #cbd5e1;border-radius:14px;padding:14px;text-align:center;margin-bottom:18px;">
+      <button type="button" class="btn btn-primary" data-act="status-scan-qr" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px;font-weight:700;border-radius:10px;background:linear-gradient(135deg, #4338ca, #312e81);">
+        <span>📷</span> <span>रसीद / पर्ची का QR कोड स्कैन करें</span>
+      </button>
+      <div style="font-size:11.5px;color:#64748b;margin-top:6px;">कैमरा खोलकर पर्ची पर छपा QR कोड सामने लाएँ</div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+      <div style="flex:1;height:1px;background:#e2e8f0;"></div>
+      <span style="font-size:12px;color:#94a3b8;font-weight:600;">या नंबर से खोजें</span>
+      <div style="flex:1;height:1px;background:#e2e8f0;"></div>
+    </div>
+
+    <!-- Manual Form -->
+    <form id="status-check-form" data-act="status-check-submit" style="display:flex;flex-direction:column;gap:12px;">
+      <div>
+        <label for="status-phone" style="display:block;font-size:12px;font-weight:700;color:#334155;margin-bottom:4px;">
+          ग्राहक का 10-अंकों का मोबाइल नंबर ${isShopOwner ? '<span style="color:#64748b;font-weight:400;">(वैकल्पिक)</span>' : '<span style="color:#dc2626;">*</span>'}
+        </label>
+        <input id="status-phone" type="tel" inputmode="numeric" maxlength="10" class="input" placeholder="जैसे: 9554880713" value="${esc(initialPhone)}" style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid #cbd5e1;font-size:14px;">
+      </div>
+
+      <div>
+        <label for="status-token-no" style="display:block;font-size:12px;font-weight:700;color:#334155;margin-bottom:4px;">
+          टोकन नंबर <span style="color:#dc2626;">*</span>
+        </label>
+        <input id="status-token-no" type="number" inputmode="numeric" class="input" placeholder="जैसे: 14" value="${esc(initialTokenNo)}" required style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid #cbd5e1;font-size:14px;">
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block" style="padding:12px;border-radius:10px;font-weight:700;font-size:14px;margin-top:4px;">
+        🔍 लाइव स्थिति देखें
+      </button>
+    </form>
+
+    <!-- Results Container -->
+    <div id="status-result-box" style="margin-top:16px;"></div>
+  `);
+}
+
+export function renderStatusResult(res) {
+  const box = document.getElementById('status-result-box');
+  if (!box) return;
+
+  if (!res || !res.ok || !res.token) {
+    box.innerHTML = `
+      <div style="background:#fee2e2;color:#b91c1c;padding:14px;border-radius:12px;font-size:13px;font-weight:600;text-align:center;">
+        ${esc((res && res.error) || 'कोई रिकॉर्ड नहीं मिला')}
+      </div>`;
+    return;
+  }
+
+  const t = res.token;
+  const isDone = t.status === 'done';
+  const isServing = t.status === 'serving';
+
+  let badgeBg = '#fef3c7';
+  let badgeColor = '#b45309';
+  let icon = '⏳';
+  if (isDone) {
+    badgeBg = '#dcfce7';
+    badgeColor = '#15803d';
+    icon = '✓';
+  } else if (isServing) {
+    badgeBg = '#dbeafe';
+    badgeColor = '#1d4ed8';
+    icon = '⚙️';
+  }
+
+  box.innerHTML = `
+    <div style="background:#fff;border:2px solid ${badgeColor};border-radius:16px;padding:18px;box-shadow:0 8px 24px rgba(0,0,0,0.06);margin-top:6px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <span style="font-size:22px;font-weight:900;color:#0f172a;">टोकन #${t.tokenNo}</span>
+        <span style="background:${badgeBg};color:${badgeColor};font-weight:800;font-size:13px;padding:4px 12px;border-radius:999px;display:inline-flex;align-items:center;gap:4px;">
+          <span>${icon}</span> <span>${esc(t.statusText)}</span>
+        </span>
+      </div>
+
+      ${t.queuePosition > 0 ? `
+        <div style="background:#fefce8;border:1px solid #fef08a;border-radius:10px;padding:10px 14px;font-size:13px;color:#854d0e;font-weight:700;margin-bottom:14px;">
+          👥 लाइन में स्थिति: आपसे पहले अभी <b>${t.queuePosition} टोकन</b> बाकी हैं।
+        </div>
+      ` : ''}
+
+      ${isServing ? `
+        <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:10px 14px;font-size:13px;color:#1e40af;font-weight:700;margin-bottom:14px;">
+          ⚙️ चक्की पर पिसाई जारी है — कुछ ही देर में आटा तैयार हो जाएगा।
+        </div>
+      ` : ''}
+
+      ${isDone ? `
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px 14px;font-size:13px;color:#166534;font-weight:700;margin-bottom:14px;">
+          🎉 आटा तैयार है! कृपया अपनी पर्ची दिखाकर चक्की से अनाज प्राप्त करें।
+        </div>
+      ` : ''}
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12.5px;color:#475569;border-top:1px solid #f1f5f9;padding-top:12px;">
+        <div><b>ग्राहक:</b> ${esc(t.name)}${t.village ? ' (' + esc(t.village) + ')' : ''}</div>
+        <div><b>अनाज:</b> ${esc(t.serviceName)}</div>
+        <div><b>कुल वज़न:</b> ${t.grossWeight} ${t.unit}</div>
+        <div><b>कटौती / छीजत:</b> -${t.lossG} g</div>
+        <div style="grid-column:1 / -1;font-size:14px;font-weight:800;color:#0f172a;background:#f8fafc;padding:8px 12px;border-radius:8px;">
+          शुद्ध आटा (Net Output): <span style="color:#059669;">${t.netWeight} ${t.unit}</span>
+        </div>
+        ${t.amountPaise != null ? `
+          <div style="grid-column:1 / -1;display:flex;justify-content:space-between;font-weight:700;font-size:13px;padding-top:4px;">
+            <span>बिल: ${inr(t.amountPaise)}</span>
+            <span style="color:${t.paid ? '#16a34a' : '#dc2626'}">${t.paid ? '✓ भुगतान प्राप्त (PAID)' : '⚠️ बाकी (DUE)'}</span>
+          </div>
+        ` : ''}
+      </div>
+
+      <div style="margin-top:12px;border-top:1px dashed #cbd5e1;padding-top:8px;font-size:11.5px;color:#64748b;display:flex;justify-content:space-between;">
+        <span>🏪 ${esc(t.shopName)}</span>
+        <span>📞 ${esc(t.shopPhone)}</span>
+      </div>
+    </div>
+  `;
+}

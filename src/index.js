@@ -18,19 +18,29 @@ import {
   adminResetTenantPassword,
   adminImpersonateTenant,
 } from './controllers/adminController.js';
+import { checkStatus } from './controllers/statusController.js';
 
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    const origin = request.headers.get('origin');
+    const isAllowedOrigin = origin && (
+      origin === 'https://localhost' ||
+      origin === 'capacitor://localhost' ||
+      origin.startsWith('http://localhost') ||
+      origin === 'https://chakkibook.solidrix.com' ||
+      origin.endsWith('.solidrix.com')
+    );
+
     if (request.method === 'OPTIONS') {
-      const origin = request.headers.get('origin') || '*';
+      const allowOrigin = isAllowedOrigin ? origin : (origin || '*');
       return new Response(null, {
         status: 204,
         headers: {
-          'access-control-allow-origin': origin,
+          'access-control-allow-origin': allowOrigin,
           'access-control-allow-credentials': 'true',
           'access-control-allow-methods': 'GET, POST, OPTIONS',
-          'access-control-allow-headers': 'content-type, cookie',
+          'access-control-allow-headers': 'content-type, authorization, cookie, x-admin-key',
           'access-control-max-age': '86400',
         },
       });
@@ -47,7 +57,20 @@ export default {
     }
     try {
       await ensureSchema(env);
-      return await route(request, env, url);
+      const res = await route(request, env, url);
+      if (isAllowedOrigin) {
+        const headers = new Headers(res.headers);
+        headers.set('access-control-allow-origin', origin);
+        headers.set('access-control-allow-credentials', 'true');
+        headers.set('access-control-allow-methods', 'GET, POST, OPTIONS');
+        headers.set('access-control-allow-headers', 'content-type, authorization, cookie, x-admin-key');
+        return new Response(res.body, {
+          status: res.status,
+          statusText: res.statusText,
+          headers,
+        });
+      }
+      return res;
     } catch (err) {
       console.error('api_failure', (err && err.stack) || String(err));
       return bad('सर्वर में गड़बड़ हुई, थोड़ी देर बाद कोशिश करें', 500);
@@ -63,6 +86,7 @@ async function route(request, env, url) {
   if (path === '/api/signup' && method === 'POST') return signup(request, env, url);
   if (path === '/api/login' && method === 'POST') return login(request, env, url);
   if (path === '/api/logout' && method === 'POST') return logout(request, env, url);
+  if (path === '/api/status' && (method === 'GET' || method === 'POST')) return checkStatus(request, env, url);
 
   // Super Admin / Tenant Management routes
   if (path === '/api/admin/login' && method === 'POST') return adminLogin(request, env, url);

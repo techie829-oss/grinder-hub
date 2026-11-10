@@ -51,7 +51,7 @@ export async function signup(request, env, url) {
 
   const session = await createSession(env, businessId, url);
   return json(
-    { ok: true, state: await buildState(env, businessId, 'today') },
+    { ok: true, token: session.token, state: await buildState(env, businessId, 'today') },
     200,
     { 'set-cookie': session.cookie }
   );
@@ -84,7 +84,7 @@ export async function login(request, env, url) {
   await env.DB.prepare('DELETE FROM sessions WHERE business_id = ? AND expires_at < ?').bind(row.id, Date.now()).run();
   const session = await createSession(env, row.id, url);
   return json(
-    { ok: true, state: await buildState(env, row.id, 'today') },
+    { ok: true, token: session.token, state: await buildState(env, row.id, 'today') },
     200,
     { 'set-cookie': session.cookie }
   );

@@ -1,10 +1,10 @@
 // Centralized DOM Event Listeners & Dispatcher with Offline-First Fallback
 import { state } from './state.js';
-import { api, withBusy, loadState, applyState, toast, loadAdminData } from './api.js';
+import { api, withBusy, loadState, applyState, toast, loadAdminData, getApiUrl, getAuthHeaders } from './api.js';
 import { inr, unitOf } from './utils/formatters.js';
 import { printReceipt } from './utils/print.js';
 import { entryWaText, openWhatsApp } from './utils/whatsapp.js';
-import { closeModal, openCustomer, openCustomerEditModal, showJobDone, findEntry } from './components/modals.js';
+import { closeModal, openCustomer, openCustomerEditModal, showJobDone, findEntry, openStatusModal, renderStatusResult } from './components/modals.js';
 import { customerRows } from './components/rows.js';
 import { filteredCustomers } from './views/customerView.js';
 import { currentService } from './views/jobView.js';
@@ -155,6 +155,52 @@ export function setupEventListeners() {
         state.job.tokenNo = null;
         window.__appRender?.();
         break;
+
+      // --- Order / Token Status Check Actions ---
+      case 'open-status-modal':
+        openStatusModal();
+        break;
+
+      case 'status-scan-qr': {
+        const { openQrScannerModal } = await import('./hardware/hardwareModal.js');
+        openQrScannerModal(async (parsed, rawVal) => {
+          let tokenNo = parsed.tokenNo || null;
+          let phone = '';
+
+          const phoneMatch = String(rawVal).match(/(?:\+91|0)?([6-9]\d{9})/);
+          if (phoneMatch) phone = phoneMatch[1];
+          if (!tokenNo) {
+            const match = String(rawVal).match(/(?:token[:#\s]*|#\s*)(\d+)/i);
+            if (match) tokenNo = parseInt(match[1], 10);
+          }
+
+          openStatusModal(tokenNo || '', phone || '');
+
+          if (tokenNo) {
+            const phoneInput = document.getElementById('status-phone');
+            const tokenInput = document.getElementById('status-token-no');
+            if (phoneInput && phone) phoneInput.value = phone;
+            if (tokenInput && tokenNo) tokenInput.value = tokenNo;
+
+            const isShopOwner = !!state.data;
+            if (isShopOwner || (phone && phone.length === 10)) {
+              toast(`QR स्कैन सफल: टोकन #${tokenNo}`);
+              const res = await fetch(getApiUrl('/api/status'), {
+                method: 'POST',
+                headers: { 'content-type': 'application/json', ...getAuthHeaders() },
+                body: JSON.stringify({ token: tokenNo, phone }),
+                credentials: 'include',
+              }).then((r) => r.json()).catch(() => null);
+              renderStatusResult(res);
+            } else {
+              toast(`टोकन #${tokenNo} स्कैन हुआ! कृपया मोबाइल नंबर दर्ज करें।`);
+            }
+          } else {
+            toast('QR कोड से टोकन नंबर नहीं मिल सका');
+          }
+        });
+        break;
+      }
 
       // --- Super Admin Platform Actions ---
       case 'admin-refresh':
@@ -627,6 +673,9 @@ export function setupEventListeners() {
 
       case 'logout':
         await api('/api/logout', {});
+        if (typeof localStorage !== 'undefined') {
+          localStorage.removeItem('cb_token');
+        }
         state.data = null;
         state.customer = null;
         state.view = 'dashboard';
@@ -752,6 +801,35 @@ export function setupEventListeners() {
       return;
     }
 
+    const statusForm = ev.target.closest('#status-check-form, form[data-act="status-check-submit"]');
+    if (statusForm) {
+      ev.preventDefault();
+      const tokenNo = document.getElementById('status-token-no')?.value;
+      const phone = document.getElementById('status-phone')?.value;
+      const btn = statusForm.querySelector('button[type="submit"]');
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'जाँच हो रही है...';
+      }
+      try {
+        const res = await fetch(getApiUrl('/api/status'), {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', ...getAuthHeaders() },
+          body: JSON.stringify({ token: tokenNo, phone: phone ? phone.trim() : '' }),
+          credentials: 'include',
+        }).then((r) => r.json()).catch(() => null);
+        renderStatusResult(res);
+      } catch (err) {
+        renderStatusResult({ ok: false, error: 'सर्वर से संपर्क नहीं हो सका' });
+      } finally {
+        if (btn && btn.isConnected) {
+          btn.disabled = false;
+          btn.textContent = '🔍 लाइव स्थिति देखें';
+        }
+      }
+      return;
+    }
+
     const form = ev.target.closest('form[data-form]');
     if (!form) return;
     ev.preventDefault();
@@ -771,18 +849,21 @@ export function setupEventListeners() {
       }
 
       try {
-        const path = mode === 'signup' ? '/api/signup' : '/api/login';
+        const path = getApiUrl(mode === 'signup' ? '/api/signup' : '/api/login');
         const payload = mode === 'signup' ? { phone, password, shopName } : { phone, password };
         const res = await fetch(path, {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers: { 'content-type': 'application/json', ...getAuthHeaders() },
           body: JSON.stringify(payload),
-          credentials: 'same-origin',
+          credentials: 'include',
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) {
           showAuthError(data.error || 'Authentication error');
         } else {
+          if (data.token && typeof localStorage !== 'undefined') {
+            localStorage.setItem('cb_token', data.token);
+          }
           state.auth.error = '';
           state.view = 'dashboard';
           state.data = data.state;

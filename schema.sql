@@ -79,6 +79,7 @@ CREATE TABLE IF NOT EXISTS tokens (
   no           INTEGER NOT NULL,
   name         TEXT NOT NULL DEFAULT '',
   village      TEXT NOT NULL DEFAULT '',
+  phone        TEXT NOT NULL DEFAULT '',
   service_id   TEXT,
   gross_weight REAL DEFAULT 0,
   loss_g       REAL NOT NULL DEFAULT 0,

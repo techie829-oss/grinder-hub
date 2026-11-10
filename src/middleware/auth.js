@@ -13,7 +13,13 @@ export async function createSession(env, businessId, url) {
 }
 
 export async function currentBusiness(request, env) {
-  const token = getCookie(request, COOKIE);
+  let token = getCookie(request, COOKIE);
+  if (!token) {
+    const authHeader = request.headers.get('authorization') || '';
+    if (authHeader.startsWith('Bearer ')) {
+      token = authHeader.slice(7).trim();
+    }
+  }
   if (!token) return null;
   const row = await env.DB.prepare(
     `SELECT b.id, b.name, b.phone, b.address, b.upi, b.note,

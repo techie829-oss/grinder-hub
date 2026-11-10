@@ -41,6 +41,9 @@ export async function ensureSchema(env) {
     await env.DB.exec("ALTER TABLE tokens ADD COLUMN village TEXT NOT NULL DEFAULT '';");
   } catch (e) {}
   try {
+    await env.DB.exec("ALTER TABLE tokens ADD COLUMN phone TEXT NOT NULL DEFAULT '';");
+  } catch (e) {}
+  try {
     await env.DB.exec('ALTER TABLE tokens ADD COLUMN gross_weight REAL DEFAULT 0;');
   } catch (e) {}
   try {

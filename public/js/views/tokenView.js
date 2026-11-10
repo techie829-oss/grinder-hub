@@ -9,11 +9,14 @@ export function viewTokens() {
   return `
   ${tokenCard()}
 
-  <div class="page-head mt-20">
+  <div class="page-head mt-20" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
     <div>
       <h1 class="page-title">${t('navToken')}</h1>
       <p class="page-sub">नंबर हर दिन 1 से शुरू होता है · आज कुल ${tObj.total} टोकन</p>
     </div>
+    <button type="button" class="btn btn-subtle btn-sm" data-act="open-status-modal" style="border:1.5px solid #cbd5e1;padding:8px 14px;border-radius:10px;font-weight:700;display:inline-flex;align-items:center;gap:6px;background:#fff;">
+      <span>📷</span> <span>QR स्कैन / स्टेटस चेक</span>
+    </button>
   </div>
 
   <div class="grid-2">
