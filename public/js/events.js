@@ -268,6 +268,80 @@ export function setupEventListeners() {
         await syncOfflineQueue();
         break;
 
+      case 'hard-refresh': {
+        const icon = el.querySelector('.refresh-icon');
+        if (icon) icon.classList.add('is-spinning');
+        toast('डेटा ताज़ा हो रहा है…');
+
+        // 1. Reset all form inputs and transient state
+        state.job.qty = '';
+        state.job.rate = '';
+        state.job.lossRateG = '';
+        state.job.totalLossG = 0;
+        state.job.netWeight = 0;
+        state.job.amount = '';
+        state.job.paid = true;
+        state.job.name = '';
+        state.job.village = '';
+        state.job.phone = '';
+        state.job.photo = '';
+        state.job.note = '';
+        state.job.withToken = false;
+        state.job.tokenId = null;
+        state.job.tokenNo = null;
+
+        state.trade.qty = '';
+        state.trade.rate = '';
+        state.trade.item = '';
+        state.trade.paid = true;
+        state.trade.name = '';
+        state.trade.village = '';
+        state.trade.phone = '';
+        state.trade.photo = '';
+        state.trade.note = '';
+
+        state.tokenForm.name = '';
+        state.tokenForm.village = '';
+        state.tokenForm.phone = '';
+        state.tokenForm.note = '';
+        state.tokenForm.qty = '';
+        state.tokenForm.lossRateG = '';
+        state.tokenForm.totalLossG = 0;
+        state.tokenForm.netWeight = 0;
+
+        state.q = '';
+        closeModal();
+
+        // 2. Sync any pending offline queue first
+        try {
+          await syncOfflineQueue();
+        } catch (e) {}
+
+        // 3. Force re-fetch fresh state with cache-busting timestamp
+        try {
+          const fresh = await api('/api/state?range=' + encodeURIComponent(state.range) + '&_t=' + Date.now());
+          if (fresh && fresh.state) {
+            applyState(fresh.state);
+          } else {
+            await loadState(state.range);
+          }
+        } catch (e) {
+          await loadState(state.range);
+        }
+
+        // 4. Trigger ServiceWorker check for background updates
+        if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then((regs) => {
+            regs.forEach((r) => r.update());
+          }).catch(() => {});
+        }
+
+        window.__appRender?.();
+        if (icon) setTimeout(() => icon.classList.remove('is-spinning'), 600);
+        toast('डेटा ताज़ा व फॉर्म रीसेट ✓');
+        break;
+      }
+
       case 'auth-mode':
         state.auth.mode = el.dataset.mode || 'login';
         state.auth.error = '';
