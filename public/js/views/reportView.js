@@ -31,7 +31,7 @@ export function viewReports() {
     <div class="kpi accent">
       <div class="kpi-label">${t('totalSale')}</div>
       <div class="kpi-value">${inr(stats.salePaise || 0)}</div>
-      <div class="kpi-sub">${stats.jobs || 0} पिसाई · ${stats.sales || 0} बिक्री</div>
+      <div class="kpi-sub">${stats.jobs || 0} सेवा कार्य · ${stats.sales || 0} बिक्री</div>
     </div>
     <div class="kpi" style="${(stats.purchasePaise || 0) > 0 ? 'background:#fffbeb;border-color:#fde68a;' : ''}">
       <div class="kpi-label" style="${(stats.purchasePaise || 0) > 0 ? 'color:#b45309;' : ''}">कच्चा माल खरीद</div>
@@ -124,7 +124,7 @@ export function viewReports() {
           }).join('')}
         </tbody>
       </table>
-      </div>` : emptyBlock('इस अवधि में कोई पिसाई या बिक्री नहीं हुई', 'ऊपर तारीख बदलें या नया बिल दर्ज करें।')}
+      </div>` : emptyBlock('इस अवधि में कोई सेवा कार्य या बिक्री नहीं हुई', 'ऊपर तारीख बदलें या नया बिल दर्ज करें।')}
   </section>
 
   <section class="card mt-14">
@@ -138,10 +138,10 @@ export function viewReports() {
           <div style="font-size:32px;margin-bottom:8px;">🧾</div>
           <div style="font-weight:750;font-size:15px;color:#0f172a;margin-bottom:4px;">इस अवधि में कोई पक्का बिल या लेन-देन दर्ज नहीं है</div>
           <div style="font-size:12.5px;color:#64748b;max-width:380px;margin:0 auto 16px;">
-            जब आप पिसाई, सामान बिक्री या फसल खरीद का बिल बनाकर "हिसाब में जोड़ें" दबाएंगे, वह सीधे यहाँ और ग्राहक के खाते में जुड़ जाएगा।
+            जब आप सुविधाएं/सेवा, सामान बिक्री या फसल खरीद का बिल बनाकर "हिसाब में जोड़ें" दबाएंगे, वह सीधे यहाँ और ग्राहक के खाते में जुड़ जाएगा।
           </div>
           <button type="button" class="btn btn-primary" data-act="switch-job-tab" data-tab="grind" data-goto="job" style="padding:10px 18px;font-weight:750;">
-            + नया बिल व पिसाई दर्ज करें
+            + नया सेवा या बिक्री बिल दर्ज करें
           </button>
         </div>`}
     ${entries.length > 120 ? '<p class="tiny mt-8">पुराने लेन-देन बैकअप फ़ाइल में देखे जा सकते हैं।</p>' : ''}

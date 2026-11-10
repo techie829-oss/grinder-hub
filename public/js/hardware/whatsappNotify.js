@@ -6,7 +6,7 @@ import { openWhatsApp } from '../utils/whatsapp.js';
 export function sendAataReadyNotification(tokenRow) {
   const biz = state.data.business || { name: 'Chakki' };
   const svc = tokenRow.serviceId ? state.data.services.find((s) => s.id === tokenRow.serviceId) : null;
-  const svcName = svc ? svc.name : 'पिसाई';
+  const svcName = svc ? svc.name : 'सुविधा / सेवा';
   const unit = svc ? unitOf(svc.unit) : 'kg';
 
   // Find customer to see if phone number exists
@@ -28,10 +28,10 @@ export function sendAataReadyNotification(tokenRow) {
   const lines = [
     `*🙏 ${biz.name} की ओर से सूचना*`,
     '',
-    `श्री *${tokenRow.name}*${tokenRow.village ? ' (' + tokenRow.village + ')' : ''}, आपका आटा पिसकर तैयार है!`,
+    `श्री *${tokenRow.name}*${tokenRow.village ? ' (' + tokenRow.village + ')' : ''}, आपका कार्य तैयार है!`,
     '',
     `🏷️ टोकन नंबर: *#${tokenRow.no}*`,
-    `🌾 उत्पाद: *${svcName}*`,
+    `🌾 उत्पाद/सेवा: *${svcName}*`,
   ];
 
   if (gross > 0) {
@@ -41,7 +41,7 @@ export function sendAataReadyNotification(tokenRow) {
     lines.push(`✂️ कटौती / जलन: *-${lossG} g*`);
   }
   if (net > 0) {
-    lines.push(`🥡 शुद्ध वापसी आटा: *${qtyFmt(net)} ${unit}*`);
+    lines.push(`🥡 शुद्ध वापसी माल: *${qtyFmt(net)} ${unit}*`);
   }
 
   lines.push('');

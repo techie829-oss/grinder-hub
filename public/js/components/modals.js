@@ -178,7 +178,7 @@ export function showJobDone(payload) {
   const hasLoss = kind === 'job' && (lossG > 0 || netWeight != null);
 
   let title = t('jobDoneTitle');
-  let kindBadge = '⚙️ पिसाई';
+  let kindBadge = '⚙️ सुविधा / सेवा';
   if (kind === 'sale') {
     title = 'बिक्री पर्ची तैयार है';
     kindBadge = '🛒 सामान बिक्री';
@@ -242,7 +242,7 @@ export function openStatusModal(initialTokenNo = '', initialPhone = '') {
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="font-size:24px;">🔍</span>
         <div>
-          <div class="sheet-title" style="font-size:18px;font-weight:800;color:#0f172a;">टोकन व पिसाई स्टेटस (Order Status)</div>
+          <div class="sheet-title" style="font-size:18px;font-weight:800;color:#0f172a;">ऑर्डर व टोकन स्टेटस (Order Status)</div>
           <div style="font-size:12px;color:#64748b;">QR कोड स्कैन करें या मोबाइल नंबर व टोकन नंबर से जाँचें</div>
         </div>
       </div>
@@ -335,23 +335,23 @@ export function renderStatusResult(res) {
 
       ${isServing ? `
         <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:10px 14px;font-size:13px;color:#1e40af;font-weight:700;margin-bottom:14px;">
-          ⚙️ चक्की पर पिसाई जारी है — कुछ ही देर में आटा तैयार हो जाएगा।
+          ⚙️ कार्य प्रक्रिया जारी है — कुछ ही देर में तैयार हो जाएगा।
         </div>
       ` : ''}
 
       ${isDone ? `
         <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px 14px;font-size:13px;color:#166534;font-weight:700;margin-bottom:14px;">
-          🎉 आटा तैयार है! कृपया अपनी पर्ची दिखाकर चक्की से अनाज प्राप्त करें।
+          🎉 कार्य पूरा व तैयार है! कृपया अपनी पर्ची दिखाकर माल प्राप्त करें।
         </div>
       ` : ''}
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12.5px;color:#475569;border-top:1px solid #f1f5f9;padding-top:12px;">
         <div><b>ग्राहक:</b> ${esc(t.name)}${t.village ? ' (' + esc(t.village) + ')' : ''}</div>
-        <div><b>अनाज:</b> ${esc(t.serviceName)}</div>
+        <div><b>सुविधा/सेवा:</b> ${esc(t.serviceName)}</div>
         <div><b>कुल वज़न:</b> ${t.grossWeight} ${t.unit}</div>
         <div><b>कटौती / छीजत:</b> -${t.lossG} g</div>
         <div style="grid-column:1 / -1;font-size:14px;font-weight:800;color:#0f172a;background:#f8fafc;padding:8px 12px;border-radius:8px;">
-          शुद्ध आटा (Net Output): <span style="color:#059669;">${t.netWeight} ${t.unit}</span>
+          शुद्ध प्राप्ति (Net Output): <span style="color:#059669;">${t.netWeight} ${t.unit}</span>
         </div>
         ${t.amountPaise != null ? `
           <div style="grid-column:1 / -1;display:flex;justify-content:space-between;font-weight:700;font-size:13px;padding-top:4px;">

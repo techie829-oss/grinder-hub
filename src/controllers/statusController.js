@@ -169,11 +169,11 @@ export async function checkStatus(request, env, url) {
     token: {
       tokenNo: record.no || record.token_no,
       status: isDone ? 'done' : (isServing ? 'serving' : 'waiting'),
-      statusText: isDone ? 'पिसाई पूरी — आटा तैयार है ✓' : (isServing ? 'पिसाई चल रही है ⚙️' : 'लाइन में प्रतीक्षा जारी ⏳'),
+      statusText: isDone ? 'कार्य पूरा — तैयार है ✓' : (isServing ? 'प्रक्रिया चल रही है ⚙️' : 'लाइन में प्रतीक्षा जारी ⏳'),
       queuePosition,
       name: record.name,
       village: record.village || '',
-      serviceName: record.service_name || 'अनाज पिसाई',
+      serviceName: record.service_name || 'सुविधा / सेवा कार्य',
       grossWeight: Number(record.gross_weight) || 0,
       lossG: Number(record.loss_g) || 0,
       netWeight: Number(record.net_weight) || 0,

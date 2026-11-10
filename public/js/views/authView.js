@@ -15,7 +15,7 @@ export function viewAuth() {
         ${logoMark(38)}
         <div>
           <div class="public-brand-title">${t('appName')}</div>
-          <div class="public-brand-sub">${isStatus ? 'टोकन व पिसाई ट्रैकर' : 'दुकानदार पोर्टल'}</div>
+          <div class="public-brand-sub">${isStatus ? 'टोकन व ऑर्डर ट्रैकर' : 'व्यापारी पोर्टल'}</div>
         </div>
       </div>
       <div class="public-header-actions">
@@ -37,7 +37,7 @@ function renderStatusView() {
   <div class="public-card">
     <div class="status-card-header">
       <div class="status-pill">🌾 ग्राहक सेवा</div>
-      <h1 class="status-title">पिसाई व टोकन स्टेटस</h1>
+      <h1 class="status-title">ऑर्डर व टोकन स्टेटस</h1>
       <p class="status-subtitle">रसीद का QR स्कैन करें या टोकन व फोन नंबर दर्ज करें</p>
     </div>
 
@@ -72,11 +72,11 @@ function renderStatusView() {
 
   <div class="public-switch-card">
     <div class="switch-info">
-      <b>चक्की या घानी संचालक हैं?</b>
-      <span>दुकान का हिसाब, लेज़र और टोकन बोर्ड खोलें</span>
+      <b>दुकानदार या व्यापारी हैं?</b>
+      <span>खाता, खरीद-बिक्री व टोकन बोर्ड खोलें</span>
     </div>
     <button type="button" class="btn btn-login-switch" data-act="auth-mode" data-mode="login">
-      🔐 दुकानदार लॉगिन ➔
+      🔐 व्यापारी लॉगिन ➔
     </button>
   </div>`;
 }
@@ -85,13 +85,13 @@ function renderShopkeeperAuthView(isLogin) {
   return `
   <div class="public-card">
     <div style="margin-bottom:14px;">
-      <button type="button" class="btn btn-sm btn-subtle" data-act="auth-mode" data-mode="status" style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;padding:6px 12px;border-radius:10px;font-weight:700;border:1.5px solid #cbd5e1;">
+      <button type="button" class="btn btn-sm btn-subtle" data-act="auth-mode" data-mode="status" style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;padding:6px 12px;border-radius:10px;font-weight:700;border:1.5px solid #cbd5e1;cursor:pointer;">
         <span>←</span> <span>ग्राहक स्टेटस चेक पर वापस जाएँ</span>
       </button>
     </div>
 
     <div class="status-card-header">
-      <div class="status-pill" style="background:#e0e7ff;color:#4338ca;">🏢 चक्की संचालक पोर्टल</div>
+      <div class="status-pill" style="background:#e0e7ff;color:#4338ca;">🏪 व्यापारी / संचालक पोर्टल</div>
       <h1 class="status-title">${isLogin ? t('welcomeBack') : t('addShop')}</h1>
       <p class="status-subtitle">${isLogin ? t('loginSub') : t('signupSub')}</p>
     </div>

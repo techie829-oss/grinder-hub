@@ -179,8 +179,13 @@ export function setupEventListeners() {
         break;
 
       case 'auth-mode':
-        state.auth.mode = el.dataset.mode === 'signup' ? 'signup' : 'login';
+        state.auth.mode = el.dataset.mode || 'login';
         state.auth.error = '';
+        if (state.auth.mode === 'status') {
+          try {
+            history.replaceState(null, '', window.location.pathname);
+          } catch (e) {}
+        }
         window.__appRender?.();
         break;
 

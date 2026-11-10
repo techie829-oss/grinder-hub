@@ -19,8 +19,8 @@ export function viewDashboard() {
     <button type="button" class="btn btn-soft" data-act="switch-job-tab" data-tab="grind" data-goto="job"
       style="padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;border-radius:14px;background:#fff;border:1.5px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.05);cursor:pointer;">
       <span style="font-size:20px;">⚙️</span>
-      <span style="font-weight:800;font-size:12.5px;color:#0f172a;">पिसाई बिल</span>
-      <span class="tiny muted" style="font-size:10.5px;">घटौती व टोकन</span>
+      <span style="font-weight:800;font-size:12.5px;color:#0f172a;">सुविधाएं / सेवा</span>
+      <span class="tiny muted" style="font-size:10.5px;">प्रोसेसिंग व टोकन</span>
     </button>
     <button type="button" class="btn btn-soft" data-act="switch-job-tab" data-tab="sale" data-goto="job"
       style="padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;border-radius:14px;background:#fff;border:1.5px solid #a7f3d0;box-shadow:0 1px 3px rgba(0,0,0,0.05);cursor:pointer;">
@@ -46,7 +46,7 @@ export function viewDashboard() {
     <div class="kpi accent">
       <div class="kpi-label">${label} कुल बिक्री</div>
       <div class="kpi-value">${inr(s.salePaise)}</div>
-      <div class="kpi-sub">${s.jobs || 0} पिसाई · ${s.sales || 0} माल बिक्री</div>
+      <div class="kpi-sub">${s.jobs || 0} सेवा कार्य · ${s.sales || 0} माल बिक्री</div>
     </div>
     <div class="kpi green">
       <div class="kpi-label">शुद्ध नकद गल्ला (Cash)</div>

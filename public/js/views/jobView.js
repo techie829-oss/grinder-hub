@@ -20,7 +20,7 @@ export function viewJob() {
   <div class="pos-header">
     <div class="pos-tabs">
       <button type="button" class="pos-tab ${currentTab === 'grind' ? 'is-active is-grind' : ''}" data-act="switch-job-tab" data-tab="grind">
-        <span>⚙️ पिसाई</span>
+        <span>⚙️ सुविधाएं / सेवा</span>
       </button>
       <button type="button" class="pos-tab ${currentTab === 'sale' ? 'is-active is-sale' : ''}" data-act="switch-job-tab" data-tab="sale">
         <span>🛒 बिक्री</span>
@@ -73,7 +73,7 @@ function renderGrindTab(data) {
 
     <!-- 1. Compact Service Grid -->
     <div class="pos-sec-head">
-      <span>⚙️ पिसाई सामग्री / सेवा</span>
+      <span>⚙️ सुविधा व सेवा चुनें (Services)</span>
     </div>
     <div class="service-grid pos-svc-grid">${serviceCards('job')}</div>
 
@@ -131,7 +131,7 @@ function renderGrindTab(data) {
         </div>
       </div>
       <div class="pos-bill-total is-grind">
-        <div class="pos-total-sub">कुल पिसाई बिल</div>
+        <div class="pos-total-sub">कुल सेवा बिल</div>
         <div class="pos-total-val" id="amount-preview">${inr(amountPaise)}</div>
       </div>
     </div>
