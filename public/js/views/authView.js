@@ -36,7 +36,12 @@ export function viewAuth() {
     </aside>
 
     <main class="auth-panel">
-      <div class="auth-lang-wrap">${langSelector()}</div>
+      <div class="auth-lang-wrap" style="display:flex;align-items:center;gap:10px;">
+        <a href="/chakkibook.apk" download="chakkibook.apk" class="btn btn-sm btn-apk-dl" title="Android ऐप डाउनलोड करें" style="background:linear-gradient(135deg, #10b981, #059669);color:#fff;font-weight:700;display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:10px;text-decoration:none;box-shadow:0 2px 8px rgba(16,185,129,0.25);font-size:12px;white-space:nowrap;">
+          <span>📥</span> <span>APK डाउनलोड</span>
+        </a>
+        ${langSelector()}
+      </div>
       <div class="auth-card">
         <h1>${isLogin ? t('welcomeBack') : t('addShop')}</h1>
         <p class="muted">${isLogin ? t('loginSub') : t('signupSub')}</p>

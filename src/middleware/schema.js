@@ -57,6 +57,9 @@ export async function ensureSchema(env) {
 
   // Businesses: Tenant management columns
   try {
+    await env.DB.exec("ALTER TABLE businesses ADD COLUMN email TEXT NOT NULL DEFAULT '';");
+  } catch (e) {}
+  try {
     await env.DB.exec("ALTER TABLE businesses ADD COLUMN status TEXT NOT NULL DEFAULT 'active';");
   } catch (e) {}
   try {

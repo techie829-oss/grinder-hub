@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS businesses (
   id             TEXT PRIMARY KEY,
   name           TEXT NOT NULL,
   phone          TEXT NOT NULL UNIQUE,
+  email          TEXT NOT NULL DEFAULT '',
   address        TEXT NOT NULL DEFAULT '',
   upi            TEXT NOT NULL DEFAULT '',
   note           TEXT NOT NULL DEFAULT '',

@@ -31,3 +31,4 @@ test('Super Admin Auth: Rejects request with invalid x-admin-key header', async 
   const auth = await isSuperAdmin(req, env);
   assert.equal(auth, false, 'Should be rejected with wrong key');
 });
+

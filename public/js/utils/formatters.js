@@ -65,7 +65,7 @@ export function todayTxt() {
 
 export function logoMark(size) {
   const s = size || 44;
-  return `<div class="logo-mark" style="width:${s}px;height:${s}px;font-size:${Math.round(s * 0.48)}px;border-radius:${Math.round(s * 0.3)}px">च</div>`;
+  return `<img src="/icon.svg" width="${s}" height="${s}" class="logo-mark" alt="चक्की बुक लोगो" style="width:${s}px;height:${s}px;border-radius:${Math.round(s * 0.28)}px;box-shadow:0 6px 18px rgba(245,158,11,0.3);flex:0 0 auto;object-fit:cover;border:none;">`;
 }
 
 export function emptyBlock(title, sub) {

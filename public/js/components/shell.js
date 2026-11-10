@@ -33,6 +33,9 @@ export function topbar() {
     </div>
     <div class="topbar-spacer"></div>
     <button type="button" id="sync-indicator" class="sync-badge" data-act="trigger-sync" title="Sync Status" style="margin-right:6px;border:none;background:none;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;gap:4px"></button>
+    <a href="/chakkibook.apk" download="chakkibook.apk" class="btn btn-sm btn-apk-dl" title="Android ऐप डाउनलोड करें" style="background:linear-gradient(135deg, #10b981, #059669);color:#fff;font-weight:700;display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:10px;text-decoration:none;box-shadow:0 2px 8px rgba(16,185,129,0.25);font-size:12px;white-space:nowrap;margin-right:6px;">
+      <span>📥</span> <span>APK डाउनलोड</span>
+    </a>
     <span class="pill-date">${todayTxt()}</span>
     ${langSelector()}
     <div class="topbar-cta">
