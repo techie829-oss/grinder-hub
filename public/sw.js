@@ -1,12 +1,10 @@
 // Service Worker for TolMaal (तौल-माल by Solidrix) PWA & Native App
-const CACHE_NAME = 'tolmaal-v2.5.3';
+const CACHE_NAME = 'tolmaal-v2.5.4';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/styles.css',
-  '/styles.css?v=2.4.5',
   '/app.js',
-  '/app.js?v=2.4.5',
   '/manifest.json',
   '/icon.svg',
   '/js/sync.js',
@@ -75,7 +73,7 @@ self.addEventListener('fetch', (event) => {
         return response;
       })
       .catch(() => {
-        return caches.match(event.request).then((cached) => {
+        return caches.match(event.request, { ignoreSearch: true }).then((cached) => {
           if (cached) return cached;
           if (event.request.mode === 'navigate') {
             return caches.match('/index.html');

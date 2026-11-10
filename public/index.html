@@ -12,7 +12,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="तौल-माल">
   <link rel="apple-touch-icon" href="/icon.svg">
-  <link rel="stylesheet" href="/styles.css?v=2.5.3">
+  <link rel="stylesheet" href="/styles.css?v=2.5.4">
 </head>
 <body>
   <div id="root" class="root">
@@ -24,61 +24,36 @@
   <div id="modal"></div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <div id="print" class="print-area"></div>
-  <script type="module" src="/app.js?v=2.5.3"></script>
+  <script type="module" src="/app.js?v=2.5.4"></script>
   <script>
     // Live Auto-Upgrade Engine: Automatic background download & instant activation without re-installing APK
     if ('serviceWorker' in navigator) {
       let refreshing = false;
+      // Only reload if a service worker was ALREADY controlling the page when it loaded.
+      // If controller is null on load, this is the first install / claim — DO NOT reload!
+      const hadController = Boolean(navigator.serviceWorker.controller);
 
-      // When a new service worker takes over, reload to apply the latest upgrade immediately
       navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (!refreshing) {
-          refreshing = true;
-          console.log('[TolMaal Auto-Upgrade] New server version activated, reloading...');
-          window.location.reload();
-        }
+        if (!hadController) return;
+        if (refreshing) return;
+        refreshing = true;
+        console.log('[TolMaal Auto-Upgrade] New server version activated, reloading...');
+        window.location.reload();
       });
 
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js?v=2.5.3').then((reg) => {
-          // Immediately check for updates on load
-          reg.update();
-
-          // Check for updates when user returns to app
-          document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible') {
-              reg.update();
-            }
-          });
-
-          // Periodic background check every 15 minutes
-          setInterval(() => {
-            reg.update();
-          }, 15 * 60 * 1000);
-        }).catch(() => {});
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
       });
     }
 
-    // Auto-recovery: If boot screen hangs for more than 3.5s due to stale browser cache, self-heal
+    // Safety fallback: only if the page completely fails to initialize after 12 seconds
     setTimeout(() => {
       const bootEl = document.querySelector('.boot');
-      if (bootEl && !window.__appBooted) {
-        console.warn('Boot freeze detected. Clearing stale cache and auto-reloading...');
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.getRegistrations().then(regs => {
-            for (let r of regs) r.unregister();
-          });
-        }
-        if ('caches' in window) {
-          caches.keys().then(keys => {
-            for (let k of keys) caches.delete(k);
-          });
-        }
-        setTimeout(() => {
-          window.location.search = '?fresh=' + Date.now();
-        }, 500);
+      if (bootEl && !window.__appBooted && !window.location.search.includes('fresh')) {
+        console.warn('[TolMaal] App boot slow, retrying cleanly...');
+        window.location.search = '?fresh=' + Date.now();
       }
-    }, 3500);
+    }, 12000);
   </script>
 </body>
 </html>

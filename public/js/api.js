@@ -119,17 +119,22 @@ export async function loadAdminData() {
 }
 
 export async function loadState(range) {
-  // If offline, boot instantly from cached local snapshot
-  if (!isOnline()) {
+  // 1. Instant hydration: if state.data is missing, load cached snapshot immediately
+  if (!state.data) {
     const cached = loadOfflineSnapshot();
-    if (cached) {
+    if (cached && cached.business) {
       state.data = cached;
       window.__appRender?.();
-      toast('Working Offline — Cached records loaded');
-      return { ok: true, state: cached };
     }
   }
 
+  // 2. If completely offline, we're done
+  if (!isOnline() && state.data) {
+    toast('Working Offline — Cached records loaded');
+    return { ok: true, state: state.data };
+  }
+
+  // 3. Fetch latest state from server and apply smoothly without full page refresh
   const data = await api('/api/state?range=' + encodeURIComponent(range || state.range));
   if (data && data.state) {
     applyState(data.state);
@@ -138,7 +143,7 @@ export async function loadState(range) {
     return data;
   }
 
-  // Network failed or offline fallback
+  // Fallback if network failed
   const cached = loadOfflineSnapshot();
   if (cached) {
     state.data = cached;
