@@ -174,7 +174,10 @@ export function setupEventListeners() {
             if (match) tokenNo = parseInt(match[1], 10);
           }
 
-          openStatusModal(tokenNo || '', phone || '');
+          const onPageTokenInput = document.getElementById('status-token-no');
+          if (!onPageTokenInput) {
+            openStatusModal(tokenNo || '', phone || '');
+          }
 
           if (tokenNo) {
             const phoneInput = document.getElementById('status-phone');
@@ -193,7 +196,8 @@ export function setupEventListeners() {
               }).then((r) => r.json()).catch(() => null);
               renderStatusResult(res);
             } else {
-              toast(`टोकन #${tokenNo} स्कैन हुआ! कृपया मोबाइल नंबर दर्ज करें।`);
+              toast(`टोकन #${tokenNo} स्कैन हुआ! कृपया अपना मोबाइल नंबर दर्ज करें।`);
+              if (phoneInput) phoneInput.focus();
             }
           } else {
             toast('QR कोड से टोकन नंबर नहीं मिल सका');

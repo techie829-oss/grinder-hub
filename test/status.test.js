@@ -27,3 +27,4 @@ test('Status API: Requires 10-digit phone number for unauthenticated lookup', as
   assert.equal(res.status, 400);
   assert.match(data.error, /10-अंकों का मोबाइल नंबर/);
 });
+

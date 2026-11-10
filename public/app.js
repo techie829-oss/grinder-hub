@@ -60,6 +60,12 @@ function handleHash() {
   if (window.location.hash === '#admin') {
     state.view = 'admin';
     window.__appRender?.();
+  } else if (window.location.hash === '#login') {
+    state.auth.mode = 'login';
+    window.__appRender?.();
+  } else if (window.location.hash === '#status') {
+    state.auth.mode = 'status';
+    window.__appRender?.();
   }
 }
 window.addEventListener('hashchange', handleHash);

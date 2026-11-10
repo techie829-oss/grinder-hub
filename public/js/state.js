@@ -78,7 +78,7 @@ export const state = {
     totalLossG: 0,
     netWeight: 0,
   },
-  auth: { mode: 'login', error: '' },
+  auth: { mode: 'status', error: '' },
   admin: {
     authenticated: false,
     key: '',
