@@ -57,6 +57,9 @@ export function topbar() {
     </div>
     <div class="topbar-spacer"></div>
     <button type="button" id="sync-indicator" class="sync-badge" data-act="trigger-sync" title="Sync Status" style="margin-right:2px;border:none;background:none;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;gap:4px"></button>
+    <button type="button" class="btn btn-sm btn-subtle" data-act="goto" data-view="reports" title="दैनिक रिपोर्ट" style="border:1.5px solid #cbd5e1;padding:5px 9px;border-radius:10px;font-weight:700;display:inline-flex;align-items:center;gap:4px;font-size:12px;margin-right:4px;background:#fff;flex:0 0 auto;">
+      <span>📊</span> <span>रिपोर्ट</span>
+    </button>
     <button type="button" class="btn btn-sm btn-subtle btn-topbar-status" data-act="open-status-modal" title="टोकन व पिसाई स्टेटस देखें" style="border:1.5px solid #cbd5e1;padding:5px 9px;border-radius:10px;font-weight:700;display:inline-flex;align-items:center;gap:4px;font-size:12px;margin-right:4px;background:#fff;flex:0 0 auto;">
       <span>🔍</span> <span class="hide-mobile">स्टेटस</span>
     </button>
@@ -73,8 +76,8 @@ export function topbar() {
 }
 
 export function viewShell(content) {
-  const d = state.data;
-  const waiting = d.tokens.waiting.length;
+  const d = state.data || {};
+  const waiting = (d.tokens && d.tokens.waiting) ? d.tokens.waiting.length : 0;
   return `
   <div class="shell">
     <aside class="side">

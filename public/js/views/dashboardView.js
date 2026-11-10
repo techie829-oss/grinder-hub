@@ -34,6 +34,12 @@ export function viewDashboard() {
       <span style="font-weight:800;font-size:12.5px;color:#d97706;">कच्चा माल खरीद</span>
       <span class="tiny muted" style="font-size:10.5px;">सरसों, गेहूँ, फसल</span>
     </button>
+    <button type="button" class="btn btn-soft" data-act="goto" data-view="reports"
+      style="padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;border-radius:14px;background:#fff;border:1.5px solid #cbd5e1;box-shadow:0 1px 3px rgba(0,0,0,0.05);cursor:pointer;">
+      <span style="font-size:20px;">📊</span>
+      <span style="font-weight:800;font-size:12.5px;color:#334155;">दैनिक रिपोर्ट</span>
+      <span class="tiny muted" style="font-size:10.5px;">हिसाब व बहीखाता</span>
+    </button>
   </div>
 
   <div class="kpis mt-14">

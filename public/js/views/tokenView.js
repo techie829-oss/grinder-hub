@@ -1,11 +1,13 @@
 import { state } from '../state.js';
 import { tokenCard } from '../components/tokenCard.js';
 import { serviceCards, queueRow } from '../components/rows.js';
-import { emptyBlock } from '../utils/formatters.js';
+import { emptyBlock, esc } from '../utils/formatters.js';
 import { t } from '../i18n.js';
 
 export function viewTokens() {
-  const tObj = state.data.tokens;
+  const tObj = state.data?.tokens || { total: 0, waiting: [], done: 0, doneList: [], nextNo: 1, serving: null };
+  const waitingList = tObj.waiting || [];
+  const doneList = tObj.doneList || [];
   return `
   ${tokenCard()}
 
@@ -41,27 +43,27 @@ export function viewTokens() {
     <section class="card">
       <div class="section-head">
         <h2 class="section-title">${t('todayQueue')}</h2>
-        <span class="muted">${tObj.waiting.length} ${t('inLine')}</span>
+        <span class="muted">${waitingList.length} ${t('inLine')}</span>
       </div>
       <div class="row-list">
         ${tObj.serving ? queueRow(tObj.serving, true) : ''}
-        ${tObj.waiting.map((x) => queueRow(x, false)).join('')}
-        ${tObj.serving || tObj.waiting.length ? '' : emptyBlock(t('queueEmpty'), t('queueEmptySub'))}
+        ${waitingList.map((x) => queueRow(x, false)).join('')}
+        ${tObj.serving || waitingList.length ? '' : emptyBlock(t('queueEmpty'), t('queueEmptySub'))}
       </div>
       ${tObj.done ? `<p class="tiny mt-8">${t('tokenDoneToday', { n: tObj.done })}</p>` : ''}
     </section>
   </div>
 
-  ${(tObj.doneList && tObj.doneList.length) ? `
+  ${(doneList.length) ? `
   <section class="card mt-14" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:16px;padding:16px;">
     <div class="section-head" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
       <h2 class="section-title" style="display:flex;align-items:center;gap:6px;color:#15803d;font-size:15px;margin:0;">
-        <span>✅</span> <span>आज पूरे हुए टोकन व काम (${tObj.doneList.length})</span>
+        <span>✅</span> <span>आज पूरे हुए टोकन व काम (${doneList.length})</span>
       </h2>
       <span class="tiny-chip" style="background:#dcfce7;color:#15803d;font-weight:700;">पूर्ण / Completed</span>
     </div>
     <div class="row-list">
-      ${tObj.doneList.map((tok) => `
+      ${doneList.map((tok) => `
         <div class="row-item" style="padding:10px 4px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:10px;">
           <span class="token-badge" style="width:36px;height:36px;border-radius:10px;background:#e0e7ff;color:#3730a3;font-weight:800;font-size:14px;display:grid;place-items:center;flex-shrink:0;">#${tok.no}</span>
           <div class="grow" style="min-width:0;">

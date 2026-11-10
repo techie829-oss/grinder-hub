@@ -531,6 +531,7 @@ export function setupEventListeners() {
         });
         break;
 
+      case 'token-next':
       case 'token-call-next': {
         const next = state.data.tokens.waiting[0];
         if (!next) {
