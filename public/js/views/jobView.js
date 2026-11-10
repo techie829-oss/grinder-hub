@@ -1,5 +1,5 @@
 // New Order / Job View (Grinding Processing, Product Sales, Raw Material Purchases)
-import { state, TRADE_SALE_PRESETS, TRADE_PURCHASE_PRESETS } from '../state.js';
+import { state } from '../state.js';
 import { inr, unitOf, esc, qtyFmt } from '../utils/formatters.js';
 import { serviceCards } from '../components/rows.js';
 import { t } from '../i18n.js';
@@ -250,12 +250,12 @@ function renderSaleTab(data) {
 
   // Dynamic user-defined products for sale
   const customProducts = (data.products || []).filter((p) => p.type === 'sale' || p.type === 'both');
-  const presets = customProducts.length ? customProducts.map((p) => ({
+  const presets = customProducts.map((p) => ({
     item: p.name,
     unit: p.unit,
     rate: p.defaultRatePaise ? p.defaultRatePaise / 100 : '',
     icon: '📦',
-  })) : TRADE_SALE_PRESETS;
+  }));
 
   const matchedCustomer = data.customers.find((c) => {
     if (!trade.name) return false;
@@ -277,6 +277,7 @@ function renderSaleTab(data) {
       <button type="button" class="btn btn-sm btn-ghost" data-act="open-product-modal" data-type="sale" style="font-size:12px;color:#059669;font-weight:700;">+ नया सामान जोड़ें</button>
     </div>
 
+    ${presets.length ? `
     <div class="trade-presets-grid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(130px, 1fr));gap:8px;margin-bottom:14px;">
       ${presets.map((p) => `
         <button type="button" class="btn btn-soft trade-preset-btn ${trade.item === p.item ? 'is-active' : ''}"
@@ -286,7 +287,13 @@ function renderSaleTab(data) {
           <span style="color:#64748b;font-size:11px;">${p.rate ? inr(p.rate * 100) + ' / ' + unitOf(p.unit) : unitOf(p.unit)}</span>
         </button>
       `).join('')}
-    </div>
+    </div>` : `
+    <div style="background:#f8fafc;border:1px dashed #cbd5e1;border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+      <div style="font-size:12px;color:#64748b;">
+        <span>📦 अभी कोई सामान सेव नहीं है। नीचे नाम लिखकर बेचें या <strong>+ नया सामान जोड़ें</strong>।</span>
+      </div>
+      <button type="button" class="btn btn-sm btn-soft" data-act="open-product-modal" data-type="sale" style="font-size:11px;font-weight:700;color:#059669;white-space:nowrap;">+ नया सामान</button>
+    </div>`}
 
     <div class="two-col">
       <div class="field">
@@ -421,12 +428,12 @@ function renderPurchaseTab(data) {
 
   // Dynamic user-defined products for purchase
   const customProducts = (data.products || []).filter((p) => p.type === 'purchase' || p.type === 'both');
-  const presets = customProducts.length ? customProducts.map((p) => ({
+  const presets = customProducts.map((p) => ({
     item: p.name,
     unit: p.unit,
     rate: p.defaultRatePaise ? p.defaultRatePaise / 100 : '',
     icon: '🌾',
-  })) : TRADE_PURCHASE_PRESETS;
+  }));
 
   const matchedCustomer = data.customers.find((c) => {
     if (!trade.name) return false;
@@ -448,6 +455,7 @@ function renderPurchaseTab(data) {
       <button type="button" class="btn btn-sm btn-ghost" data-act="open-product-modal" data-type="purchase" style="font-size:12px;color:#d97706;font-weight:700;">+ नया आइटम जोड़ें</button>
     </div>
 
+    ${presets.length ? `
     <div class="trade-presets-grid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(130px, 1fr));gap:8px;margin-bottom:14px;">
       ${presets.map((p) => `
         <button type="button" class="btn btn-soft trade-preset-btn ${trade.item === p.item ? 'is-active' : ''}"
@@ -457,7 +465,13 @@ function renderPurchaseTab(data) {
           <span style="color:#64748b;font-size:11px;">${p.rate ? inr(p.rate * 100) + ' / ' + unitOf(p.unit) : unitOf(p.unit)}</span>
         </button>
       `).join('')}
-    </div>
+    </div>` : `
+    <div style="background:#f8fafc;border:1px dashed #cbd5e1;border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
+      <div style="font-size:12px;color:#64748b;">
+        <span>🌾 अभी कोई फसल सेव नहीं है। नीचे नाम लिखकर खरीदें या <strong>+ नई फसल जोड़ें</strong>।</span>
+      </div>
+      <button type="button" class="btn btn-sm btn-soft" data-act="open-product-modal" data-type="purchase" style="font-size:11px;font-weight:700;color:#d97706;white-space:nowrap;">+ नई फसल</button>
+    </div>`}
 
     <div class="two-col">
       <div class="field">
