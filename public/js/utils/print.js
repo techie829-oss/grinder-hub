@@ -45,3 +45,36 @@ export function printReceipt(entry) {
     </div>`;
   window.print();
 }
+
+export function printTokenReceipt(tokenRow) {
+  if (!tokenRow) return;
+  const biz = state.data?.business || { name: 'तौल-माल (TolMaal)' };
+  const svc = tokenRow.serviceId ? state.data.services.find((s) => s.id === tokenRow.serviceId) : null;
+  const svcName = svc ? svc.name : (tokenRow.serviceName || 'सुविधा / सेवा');
+  const unit = svc ? unitOf(svc.unit) : 'kg';
+  const gross = tokenRow.grossWeight || 0;
+  const lossG = tokenRow.lossG || 0;
+  const net = tokenRow.netWeight || gross;
+
+  printEl.innerHTML = `
+    <div class="receipt">
+      <div class="r-shop">${esc(biz.name)}</div>
+      ${biz.address ? `<div class="r-sub">${esc(biz.address)}</div>` : ''}
+      ${biz.phone ? `<div class="r-sub">Ph: ${esc(biz.phone)}</div>` : ''}
+      <div class="r-line"></div>
+      <div style="text-align:center;font-size:14px;font-weight:700;margin:4px 0;">टोकन पर्ची (TOKEN SLIP)</div>
+      <div style="text-align:center;font-size:32px;font-weight:900;letter-spacing:1px;margin:6px 0;">#${tokenRow.no}</div>
+      <div class="r-line"></div>
+      <div class="r-row"><span>तारीख व समय</span><span>${dateTxt(tokenRow.at)} ${timeTxt(tokenRow.at)}</span></div>
+      <div class="r-row"><span>ग्राहक</span><span>${esc(tokenRow.name)}${tokenRow.village ? ' (' + esc(tokenRow.village) + ')' : ''}</span></div>
+      ${tokenRow.phone ? `<div class="r-row"><span>मोबाइल</span><span>${esc(tokenRow.phone)}</span></div>` : ''}
+      <div class="r-row"><span>सामग्री / सेवा</span><span>${esc(svcName)}</span></div>
+      <div class="r-line"></div>
+      ${gross > 0 ? `<div class="r-row"><span>कुल आवक वजन</span><span>${qtyFmt(gross)} ${unit}</span></div>` : ''}
+      ${lossG > 0 ? `<div class="r-row"><span>काट / घटौती</span><span>-${lossG} g</span></div>` : ''}
+      ${net > 0 ? `<div class="r-row" style="font-size:14px;font-weight:800;"><span>शुद्ध वापसी माल</span><span>${qtyFmt(net)} ${unit}</span></div>` : ''}
+      <div class="r-line"></div>
+      <div class="r-thanks" style="text-align:center;margin-top:8px;">सामान लेते समय यह पर्ची दिखाएं। धन्यवाद!</div>
+    </div>`;
+  window.print();
+}

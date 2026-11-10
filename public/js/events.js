@@ -46,6 +46,37 @@ export function recalcJob() {
   if (netPreview) netPreview.textContent = netWeight ? `${netWeight.toFixed(3)} ${unit}` : `0 ${unit}`;
 }
 
+export function recalcToken() {
+  const qtyEl = document.getElementById('t-qty');
+  const lossRateEl = document.getElementById('t-loss-rate');
+  const grossPreview = document.getElementById('t-gross-preview');
+  const lossPreview = document.getElementById('t-loss-preview');
+  const netPreview = document.getElementById('t-net-preview');
+  const estPreview = document.getElementById('t-est-preview');
+
+  if (!qtyEl) return;
+  const svc = (state.data?.services || []).find((s) => s.id === state.tokenForm.serviceId);
+  const unit = svc ? unitOf(svc.unit) : 'kg';
+
+  const grossWeight = Number(qtyEl.value) || 0;
+  const lossRateVal = lossRateEl ? (Number(lossRateEl.value) || 0) : (svc ? Number(svc.lossRateG || 0) : 0);
+
+  state.tokenForm.qty = qtyEl.value;
+  state.tokenForm.lossRateG = lossRateEl ? lossRateEl.value : String(lossRateVal);
+
+  const totalLossG = svc && svc.unit === 'kg' ? Math.round(grossWeight * lossRateVal) : 0;
+  const netWeight = svc && svc.unit === 'kg' ? Math.max(0, grossWeight - (totalLossG / 1000)) : grossWeight;
+  const estAmountPaise = svc ? Math.round(grossWeight * svc.ratePaise) : 0;
+
+  state.tokenForm.totalLossG = totalLossG;
+  state.tokenForm.netWeight = netWeight;
+
+  if (grossPreview) grossPreview.textContent = grossWeight ? `${grossWeight} ${unit}` : `0 ${unit}`;
+  if (lossPreview) lossPreview.textContent = totalLossG ? `-${totalLossG} g` : '0 g';
+  if (netPreview) netPreview.textContent = netWeight ? `${netWeight.toFixed(3).replace(/\.?0+$/, '')} ${unit}` : `0 ${unit}`;
+  if (estPreview) estPreview.textContent = inr(estAmountPaise);
+}
+
 export function pickService(target, id) {
   const svc = state.data.services.find((s) => s.id === id);
   if (!svc) return;
@@ -77,6 +108,18 @@ export function pickService(target, id) {
     document.querySelectorAll('[data-act="pick-svc"][data-target="token"]').forEach((b) => {
       b.classList.toggle('is-on', b.dataset.id === id);
     });
+
+    const qtyLabel = document.getElementById('t-qty-label');
+    const lossLabel = document.getElementById('t-loss-rate-label');
+    const lossInput = document.getElementById('t-loss-rate');
+
+    if (qtyLabel) qtyLabel.innerHTML = `कुल आवक वज़न (${unitOf(svc.unit)}) *`;
+    if (lossLabel) lossLabel.textContent = `काट / घटौती दर (g/${unitOf(svc.unit)})`;
+    if (lossInput && svc.lossRateG !== undefined) {
+      lossInput.value = svc.lossRateG || 0;
+      state.tokenForm.lossRateG = String(svc.lossRateG || 0);
+    }
+    recalcToken();
   }
 }
 
@@ -155,6 +198,18 @@ export function setupEventListeners() {
       ev.target.style.display = 'none';
       if (btnTxt) btnTxt.textContent = 'ग्राहक का फोटो खींचें';
       toast('फोटो हटाई गई');
+      return;
+    }
+
+    const lossPreset = ev.target.closest('.token-loss-preset');
+    if (lossPreset) {
+      const loss = lossPreset.dataset.loss;
+      const lossInput = document.getElementById('t-loss-rate');
+      if (lossInput) {
+        lossInput.value = loss;
+        state.tokenForm.lossRateG = loss;
+        recalcToken();
+      }
       return;
     }
 
@@ -329,12 +384,20 @@ export function setupEventListeners() {
 
       // --- Hardware & Machine Automation Actions ---
       case 'hw-scale-ocr': {
+        const target = el.dataset.target || (state.view === 'token' ? 'token' : 'job');
         const { openScaleOcrModal } = await import('./hardware/hardwareModal.js');
         openScaleOcrModal((lockedWeight) => {
-          state.job.qty = String(lockedWeight);
-          const qtyInput = document.getElementById('j-qty');
-          if (qtyInput) qtyInput.value = state.job.qty;
-          recalcJob();
+          if (target === 'token') {
+            state.tokenForm.qty = String(lockedWeight);
+            const qtyInput = document.getElementById('t-qty');
+            if (qtyInput) qtyInput.value = state.tokenForm.qty;
+            recalcToken();
+          } else {
+            state.job.qty = String(lockedWeight);
+            const qtyInput = document.getElementById('j-qty');
+            if (qtyInput) qtyInput.value = state.job.qty;
+            recalcJob();
+          }
           toast(`Scale reading locked: ${lockedWeight} kg ✓`);
         });
         break;
@@ -451,7 +514,8 @@ export function setupEventListeners() {
       case 'token-notify-wa': {
         const tok = state.data.tokens.serving?.id === el.dataset.id
           ? state.data.tokens.serving
-          : state.data.tokens.waiting.find((x) => x.id === el.dataset.id);
+          : (state.data.tokens.waiting.find((x) => x.id === el.dataset.id) ||
+             (state.data.tokens.doneList || []).find((x) => x.id === el.dataset.id));
         if (tok) {
           const { sendAataReadyNotification } = await import('./hardware/whatsappNotify.js');
           sendAataReadyNotification(tok);
@@ -459,10 +523,23 @@ export function setupEventListeners() {
         break;
       }
 
+      case 'token-share-wa': {
+        const tok = state.data.tokens.serving?.id === el.dataset.id
+          ? state.data.tokens.serving
+          : (state.data.tokens.waiting.find((x) => x.id === el.dataset.id) ||
+             (state.data.tokens.doneList || []).find((x) => x.id === el.dataset.id));
+        if (tok) {
+          const { sendTokenIssuedNotification } = await import('./hardware/whatsappNotify.js');
+          sendTokenIssuedNotification(tok);
+        }
+        break;
+      }
+
       case 'token-print-pos': {
         const tok = state.data.tokens.serving?.id === el.dataset.id
           ? state.data.tokens.serving
-          : state.data.tokens.waiting.find((x) => x.id === el.dataset.id);
+          : (state.data.tokens.waiting.find((x) => x.id === el.dataset.id) ||
+             (state.data.tokens.doneList || []).find((x) => x.id === el.dataset.id));
         if (tok) {
           const { printThermalToken, isPrinterConnected } = await import('./hardware/thermalPrinter.js');
           if (isPrinterConnected()) {
@@ -473,16 +550,8 @@ export function setupEventListeners() {
               toast('Printer error: ' + err.message);
             }
           } else {
-            printReceipt({
-              kind: 'token',
-              name: tok.name,
-              village: tok.village,
-              tokenNo: tok.no,
-              qty: tok.grossWeight,
-              lossG: tok.lossG,
-              netWeight: tok.netWeight,
-              at: tok.at,
-            });
+            const { printTokenReceipt } = await import('./utils/print.js');
+            printTokenReceipt(tok);
           }
         }
         break;
@@ -599,8 +668,15 @@ export function setupEventListeners() {
           }
         }
         if (tok.grossWeight) state.job.qty = String(tok.grossWeight);
+        if (tok.grossWeight && tok.lossG) {
+          state.job.lossRateG = String(Math.round(tok.lossG / tok.grossWeight));
+        }
+        state.job.totalLossG = tok.lossG || 0;
+        state.job.netWeight = tok.netWeight || tok.grossWeight || 0;
         state.jobTab = 'grind';
+        closeModal();
         goTo('job');
+        setTimeout(() => recalcJob(), 50);
         break;
       }
 
@@ -1063,6 +1139,40 @@ export function setupEventListeners() {
         }
       }
     }
+
+    // Live calculation & customer lookup for Token Form
+    if (tEl.id === 't-qty' || tEl.id === 't-loss-rate') {
+      recalcToken();
+    }
+
+    if (tEl.id === 't-name' || tEl.id === 't-village' || tEl.id === 't-phone') {
+      const rawName = (document.getElementById('t-name')?.value || '').trim();
+      const rawVillage = (document.getElementById('t-village')?.value || '').trim();
+      state.tokenForm.name = rawName;
+      state.tokenForm.village = rawVillage;
+      state.tokenForm.phone = (document.getElementById('t-phone')?.value || '').trim();
+
+      if (rawName && state.data?.customers) {
+        const match = state.data.customers.find((c) => {
+          const nameMatch = c.name.toLowerCase() === rawName.toLowerCase();
+          if (!nameMatch) return false;
+          if (rawVillage) return (c.village || '').toLowerCase() === rawVillage.toLowerCase();
+          return true;
+        });
+        if (match) {
+          const villageInput = document.getElementById('t-village');
+          const phoneInput = document.getElementById('t-phone');
+          if (villageInput && !villageInput.value && match.village) {
+            villageInput.value = match.village;
+            state.tokenForm.village = match.village;
+          }
+          if (phoneInput && !phoneInput.value && match.phone) {
+            phoneInput.value = match.phone;
+            state.tokenForm.phone = match.phone;
+          }
+        }
+      }
+    }
   });
 
   // Global form submit handler
@@ -1322,10 +1432,21 @@ export function setupEventListeners() {
       await withBusy(form.querySelector('[type="submit"]'), async () => {
         const name = String(fd.get('name') || '').trim();
         const village = String(fd.get('village') || '').trim();
+        const phone = String(fd.get('phone') || '').trim();
+        const qty = parseFloat(fd.get('qty')) || 0;
+        const lossRateG = parseFloat(fd.get('lossRateG')) || 0;
+        const totalLossG = qty > 0 ? Math.round(qty * lossRateG) : 0;
+        const netWeight = qty > 0 ? Math.max(0, qty - (totalLossG / 1000)) : 0;
+
         const payload = {
           serviceId: state.tokenForm.serviceId,
           name,
           village,
+          phone,
+          grossWeight: qty,
+          lossRateG,
+          totalLossG,
+          netWeight,
         };
 
         const data = await api('/api/tokens', payload);
@@ -1334,29 +1455,43 @@ export function setupEventListeners() {
           state.data.tokens.nextNo += 1;
           enqueueOfflineAction('token', { ...payload, no: nextNo, at: Date.now() });
 
-          state.data.tokens.waiting.push({
+          const offTok = {
             id: 'offline-' + crypto.randomUUID(),
             no: nextNo,
             name: name || 'Customer',
             village: village || '',
+            phone: phone || '',
             serviceId: payload.serviceId,
-            grossWeight: 0,
-            lossG: 0,
-            netWeight: 0,
+            grossWeight: qty,
+            lossG: totalLossG,
+            netWeight: netWeight,
             status: 'waiting',
             at: Date.now(),
-          });
+          };
+          state.data.tokens.waiting.push(offTok);
 
           saveOfflineSnapshot(state.data);
           form.reset();
+          state.tokenForm.name = '';
+          state.tokenForm.village = '';
+          state.tokenForm.phone = '';
+          state.tokenForm.qty = '';
           window.__appRender?.();
+          const { openTokenReceiptModal } = await import('./components/modals.js');
+          openTokenReceiptModal(offTok);
           toast(`Token #${nextNo} issued (offline)`);
           return;
         }
 
-        if (data) {
+        if (data && data.ok) {
           applyState(data.state);
           form.reset();
+          state.tokenForm.name = '';
+          state.tokenForm.village = '';
+          state.tokenForm.phone = '';
+          state.tokenForm.qty = '';
+          const { openTokenReceiptModal } = await import('./components/modals.js');
+          openTokenReceiptModal(data.token);
           toast(`Token #${data.token.no} issued ✓`);
         }
       });

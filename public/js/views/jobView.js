@@ -190,7 +190,7 @@ function renderGrindTab(data) {
 
     <!-- 7. Note & Token checkbox -->
     <div class="pos-field" style="margin-bottom:6px;">
-      <input id="j-note" name="note" maxlength="120" value="${esc(job.note)}" placeholder="नोट (वैकल्पिक e.g. बारीक पिसाई, सूखा गेहूँ)">
+      <input id="j-note" name="note" maxlength="120" value="${esc(job.note)}" placeholder="नोट (वैकल्पिक e.g. बारीक, सूखा माल)">
     </div>
 
     ${job.tokenNo ? '' : `

@@ -104,9 +104,9 @@ function viewAdminDashboard() {
       </div>
 
       <div style="background:#fff;padding:18px;border-radius:16px;border:1px solid #e2e8f0;box-shadow:0 2px 6px rgba(0,0,0,0.03);">
-        <div style="font-size:12px;color:#64748b;font-weight:700;margin-bottom:6px;">⚖️ कुल पिसाई वज़न</div>
+        <div style="font-size:12px;color:#64748b;font-weight:700;margin-bottom:6px;">⚖️ कुल प्रोसेस वज़न</div>
         <div style="font-size:26px;font-weight:800;color:#4338ca;">${m.totalWeightKg >= 1000 ? (m.totalWeightKg / 1000).toFixed(2) + ' टन' : m.totalWeightKg.toFixed(1) + ' kg'}</div>
-        <div style="font-size:11.5px;color:#64748b;margin-top:4px;">${m.totalJobs} पिसाई काम पूरे</div>
+        <div style="font-size:11.5px;color:#64748b;margin-top:4px;">${m.totalJobs} सेवा काम पूरे</div>
       </div>
 
       <div style="background:#fff;padding:18px;border-radius:16px;border:1px solid #e2e8f0;box-shadow:0 2px 6px rgba(0,0,0,0.03);">
@@ -195,7 +195,7 @@ function viewAdminDashboard() {
                 </div>
                 <div style="text-align:center;">
                   <div style="font-weight:800;font-size:15px;color:#4338ca;">${t.totalWeightKg.toFixed(1)} kg</div>
-                  <div style="font-size:11px;color:#64748b;">पिसाई</div>
+                  <div style="font-size:11px;color:#64748b;">प्रोसेस माल</div>
                 </div>
                 <div style="text-align:center;">
                   <div style="font-weight:800;font-size:15px;color:#059669;">${inr(t.totalRevenuePaise)}</div>

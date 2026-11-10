@@ -442,3 +442,87 @@ export function openProductModal(productId = null, defaultType = 'both') {
   `);
 }
 
+export function openTokenReceiptModal(tok) {
+  const biz = state.data?.business || { name: 'तौल-माल' };
+  const svc = tok.serviceId ? state.data?.services?.find((s) => s.id === tok.serviceId) : null;
+  const svcName = svc ? svc.name : (tok.serviceName || 'सुविधा / सेवा');
+  const unit = svc ? unitOf(svc.unit) : 'kg';
+  const gross = tok.grossWeight || 0;
+  const lossG = tok.lossG || 0;
+  const net = tok.netWeight || gross;
+  const estAmountPaise = (gross && svc) ? Math.round(gross * svc.ratePaise) : 0;
+
+  showModal(`
+    <div class="sheet-head" style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e2e8f0;padding-bottom:12px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:26px;">🎫</span>
+        <div>
+          <div class="sheet-title" style="font-size:18px;font-weight:800;color:#0f172a;">टोकन पर्ची जारी हुई</div>
+          <div style="font-size:12px;color:#64748b;">${esc(biz.name)} · ग्राहक माल जमा रसीद</div>
+        </div>
+      </div>
+      <button type="button" class="icon-btn" data-act="close-modal" aria-label="Close">✕</button>
+    </div>
+
+    <!-- Token Hero Number -->
+    <div style="background:linear-gradient(135deg, #1e1b4b, #312e81);color:#fff;border-radius:14px;padding:16px;text-align:center;margin-bottom:16px;box-shadow:0 4px 14px rgba(49,46,129,0.25);">
+      <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;opacity:0.85;font-weight:700;">टोकन नंबर (Token Number)</div>
+      <div style="font-size:42px;font-weight:900;line-height:1.1;margin:4px 0;letter-spacing:2px;color:#fbbf24;">#${tok.no}</div>
+      <div style="font-size:14.5px;font-weight:700;color:#e0e7ff;margin-top:4px;">
+        ${esc(tok.name)}${tok.village ? ` (${esc(tok.village)})` : ''}
+      </div>
+      ${tok.phone ? `<div style="font-size:12px;color:#a5b4fc;margin-top:2px;">📞 ${esc(tok.phone)}</div>` : ''}
+    </div>
+
+    <!-- Weight & Deduction Summary Grid -->
+    <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:12px;margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:8px;border-bottom:1px solid #e2e8f0;margin-bottom:8px;font-size:13px;">
+        <span style="color:#64748b;font-weight:600;">सामग्री / सेवा:</span>
+        <span style="font-weight:750;color:#0f172a;">${esc(svcName)}</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:8px;text-align:center;">
+        <div style="background:#fff;border:1px solid #cbd5e1;border-radius:8px;padding:8px 4px;">
+          <div style="font-size:11px;color:#64748b;font-weight:700;">आवक वजन</div>
+          <div style="font-size:15px;font-weight:800;color:#0f172a;margin-top:2px;">${gross ? qtyFmt(gross) + ' ' + unit : '—'}</div>
+        </div>
+        <div style="background:#fff;border:1px solid #cbd5e1;border-radius:8px;padding:8px 4px;">
+          <div style="font-size:11px;color:#ea580c;font-weight:700;">काट / घटौती</div>
+          <div style="font-size:15px;font-weight:800;color:#ea580c;margin-top:2px;">${lossG ? '-' + lossG + 'g' : '0g'}</div>
+        </div>
+        <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:8px;padding:8px 4px;">
+          <div style="font-size:11px;color:#15803d;font-weight:800;">शुद्ध वापसी माल</div>
+          <div style="font-size:16px;font-weight:900;color:#15803d;margin-top:2px;">${net ? qtyFmt(net) + ' ' + unit : '—'}</div>
+        </div>
+      </div>
+
+      ${estAmountPaise > 0 ? `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:8px;border-top:1px dashed #cbd5e1;font-size:13px;">
+          <span style="color:#64748b;font-weight:600;">अनुमानित सेवा शुल्क:</span>
+          <span style="font-size:15px;font-weight:800;color:#1e293b;">${inr(estAmountPaise)}</span>
+        </div>
+      ` : ''}
+    </div>
+
+    <!-- Action Buttons -->
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <button type="button" class="btn btn-soft" data-act="token-print-pos" data-id="${tok.id}" style="padding:10px;font-weight:750;display:inline-flex;align-items:center;justify-content:center;gap:6px;">
+          <span>🖨️</span> <span>पर्ची प्रिंट</span>
+        </button>
+        <button type="button" class="btn btn-soft" data-act="token-share-wa" data-id="${tok.id}" style="padding:10px;font-weight:750;display:inline-flex;align-items:center;justify-content:center;gap:6px;background:#dcfce7;color:#15803d;border:1px solid #86efac;">
+          <span>💬</span> <span>WhatsApp पर्ची</span>
+        </button>
+      </div>
+
+      <button type="button" class="btn btn-primary" data-act="token-to-job" data-id="${tok.id}" style="padding:12px;font-weight:800;font-size:14px;display:inline-flex;align-items:center;justify-content:center;gap:6px;">
+        <span>🧾</span> <span>अभी बिल बनाएं व डिलीवर करें</span>
+      </button>
+
+      <button type="button" class="btn btn-ghost" data-act="close-modal" style="padding:8px;font-weight:700;color:#64748b;">
+        ✕ बंद करें (टोकन कतार में सेव है)
+      </button>
+    </div>
+  `);
+}
+
