@@ -50,27 +50,31 @@ export function topbar() {
   const titleKey = TITLES[state.view] || 'navHome';
   return `
   <header class="topbar">
-    <div class="mobile-brand" style="flex:0 0 auto;">${logoMark(34)}</div>
-    <div class="topbar-info" style="min-width:0;flex:1 1 auto;">
-      <div class="topbar-title ellipsis" style="font-size:15px;font-weight:800;color:#0f172a;line-height:1.2;">${esc(d.business.name)}</div>
-      <div class="topbar-sub ellipsis" style="font-size:11px;color:#64748b;line-height:1.2;">${t('appName')} · ${t(titleKey)}</div>
+    <div class="topbar-brand-wrap" style="display:flex;align-items:center;gap:8px;min-width:0;flex:0 1 auto;">
+      <div class="mobile-brand" style="flex:0 0 auto;">${logoMark(28)}</div>
+      <div class="topbar-info" style="min-width:0;line-height:1.15;">
+        <div class="topbar-title" style="font-size:14px;font-weight:800;color:#0f172a;letter-spacing:-0.2px;white-space:nowrap;">${t('appName')}</div>
+        <div class="topbar-sub" style="font-size:10.5px;color:#64748b;font-weight:600;white-space:nowrap;">${t(titleKey)}</div>
+      </div>
     </div>
     <div class="topbar-spacer"></div>
-    <button type="button" id="sync-indicator" class="sync-badge" data-act="trigger-sync" title="Sync Status" style="margin-right:2px;border:none;background:none;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;gap:4px"></button>
-    <button type="button" class="btn btn-sm btn-subtle btn-topbar-refresh" data-act="hard-refresh" title="डेटा ताज़ा करें व फॉर्म रीसेट करें (Hard Refresh)" style="border:1.5px solid #cbd5e1;padding:5px 9px;border-radius:10px;font-weight:700;display:inline-flex;align-items:center;gap:4px;font-size:12px;margin-right:4px;background:#fff;flex:0 0 auto;">
-      <span class="refresh-icon" style="font-size:13px;display:inline-block;">🔄</span> <span>रिफ्रेश</span>
-    </button>
-    <button type="button" class="btn btn-sm btn-subtle btn-topbar-status" data-act="open-status-modal" title="टोकन व ऑर्डर स्टेटस देखें" style="border:1.5px solid #cbd5e1;padding:5px 9px;border-radius:10px;font-weight:700;display:inline-flex;align-items:center;gap:4px;font-size:12px;margin-right:4px;background:#fff;flex:0 0 auto;">
-      <span>🔍</span> <span class="hide-mobile">स्टेटस</span>
-    </button>
-    <a href="/tolmaal.apk" download="tolmaal.apk" class="btn btn-sm btn-apk-dl hide-mobile" title="TolMaal Android App (.apk) डाउनलोड करें" style="background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;font-weight:700;display:inline-flex;align-items:center;gap:4px;padding:5px 9px;border-radius:8px;text-decoration:none;font-size:11.5px;white-space:nowrap;margin-right:6px;">
-      <span>📲</span> <span>App</span>
-    </a>
-    <span class="pill-date hide-mobile">${todayTxt()}</span>
-    <div class="topbar-lang" style="flex:0 0 auto;">${langSelector()}</div>
-    <div class="topbar-cta hide-mobile">
-      <button class="btn btn-primary btn-sm" data-act="goto" data-view="job">+ ${t('navJob')}</button>
-      <button class="icon-btn" data-act="goto" data-view="settings" aria-label="${t('navSettings')}">${ICONS.sliders}</button>
+    <div class="topbar-actions" style="display:flex;align-items:center;gap:4px;flex:0 0 auto;">
+      <button type="button" id="sync-indicator" class="sync-badge" data-act="trigger-sync" title="Sync Status" style="border:none;background:none;cursor:pointer;font-size:11.5px;padding:0 2px;margin:0;"></button>
+      <button type="button" class="btn btn-sm btn-subtle btn-topbar-refresh" data-act="hard-refresh" title="डेटा ताज़ा करें व फॉर्म रीसेट करें (Hard Refresh)" style="border:1.5px solid #cbd5e1;border-radius:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;background:#fff;width:32px;height:32px;padding:0;flex:0 0 32px;">
+        <span class="refresh-icon" style="font-size:13px;display:inline-block;">🔄</span>
+      </button>
+      <button type="button" class="btn btn-sm btn-subtle btn-topbar-status" data-act="open-status-modal" title="टोकन व ऑर्डर स्टेटस खोजें" style="border:1.5px solid #cbd5e1;border-radius:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;font-size:12px;background:#fff;width:32px;height:32px;padding:0;flex:0 0 32px;">
+        <span>🔍</span>
+      </button>
+      <a href="/tolmaal.apk" download="tolmaal.apk" class="btn btn-sm btn-apk-dl hide-mobile" title="TolMaal Android App (.apk) डाउनलोड करें" style="background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;font-weight:700;display:inline-flex;align-items:center;gap:4px;padding:5px 9px;border-radius:8px;text-decoration:none;font-size:11.5px;white-space:nowrap;margin-right:2px;">
+        <span>📲</span> <span>App</span>
+      </a>
+      <span class="pill-date hide-mobile">${todayTxt()}</span>
+      <div class="topbar-lang" style="flex:0 0 auto;">${langSelector()}</div>
+      <div class="topbar-cta hide-mobile">
+        <button class="btn btn-primary btn-sm" data-act="goto" data-view="job">+ ${t('navJob')}</button>
+        <button class="icon-btn" data-act="goto" data-view="settings" aria-label="${t('navSettings')}">${ICONS.sliders}</button>
+      </div>
     </div>
   </header>`;
 }

@@ -1,5 +1,5 @@
 import { state } from '../state.js';
-import { inr, qtyFmt, rangeLabel, emptyBlock, esc, relTxt } from '../utils/formatters.js';
+import { inr, qtyFmt, rangeLabel, emptyBlock, esc, relTxt, todayTxt, phoneFmt } from '../utils/formatters.js';
 import { tokenCard } from '../components/tokenCard.js';
 import { entryRow } from '../components/rows.js';
 import { t } from '../i18n.js';
@@ -12,6 +12,24 @@ export function viewDashboard() {
   const dues = d.customers.filter((c) => c.balancePaise > 0).slice(0, 6);
 
   return `
+  <!-- Business Info Header Banner -->
+  <div class="dash-biz-banner card" style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;background:#ffffff;border:1.5px solid #e2e8f0;border-radius:14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(15,23,42,0.04);">
+    <div style="min-width:0;flex:1 1 auto;">
+      <div style="font-size:17px;font-weight:850;color:#0f172a;line-height:1.25;letter-spacing:-0.2px;word-break:break-word;">
+        ${esc(d.business.name)}
+      </div>
+      <div style="font-size:11.5px;color:#64748b;font-weight:600;margin-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+        ${d.business.village ? `<span style="color:#475569;">📍 ${esc(d.business.village)}</span>` : ''}
+        ${d.business.phone ? `<span>📞 ${phoneFmt(d.business.phone)}</span>` : ''}
+      </div>
+    </div>
+    <div style="flex:0 0 auto;text-align:right;">
+      <span style="display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:750;background:#f8fafc;color:#475569;border:1px solid #cbd5e1;padding:4px 8px;border-radius:8px;">
+        📅 ${todayTxt()}
+      </span>
+    </div>
+  </div>
+
   ${tokenCard()}
 
   <!-- Quick Action Launcher Bar -->
