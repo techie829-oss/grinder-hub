@@ -30,6 +30,7 @@ export default {
       origin === 'https://localhost' ||
       origin === 'capacitor://localhost' ||
       origin.startsWith('http://localhost') ||
+      origin === 'https://tolmaal.solidrix.com' ||
       origin === 'https://chakkibook.solidrix.com' ||
       origin.endsWith('.solidrix.com')
     );

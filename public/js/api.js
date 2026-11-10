@@ -3,18 +3,27 @@ import { state, toastEl } from './state.js';
 import { closeModal } from './components/modals.js';
 import { saveOfflineSnapshot, loadOfflineSnapshot, syncOfflineQueue, isOnline } from './sync.js';
 
-export const LIVE_SERVER_URL = 'https://chakkibook.solidrix.com';
+export const LIVE_SERVER_URL = 'https://tolmaal.solidrix.com';
 
 export function getApiUrl(path) {
   if (path.startsWith('http://') || path.startsWith('https://')) return path;
-  const isCapacitor = typeof window !== 'undefined' && (
-    window.Capacitor !== undefined ||
-    window.location.protocol === 'capacitor:' ||
-    window.location.hostname === 'localhost' ||
-    window.location.origin === 'https://localhost' ||
-    window.location.origin === 'capacitor://localhost'
-  );
-  return isCapacitor ? `${LIVE_SERVER_URL}${path}` : path;
+  if (typeof window !== 'undefined') {
+    // If running on tolmaal domain, use relative path directly
+    if (window.location.hostname === 'tolmaal.solidrix.com' || window.location.hostname === 'tolmaal.rohitkmarch96.workers.dev') {
+      return path;
+    }
+    const isCapacitor = (
+      window.Capacitor !== undefined ||
+      window.location.protocol === 'capacitor:' ||
+      window.location.hostname === 'localhost' ||
+      window.location.origin === 'https://localhost' ||
+      window.location.origin === 'capacitor://localhost'
+    );
+    if (isCapacitor) {
+      return `${LIVE_SERVER_URL}${path}`;
+    }
+  }
+  return path;
 }
 
 export function getAuthHeaders() {
@@ -65,13 +74,16 @@ export async function api(path, body) {
     if (path.startsWith('/api/admin/')) {
       return { ok: false, error: data.error || 'Unauthorized' };
     }
+    const hadToken = typeof localStorage !== 'undefined' && !!localStorage.getItem('cb_token');
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem('cb_token');
     }
     state.data = null;
     closeModal();
     window.__appRender?.();
-    toast('Session expired. Please sign in again.');
+    if (hadToken) {
+      toast('सत्र समाप्त हो गया है। कृपया दोबारा लॉगिन करें।');
+    }
     return null;
   }
   if (!res.ok) {

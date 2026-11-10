@@ -14,12 +14,12 @@ export function json(data, status = 200, extraHeaders = {}, request = null) {
   let cors = {};
   if (request) {
     const origin = request.headers.get('origin');
-    if (origin && (origin === 'https://localhost' || origin === 'capacitor://localhost' || origin.startsWith('http://localhost'))) {
+    if (origin && (origin === 'https://localhost' || origin === 'capacitor://localhost' || origin.startsWith('http://localhost') || origin === 'https://tolmaal.solidrix.com' || origin.endsWith('.solidrix.com'))) {
       cors = {
         'access-control-allow-origin': origin,
         'access-control-allow-credentials': 'true',
         'access-control-allow-methods': 'GET, POST, OPTIONS',
-        'access-control-allow-headers': 'content-type, cookie',
+        'access-control-allow-headers': 'content-type, authorization, cookie, x-admin-key',
       };
     }
   }
