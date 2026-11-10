@@ -10,7 +10,7 @@
     "db:init": "wrangler d1 execute chakki-book --local --file=schema.sql",
     "check": "node --check src/worker.js && node --check public/app.js",
     "android:add": "npx cap add android",
-    "android:sync": "npx cap sync android",
+    "android:sync": "rm -f public/tolmaal.apk android/app/src/main/assets/public/tolmaal.apk && npx cap sync android",
     "android:build": "cd android && ./gradlew assembleDebug",
     "android:build:release": "cd android && ./gradlew assembleRelease",
     "android:bundle:release": "cd android && ./gradlew bundleRelease"
