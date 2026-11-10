@@ -80,8 +80,8 @@ function viewAdminDashboard() {
         <p style="font-size:13px;color:#64748b;margin:0;">भारत भर की आटा चक्की, मसाला व तेल घानी इकाइयों का केंद्रीय नियंत्रण</p>
       </div>
       <div style="display:flex;align-items:center;gap:8px;">
-        <a href="/chakkibook.apk" download="chakkibook.apk" class="btn btn-sm" title="Android ऐप डाउनलोड करें" style="background:linear-gradient(135deg, #10b981, #059669);color:#fff;font-weight:700;display:inline-flex;align-items:center;gap:5px;padding:8px 14px;border-radius:10px;text-decoration:none;font-size:12px;box-shadow:0 2px 8px rgba(16,185,129,0.25);">
-          <span>📥</span> <span>APK डाउनलोड</span>
+        <a href="/tolmaal.apk" download="tolmaal.apk" class="btn btn-sm" title="TolMaal Android ऐप डाउनलोड करें" style="background:linear-gradient(135deg, #10b981, #059669);color:#fff;font-weight:700;display:inline-flex;align-items:center;gap:5px;padding:8px 14px;border-radius:10px;text-decoration:none;font-size:12px;box-shadow:0 2px 8px rgba(16,185,129,0.25);">
+          <span>📱</span> <span>TolMaal App (.apk)</span>
         </a>
         <button type="button" class="btn btn-subtle btn-sm" data-act="admin-refresh" title="डेटा रीफ्रेश करें" style="border:1px solid #cbd5e1;padding:8px 14px;border-radius:10px;">
           🔄 रिफ्रेश

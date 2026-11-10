@@ -1,12 +1,12 @@
 // Service Worker for TolMaal (तौल-माल by Solidrix) PWA & Native App
-const CACHE_NAME = 'tolmaal-v2.4.0';
+const CACHE_NAME = 'tolmaal-v2.4.1';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/styles.css',
-  '/styles.css?v=2.4.0',
+  '/styles.css?v=2.4.1',
   '/app.js',
-  '/app.js?v=2.4.0',
+  '/app.js?v=2.4.1',
   '/manifest.json',
   '/icon.svg',
   '/js/sync.js',
@@ -61,8 +61,8 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
-  // Never cache API requests
-  if (url.pathname.startsWith('/api/')) return;
+  // Never cache API requests or direct APK downloads
+  if (url.pathname.startsWith('/api/') || url.pathname.endsWith('.apk')) return;
 
   // Network-First with Offline Cache Fallback
   event.respondWith(

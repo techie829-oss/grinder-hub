@@ -1,6 +1,11 @@
 name = "tolmaal"
 main = "src/worker.js"
 compatibility_date = "2026-11-01"
+workers_dev = true
+
+routes = [
+  { pattern = "tolmaal.solidrix.com", custom_domain = true }
+]
 
 [assets]
 directory = "./public"

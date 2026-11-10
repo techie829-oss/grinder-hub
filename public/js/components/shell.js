@@ -60,8 +60,8 @@ export function topbar() {
     <button type="button" class="btn btn-sm btn-subtle btn-topbar-status" data-act="open-status-modal" title="टोकन व पिसाई स्टेटस देखें" style="border:1.5px solid #cbd5e1;padding:5px 9px;border-radius:10px;font-weight:700;display:inline-flex;align-items:center;gap:4px;font-size:12px;margin-right:4px;background:#fff;flex:0 0 auto;">
       <span>🔍</span> <span class="hide-mobile">स्टेटस</span>
     </button>
-    <a href="/chakkibook.apk" download="chakkibook.apk" class="btn btn-sm btn-apk-dl hide-mobile" title="Android ऐप डाउनलोड करें" style="background:linear-gradient(135deg, #10b981, #059669);color:#fff;font-weight:700;display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:10px;text-decoration:none;box-shadow:0 2px 8px rgba(16,185,129,0.25);font-size:12px;white-space:nowrap;margin-right:6px;">
-      <span>📥</span> <span>APK डाउनलोड</span>
+    <a href="/tolmaal.apk" download="tolmaal.apk" class="btn btn-sm btn-apk-dl hide-mobile" title="TolMaal Android ऐप डाउनलोड करें" style="background:linear-gradient(135deg, #10b981, #059669);color:#fff;font-weight:700;display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:10px;text-decoration:none;box-shadow:0 2px 8px rgba(16,185,129,0.25);font-size:12px;white-space:nowrap;margin-right:6px;">
+      <span>📱</span> <span>TolMaal App (.apk)</span>
     </a>
     <span class="pill-date hide-mobile">${todayTxt()}</span>
     <div class="topbar-lang" style="flex:0 0 auto;">${langSelector()}</div>
