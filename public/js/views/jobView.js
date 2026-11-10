@@ -16,28 +16,19 @@ export function viewJob() {
   const currentTab = state.jobTab || 'grind';
 
   return `
-  <div class="page-head" style="margin-bottom:12px;">
-    <div>
-      <h1 class="page-title">
-        ${currentTab === 'grind' ? '⚙️ नया बिल व पिसाई (Grinding)' : (currentTab === 'sale' ? '🛒 तैयार माल बिक्री (Sell Product)' : '📥 कच्चा माल खरीद (Buy Grain)')}
-      </h1>
-      <p class="page-sub">
-        ${currentTab === 'grind' ? 'अनाज पिसाई, तेल घानी, घटौती कटौती और टोकन हिसाब' : (currentTab === 'sale' ? 'शुद्ध तेल, ताजा आटा, खली, पॉलिश या अन्य दुकान के सामान की बिक्री' : 'किसानों से सरसों, गेहूँ, धान, खली आदि की खरीद व खाता')}
-      </p>
+  <!-- Sleek POS Header with 3 High-Visibility Tabs -->
+  <div class="pos-header">
+    <div class="pos-tabs">
+      <button type="button" class="pos-tab ${currentTab === 'grind' ? 'is-active is-grind' : ''}" data-act="switch-job-tab" data-tab="grind">
+        <span>⚙️ पिसाई</span>
+      </button>
+      <button type="button" class="pos-tab ${currentTab === 'sale' ? 'is-active is-sale' : ''}" data-act="switch-job-tab" data-tab="sale">
+        <span>🛒 बिक्री</span>
+      </button>
+      <button type="button" class="pos-tab ${currentTab === 'purchase' ? 'is-active is-purchase' : ''}" data-act="switch-job-tab" data-tab="purchase">
+        <span>📥 खरीद</span>
+      </button>
     </div>
-  </div>
-
-  <!-- Segmented Switcher for Grinding vs Product Sale vs Grain Purchase -->
-  <div class="trade-tabs-wrap" style="display:flex;background:#f1f5f9;padding:4px;border-radius:14px;margin-bottom:16px;gap:4px;border:1px solid #e2e8f0;">
-    <button type="button" class="trade-tab-btn ${currentTab === 'grind' ? 'is-active' : ''}" data-act="switch-job-tab" data-tab="grind" style="flex:1;padding:10px 4px;border:none;border-radius:10px;font-weight:750;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.15s ease;${currentTab === 'grind' ? 'background:#fff;color:#0f172a;box-shadow:0 2px 6px rgba(0,0,0,0.08);' : 'background:transparent;color:#64748b;'}">
-      <span>⚙️</span> <span>पिसाई / प्रोसेस</span>
-    </button>
-    <button type="button" class="trade-tab-btn ${currentTab === 'sale' ? 'is-active' : ''}" data-act="switch-job-tab" data-tab="sale" style="flex:1;padding:10px 4px;border:none;border-radius:10px;font-weight:750;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.15s ease;${currentTab === 'sale' ? 'background:#fff;color:#059669;box-shadow:0 2px 6px rgba(0,0,0,0.08);' : 'background:transparent;color:#64748b;'}">
-      <span>🛒</span> <span>सामान बिक्री</span>
-    </button>
-    <button type="button" class="trade-tab-btn ${currentTab === 'purchase' ? 'is-active' : ''}" data-act="switch-job-tab" data-tab="purchase" style="flex:1;padding:10px 4px;border:none;border-radius:10px;font-weight:750;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:all 0.15s ease;${currentTab === 'purchase' ? 'background:#fff;color:#d97706;box-shadow:0 2px 6px rgba(0,0,0,0.08);' : 'background:transparent;color:#64748b;'}">
-      <span>📥</span> <span>कच्चा माल खरीद</span>
-    </button>
   </div>
 
   ${currentTab === 'grind' ? renderGrindTab(data) : (currentTab === 'sale' ? renderSaleTab(data) : renderPurchaseTab(data))}
@@ -73,172 +64,143 @@ function renderGrindTab(data) {
   });
 
   return `
-  <form class="card" data-form="job">
+  <form class="card pos-card" data-form="job">
     ${job.tokenNo ? `
-    <div class="sheet-head" style="margin-bottom:14px;background:var(--brand-soft);padding:10px 14px;border-radius:12px;display:flex;justify-content:space-between;align-items:center">
-      <span style="font-weight:700;color:var(--brand)">${t('tokenJobBadge', { no: job.tokenNo })}</span>
-      <button type="button" class="btn btn-sm btn-ghost" data-act="clear-job-token">${t('clearToken')}</button>
+    <div class="sheet-head" style="margin-bottom:8px;background:var(--brand-soft);padding:7px 12px;border-radius:10px;display:flex;justify-content:space-between;align-items:center;">
+      <span style="font-weight:750;color:var(--brand);font-size:12.5px;">${t('tokenJobBadge', { no: job.tokenNo })}</span>
+      <button type="button" class="btn btn-sm btn-ghost" data-act="clear-job-token" style="padding:3px 8px;font-size:11px;">${t('clearToken')}</button>
     </div>` : ''}
 
-    <div class="section-head"><h2 class="section-title">${t('pickService')}</h2></div>
-    <div class="service-grid">${serviceCards('job')}</div>
+    <!-- 1. Compact Service Grid -->
+    <div class="pos-sec-head">
+      <span>⚙️ पिसाई सामग्री / सेवा</span>
+    </div>
+    <div class="service-grid pos-svc-grid">${serviceCards('job')}</div>
 
-    <div class="two-col">
-      <div class="field">
-        <label for="j-name">${t('customerName')}</label>
+    <!-- 2. Customer Name & Village (2-in-1 Compact Row) -->
+    <div class="pos-row-2">
+      <div class="pos-field">
+        <label for="j-name">ग्राहक का नाम</label>
         <input id="j-name" name="name" list="cust-names" maxlength="60" value="${esc(job.name)}"
-          placeholder="Name" autocomplete="off">
+          placeholder="ग्राहक का नाम" autocomplete="off">
         <datalist id="cust-names">
           ${data.customers.map((c) => `<option value="${esc(c.name)}">${c.village ? esc(c.village) : ''}${c.phone ? ' · ' + c.phone : ''}</option>`).join('')}
         </datalist>
       </div>
-      <div class="field">
-        <label for="j-village">${t('villageLabel')}</label>
+      <div class="pos-field">
+        <label for="j-village">गाँव / स्थान</label>
         <input id="j-village" name="village" list="cust-villages" maxlength="60" value="${esc(job.village || '')}"
-          placeholder="Village / Location" autocomplete="off">
+          placeholder="गाँव या स्थान" autocomplete="off">
         <datalist id="cust-villages">
           ${[...new Set(data.customers.map((c) => c.village).filter(Boolean))].map((v) => `<option value="${esc(v)}"></option>`).join('')}
         </datalist>
       </div>
     </div>
 
-    <div class="field">
-      <label for="j-phone">${t('phoneLabel')}</label>
-      <input id="j-phone" name="phone" type="tel" inputmode="numeric" maxlength="10"
-        value="${esc(job.phone)}" placeholder="10 Digits">
+    <!-- 3. Phone & Quick Hardware Scale Strip -->
+    <div style="display:flex;gap:6px;align-items:flex-end;margin-bottom:8px;">
+      <div class="pos-field" style="flex:1;margin-bottom:0;">
+        <label for="j-phone">मोबाइल नंबर</label>
+        <input id="j-phone" name="phone" type="tel" inputmode="numeric" maxlength="10"
+          value="${esc(job.phone)}" placeholder="10 Digits">
+      </div>
+      <div style="display:flex;gap:4px;flex-shrink:0;">
+        <button type="button" class="btn btn-sm btn-ghost" data-act="hw-scale-ocr" style="padding:6px 8px;font-size:12px;height:38px;border-radius:10px;" title="Camera Scale OCR">📷 OCR</button>
+        <button type="button" class="btn btn-sm btn-ghost" data-act="hw-scale-bt" style="padding:6px 8px;font-size:12px;height:38px;border-radius:10px;" title="Bluetooth Scale">⚖️ ${scaleConnected ? liveWt + 'k' : 'कांटा'}</button>
+        <button type="button" class="btn btn-sm btn-ghost" data-act="hw-qr-scan" style="padding:6px 8px;font-size:12px;height:38px;border-radius:10px;" title="QR Scan">🔲 QR</button>
+      </div>
     </div>
 
-    <div id="cust-balance-banner" class="cust-banner ${matchedCustomer ? (matchedCustomer.balancePaise > 0 ? 'due' : (matchedCustomer.balancePaise < 0 ? 'adv' : 'zero')) : ''}" style="${matchedCustomer ? '' : 'display:none'}">
+    <div id="cust-balance-banner" class="cust-banner ${matchedCustomer ? (matchedCustomer.balancePaise > 0 ? 'due' : (matchedCustomer.balancePaise < 0 ? 'adv' : 'zero')) : ''}" style="${matchedCustomer ? '' : 'display:none'};margin-bottom:8px;">
       <span>${matchedCustomer ? (matchedCustomer.village ? `<strong>${esc(matchedCustomer.name)} (${esc(matchedCustomer.village)})</strong>` : `<strong>${esc(matchedCustomer.name)}</strong>`) + ' ledger:' : ''}</span>
       <strong>${matchedCustomer ? (matchedCustomer.balancePaise > 0 ? inr(matchedCustomer.balancePaise) + ' ' + t('dueTag') : (matchedCustomer.balancePaise < 0 ? inr(-matchedCustomer.balancePaise) + ' ' + t('advTag') : t('settledTag'))) : ''}</strong>
     </div>
 
-    <!-- Machine Automation & Hardware Bar -->
-    <div class="hardware-quick-bar" style="display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 8px">
-      <button type="button" class="btn btn-sm btn-ghost" data-act="hw-scale-ocr" style="flex:1;min-width:110px;display:flex;align-items:center;justify-content:center;gap:6px" title="Read digital scale display with camera">
-        <span>📷</span> <span>Scale OCR</span>
-      </button>
-      <button type="button" class="btn btn-sm btn-ghost" data-act="hw-scale-bt" style="flex:1;min-width:110px;display:flex;align-items:center;justify-content:center;gap:6px" title="Connect Bluetooth BLE electronic scale">
-        <span>⚖️</span> <span>${scaleConnected ? 'Scale: ' + liveWt + 'kg' : 'BT Scale'}</span>
-      </button>
-      <button type="button" class="btn btn-sm btn-ghost" data-act="hw-qr-scan" style="flex:1;min-width:110px;display:flex;align-items:center;justify-content:center;gap:6px" title="Scan Token QR Code">
-        <span>🔲</span> <span>Scan QR</span>
-      </button>
-    </div>
-
-    <div class="two-col">
-      <div class="field">
-        <label for="j-qty" style="display:flex;justify-content:space-between">
-          <span>${t('grossWeight')} (${unit})</span>
-          ${scaleConnected ? `<span class="tiny-chip" style="background:#dcfce7;color:#15803d">● Live ${liveWt} kg</span>` : ''}
-        </label>
-        <input id="j-qty" name="qty" type="number" step="any" min="0" inputmode="decimal"
-          value="${job.qty}" placeholder="0.00" required>
+    <!-- 4. POS Core Billing Dashboard Box (Weight + Rate = Total) -->
+    <div class="pos-billing-strip">
+      <div class="pos-bill-input-group">
+        <div class="pos-bill-field">
+          <label for="j-qty">आवक वजन (${unit}) * ${scaleConnected ? `<span style="color:#15803d;font-weight:700;">● ${liveWt}</span>` : ''}</label>
+          <input id="j-qty" name="qty" type="number" step="any" min="0" inputmode="decimal"
+            value="${job.qty}" placeholder="0.00" required>
+        </div>
+        <div class="pos-bill-field">
+          <label for="j-rate">दर (₹/${unit})</label>
+          <input id="j-rate" name="rate" type="number" step="any" min="0" inputmode="decimal"
+            value="${job.rate}" placeholder="0.00" required>
+        </div>
       </div>
-      <div class="field">
-        <label for="j-rate">${t('ratePerUnit', { unit })}</label>
-        <input id="j-rate" name="rate" type="number" step="any" min="0" inputmode="decimal"
-          value="${job.rate}" placeholder="0.00" required>
+      <div class="pos-bill-total is-grind">
+        <div class="pos-total-sub">कुल पिसाई बिल</div>
+        <div class="pos-total-val" id="amount-preview">${inr(amountPaise)}</div>
       </div>
     </div>
 
-    <!-- Live Dynamic Loss / Deduction Box -->
-    <div class="loss-calc-card" style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:12px;margin:12px 0">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <span style="font-weight:700;font-size:13px;color:#334155;display:flex;align-items:center;gap:6px">
-          <span>✂️</span> <span>${t('lossSettingsTitle')}</span>
-        </span>
-        <span class="tiny-chip" style="background:#e0e7ff;color:#3730a3">घटौती / काट हिसाब</span>
+    <!-- 5. Inline Loss / Deduction Strip -->
+    <div class="pos-loss-strip">
+      <div class="pos-loss-left">
+        <span style="font-weight:750;color:#c2410c;">✂️ काट:</span>
+        <input id="j-loss-rate" name="lossRateG" type="number" step="any" min="0" inputmode="numeric"
+          value="${job.lossRateG !== undefined && job.lossRateG !== '' ? job.lossRateG : (svc ? svc.lossRateG || 0 : 0)}"
+          class="pos-loss-input">
+        <span style="color:#64748b;font-size:10px;">g/${unit}</span>
+        <button type="button" class="pos-loss-pill loss-preset" data-g="0">0g</button>
+        <button type="button" class="pos-loss-pill loss-preset" data-g="10">10g</button>
+        <button type="button" class="pos-loss-pill loss-preset" data-g="15">15g</button>
+        <button type="button" class="pos-loss-pill loss-preset" data-g="20">20g</button>
       </div>
-
-      <div class="two-col" style="margin-bottom:8px">
-        <div class="field" style="margin-bottom:0">
-          <label for="j-loss-rate" class="tiny" style="color:#64748b">${t('lossRateLabel')}</label>
-          <input id="j-loss-rate" name="lossRateG" type="number" step="1" min="0" inputmode="numeric"
-            value="${job.lossRateG !== undefined && job.lossRateG !== '' ? job.lossRateG : (svc ? svc.lossRateG || 0 : 0)}"
-            placeholder="0" style="padding:6px 10px;font-size:13px">
-        </div>
-        <div class="field" style="margin-bottom:0">
-          <label class="tiny" style="color:#64748b">${t('presetLoss')}</label>
-          <div style="display:flex;gap:4px;flex-wrap:wrap">
-            <button type="button" class="btn btn-sm btn-ghost loss-preset" data-g="0" style="padding:4px 6px;font-size:11px">0g</button>
-            <button type="button" class="btn btn-sm btn-ghost loss-preset" data-g="10" style="padding:4px 6px;font-size:11px">10g</button>
-            <button type="button" class="btn btn-sm btn-ghost loss-preset" data-g="20" style="padding:4px 6px;font-size:11px">20g</button>
-            <button type="button" class="btn btn-sm btn-ghost loss-preset" data-g="50" style="padding:4px 6px;font-size:11px">50g</button>
-          </div>
-        </div>
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
-        <div style="background:#fff7ed;padding:10px;border-radius:10px;border:1px solid #fed7aa">
-          <div style="font-size:11px;color:#c2410c;font-weight:600">${t('totalLoss')}</div>
-          <div style="font-size:16px;font-weight:800;color:#ea580c;margin-top:2px" id="loss-total-preview">${totalLossG ? '-' + totalLossG + ' g' : '0 g'}</div>
-        </div>
-        <div style="background:#f0fdf4;padding:10px;border-radius:10px;border:1px solid #bbf7d0">
-          <div style="font-size:11px;color:#15803d;font-weight:600">${t('netWeight')}</div>
-          <div style="font-size:16px;font-weight:800;color:#16a34a;margin-top:2px" id="net-qty-preview">${netWeight ? netWeight.toFixed(3) + ' ' + unit : '0 ' + unit}</div>
-        </div>
-      </div>
-
-      <div class="amount-box" style="margin-top:12px;margin-bottom:0">
-        <span class="amt-label">${t('totalAmount')}</span>
-        <span class="amt-value" id="amount-preview">${inr(amountPaise)}</span>
+      <div class="pos-loss-right">
+        <span id="loss-total-preview" style="color:#ea580c;font-weight:700;">${totalLossG ? '-' + totalLossG + 'g' : '0g'}</span>
+        → <strong id="net-qty-preview" style="color:#16a34a;">${netWeight ? netWeight.toFixed(3) + ' ' + unit : '0 ' + unit}</strong>
       </div>
     </div>
 
-    <div class="field">
-      <label>${t('paymentType')}</label>
-      <div class="seg">
-        <label><input type="radio" name="paid" value="yes"${job.paid ? ' checked' : ''}><span>${t('cashPaid')}</span></label>
-        <label><input type="radio" name="paid" value="no"${job.paid ? '' : ' checked'}><span>${t('creditDue')}</span></label>
-      </div>
+    <!-- 6. Payment Mode Toggle -->
+    <div class="pos-pay-toggle">
+      <label class="pos-pay-opt"><input type="radio" name="paid" value="yes"${job.paid ? ' checked' : ''}><span>🟢 नकद मिला (Cash Paid)</span></label>
+      <label class="pos-pay-opt"><input type="radio" name="paid" value="no"${job.paid ? '' : ' checked'}><span>🟣 बाकी / उधार (Credit Due)</span></label>
     </div>
 
-    <!-- Udhaar Customer Photo & Identification Card -->
-    <div id="udhaar-photo-card" style="display:${job.paid ? 'none' : 'block'};background:#fffbeb;border:1.5px solid #f59e0b;border-radius:14px;padding:14px;margin:14px 0;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-        <span style="font-weight:800;color:#b45309;font-size:13.5px;display:flex;align-items:center;gap:6px;">
-          <span>📸</span> <span>उधार खाता पहचान (Photo Verification)</span>
-        </span>
-        <span class="tiny-chip" style="background:#fef3c7;color:#92400e;font-weight:700;">उधार सुरक्षा</span>
+    <!-- Udhaar Photo Card -->
+    <div id="udhaar-photo-card" style="display:${job.paid ? 'none' : 'block'};background:#fffbeb;border:1.5px solid #f59e0b;border-radius:12px;padding:10px;margin:8px 0;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <span style="font-weight:750;color:#b45309;font-size:12px;">📸 उधार खाता फोटो सत्यापन</span>
+        <span class="tiny-chip" style="background:#fef3c7;color:#92400e;font-size:10px;">सुरक्षित उधार</span>
       </div>
-      <p class="tiny" style="color:#78350f;margin-bottom:12px;line-height:1.4;">
-        उधार देते समय ग्राहक का फोटो रखें ताकि बाद में नाम या व्यक्ति पहचानने में कोई भ्रम या गड़बड़ी न हो।
-      </p>
-
-      <div style="display:flex;align-items:center;gap:14px;">
-        <div id="job-photo-preview-wrap" style="width:64px;height:64px;border-radius:50%;overflow:hidden;border:2.5px solid #f59e0b;background:#fff;display:grid;place-items:center;flex-shrink:0;box-shadow:0 2px 8px rgba(245,158,11,0.25);cursor:pointer;" onclick="document.getElementById('job-photo-file').click();">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div id="job-photo-preview-wrap" style="width:48px;height:48px;border-radius:50%;overflow:hidden;border:2px solid #f59e0b;background:#fff;display:grid;place-items:center;flex-shrink:0;cursor:pointer;" onclick="document.getElementById('job-photo-file').click();">
           <img id="job-photo-img" src="${matchedCustomer ? esc(matchedCustomer.photo || '') : ''}" style="${matchedCustomer && matchedCustomer.photo ? '' : 'display:none;'}width:100%;height:100%;object-fit:cover;">
-          <span id="job-photo-ph" style="${matchedCustomer && matchedCustomer.photo ? 'display:none;' : ''}font-size:28px;">👤</span>
+          <span id="job-photo-ph" style="${matchedCustomer && matchedCustomer.photo ? 'display:none;' : ''}font-size:22px;">👤</span>
         </div>
-
         <div style="flex:1;">
-          <div id="job-photo-cust-name" style="font-size:14px;font-weight:800;color:#0f172a;margin-bottom:2px;">
+          <div id="job-photo-cust-name" style="font-size:12px;font-weight:750;color:#0f172a;">
             ${matchedCustomer ? esc(matchedCustomer.name) + (matchedCustomer.village ? ` (${esc(matchedCustomer.village)})` : '') : 'ग्राहक का नाम ऊपर लिखें'}
           </div>
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px;">
-            <label class="btn btn-sm btn-primary" style="background:#d97706;padding:6px 12px;border-radius:8px;font-weight:700;display:inline-flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;">
-              <span>📷</span> <span id="job-photo-btn-txt">${matchedCustomer && matchedCustomer.photo ? 'नया फोटो लें' : 'ग्राहक का फोटो खींचें'}</span>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
+            <label class="btn btn-sm btn-primary" style="background:#d97706;padding:4px 9px;border-radius:6px;font-weight:700;cursor:pointer;font-size:11px;">
+              <span>📷</span> <span id="job-photo-btn-txt">${matchedCustomer && matchedCustomer.photo ? 'फोटो बदलें' : 'फोटो खींचें'}</span>
               <input type="file" id="job-photo-file" accept="image/*" capture="user" style="display:none;">
             </label>
-            <button type="button" class="btn btn-sm btn-ghost" id="job-photo-clear" style="${matchedCustomer && matchedCustomer.photo ? 'display:inline-flex;' : 'display:none;'}color:#dc2626;font-size:12px;padding:4px 8px;">हटाएं</button>
+            <button type="button" class="btn btn-sm btn-ghost" id="job-photo-clear" style="${matchedCustomer && matchedCustomer.photo ? 'display:inline-flex;' : 'display:none;'}color:#dc2626;font-size:11px;padding:3px 6px;">हटाएं</button>
           </div>
         </div>
       </div>
       <input type="hidden" id="j-photo" name="photo" value="${matchedCustomer ? esc(matchedCustomer.photo || '') : ''}">
     </div>
 
-    <div class="field">
-      <label for="j-note">${t('noteLabel')}</label>
-      <input id="j-note" name="note" maxlength="120" value="${esc(job.note)}" placeholder="${t('notePlaceholder')}">
+    <!-- 7. Note & Token checkbox -->
+    <div class="pos-field" style="margin-bottom:6px;">
+      <input id="j-note" name="note" maxlength="120" value="${esc(job.note)}" placeholder="नोट (वैकल्पिक e.g. बारीक पिसाई, सूखा गेहूँ)">
     </div>
 
     ${job.tokenNo ? '' : `
-    <label class="check">
-      <input type="checkbox" name="withToken"${job.withToken ? ' checked' : ''}> ${t('alsoIssueToken')}
+    <label class="check" style="margin-bottom:8px;font-size:12px;color:#64748b;">
+      <input type="checkbox" name="withToken"${job.withToken ? ' checked' : ''}> इस काम का टोकन पर्ची भी निकालें
     </label>`}
 
-    <button class="btn btn-primary btn-block" type="submit">${t('saveJobBtn')}</button>
+    <button class="btn btn-primary btn-block pos-submit-btn" type="submit">
+      ✓ हिसाब में जोड़ें (Save Bill)
+    </button>
   </form>`;
 }
 
@@ -268,46 +230,43 @@ function renderSaleTab(data) {
   });
 
   return `
-  <form class="card" data-form="trade">
+  <form class="card pos-card" data-form="trade">
     <input type="hidden" name="kind" value="sale">
 
-    <!-- Quick Dynamic Product Chips -->
-    <div class="section-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-      <h2 class="section-title">सामान चुनें या नीचे नाम लिखें</h2>
-      <button type="button" class="btn btn-sm btn-ghost" data-act="open-product-modal" data-type="sale" style="font-size:12px;color:#059669;font-weight:700;">+ नया सामान जोड़ें</button>
+    <!-- 1. Quick Saved Product Chips -->
+    <div class="pos-sec-head">
+      <span>🛒 तैयार सामान चुनें</span>
+      <button type="button" class="btn btn-sm btn-ghost" data-act="open-product-modal" data-type="sale" style="font-size:11.5px;color:#059669;font-weight:700;padding:2px 6px;">+ नया सामान</button>
     </div>
 
     ${presets.length ? `
-    <div class="trade-presets-grid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(130px, 1fr));gap:8px;margin-bottom:14px;">
+    <div class="pos-chip-grid">
       ${presets.map((p) => `
-        <button type="button" class="btn btn-soft trade-preset-btn ${trade.item === p.item ? 'is-active' : ''}"
-          data-act="pick-trade-preset" data-item="${esc(p.item)}" data-unit="${esc(p.unit)}" data-rate="${p.rate || ''}"
-          style="padding:10px 8px;text-align:left;display:flex;flex-direction:column;gap:3px;border-radius:12px;font-size:12px;border:1.5px solid ${trade.item === p.item ? '#059669' : '#e2e8f0'};background:${trade.item === p.item ? '#ecfdf5' : '#fff'};cursor:pointer;">
-          <span style="font-size:15px;">${p.icon || '📦'} <strong>${esc(p.item)}</strong></span>
-          <span style="color:#64748b;font-size:11px;">${p.rate ? inr(p.rate * 100) + ' / ' + unitOf(p.unit) : unitOf(p.unit)}</span>
+        <button type="button" class="pos-chip-btn ${trade.item === p.item ? 'is-sale-active' : ''}"
+          data-act="pick-trade-preset" data-item="${esc(p.item)}" data-unit="${esc(p.unit)}" data-rate="${p.rate || ''}">
+          <strong>${p.icon || '📦'} ${esc(p.item)}</strong>
+          <span>${p.rate ? inr(p.rate * 100) + '/' + unitOf(p.unit) : unitOf(p.unit)}</span>
         </button>
       `).join('')}
     </div>` : `
-    <div style="background:#f8fafc;border:1px dashed #cbd5e1;border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
-      <div style="font-size:12px;color:#64748b;">
-        <span>📦 अभी कोई सामान सेव नहीं है। नीचे नाम लिखकर बेचें या <strong>+ नया सामान जोड़ें</strong>।</span>
-      </div>
-      <button type="button" class="btn btn-sm btn-soft" data-act="open-product-modal" data-type="sale" style="font-size:11px;font-weight:700;color:#059669;white-space:nowrap;">+ नया सामान</button>
+    <div style="background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;padding:8px 10px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:6px;">
+      <span style="font-size:11.5px;color:#64748b;">📦 कोई सामान सेव नहीं है।</span>
+      <button type="button" class="btn btn-sm btn-soft" data-act="open-product-modal" data-type="sale" style="font-size:11px;font-weight:700;color:#059669;padding:3px 8px;">+ जोड़ें</button>
     </div>`}
 
-    <div class="two-col">
-      <div class="field">
-        <label for="tr-item">सामान / उत्पाद का नाम *</label>
+    <!-- 2. Item Name & Unit (2-in-1 Compact Row) -->
+    <div class="pos-row-2">
+      <div class="pos-field">
+        <label for="tr-item">सामान का नाम *</label>
         <input id="tr-item" name="item" list="sale-items-datalist" maxlength="60" value="${esc(trade.item)}"
-          placeholder="e.g. शुद्ध सरसों तेल, ताजा आटा..." required autocomplete="off">
+          placeholder="जैसे: सरसों तेल, आटा..." required autocomplete="off">
         <datalist id="sale-items-datalist">
           ${presets.map((p) => `<option value="${esc(p.item)}">${p.rate ? inr(p.rate * 100) + ' / ' + unitOf(p.unit) : ''}</option>`).join('')}
         </datalist>
       </div>
-
-      <div class="field">
+      <div class="pos-field">
         <label for="tr-unit">इकाई (Unit)</label>
-        <select id="tr-unit" name="unit" style="padding:10px 12px;border-radius:12px;border:1px solid #cbd5e1;background:#fff;font-weight:700;">
+        <select id="tr-unit" name="unit">
           <option value="kg"${trade.unit === 'kg' ? ' selected' : ''}>किलो (kg)</option>
           <option value="ltr"${trade.unit === 'ltr' ? ' selected' : ''}>लीटर (ltr)</option>
           <option value="qtl"${trade.unit === 'qtl' ? ' selected' : ''}>क्विंटल (qtl)</option>
@@ -318,100 +277,94 @@ function renderSaleTab(data) {
       </div>
     </div>
 
-    <div class="two-col">
-      <div class="field">
-        <label for="tr-qty">मात्रा / वजन (Quantity) *</label>
-        <input id="tr-qty" name="qty" type="number" step="any" min="0" inputmode="decimal"
-          value="${trade.qty}" placeholder="0.00" required>
+    <!-- 3. POS Core Billing Dashboard Box (Qty + Rate = Total) -->
+    <div class="pos-billing-strip">
+      <div class="pos-bill-input-group">
+        <div class="pos-bill-field">
+          <label for="tr-qty">मात्रा / वजन *</label>
+          <input id="tr-qty" name="qty" type="number" step="any" min="0" inputmode="decimal"
+            value="${trade.qty}" placeholder="0.00" required>
+        </div>
+        <div class="pos-bill-field">
+          <label for="tr-rate">भाव / रेट (₹)</label>
+          <input id="tr-rate" name="rate" type="number" step="any" min="0" inputmode="decimal"
+            value="${trade.rate}" placeholder="0.00">
+        </div>
       </div>
-      <div class="field">
-        <label for="tr-rate">भाव / रेट (₹ प्रति इकाई)</label>
-        <input id="tr-rate" name="rate" type="number" step="any" min="0" inputmode="decimal"
-          value="${trade.rate}" placeholder="0.00">
+      <div class="pos-bill-total is-sale">
+        <div class="pos-total-sub">कुल बिक्री बिल</div>
+        <div class="pos-total-val" id="tr-amount-preview">${inr(amountPaise)}</div>
       </div>
     </div>
 
-    <div class="amount-box" style="margin:12px 0;background:#ecfdf5;border-color:#a7f3d0;">
-      <span class="amt-label" style="color:#065f46;">कुल बिक्री रकम (Total Amount)</span>
-      <span class="amt-value" id="tr-amount-preview" style="color:#059669;">${inr(amountPaise)}</span>
-    </div>
-
-    <div class="two-col">
-      <div class="field">
+    <!-- 4. Customer Info (2-in-1 Compact Row) -->
+    <div class="pos-row-2">
+      <div class="pos-field">
         <label for="tr-name">ग्राहक का नाम</label>
         <input id="tr-name" name="name" list="cust-names" maxlength="60" value="${esc(trade.name)}"
-          placeholder="नकद ग्राहक / नाम" autocomplete="off">
+          placeholder="ग्राहक का नाम" autocomplete="off">
       </div>
-      <div class="field">
+      <div class="pos-field">
         <label for="tr-village">गाँव / पता</label>
         <input id="tr-village" name="village" list="cust-villages" maxlength="60" value="${esc(trade.village || '')}"
           placeholder="गाँव या स्थान" autocomplete="off">
       </div>
     </div>
 
-    <div class="field">
+    <div class="pos-field">
       <label for="tr-phone">मोबाइल नंबर</label>
       <input id="tr-phone" name="phone" type="tel" inputmode="numeric" maxlength="10"
         value="${esc(trade.phone)}" placeholder="10 Digits">
     </div>
 
-    <div id="tr-cust-balance-banner" class="cust-banner ${matchedCustomer ? (matchedCustomer.balancePaise > 0 ? 'due' : (matchedCustomer.balancePaise < 0 ? 'adv' : 'zero')) : ''}" style="${matchedCustomer ? '' : 'display:none'}">
+    <div id="tr-cust-balance-banner" class="cust-banner ${matchedCustomer ? (matchedCustomer.balancePaise > 0 ? 'due' : (matchedCustomer.balancePaise < 0 ? 'adv' : 'zero')) : ''}" style="${matchedCustomer ? '' : 'display:none'};margin-bottom:8px;">
       <span>${matchedCustomer ? (matchedCustomer.village ? `<strong>${esc(matchedCustomer.name)} (${esc(matchedCustomer.village)})</strong>` : `<strong>${esc(matchedCustomer.name)}</strong>`) + ' खाता:' : ''}</span>
       <strong>${matchedCustomer ? (matchedCustomer.balancePaise > 0 ? inr(matchedCustomer.balancePaise) + ' ' + t('dueTag') : (matchedCustomer.balancePaise < 0 ? inr(-matchedCustomer.balancePaise) + ' ' + t('advTag') : t('settledTag'))) : ''}</strong>
     </div>
 
-    <div class="field">
-      <label>भुगतान प्रकार</label>
-      <div class="seg">
-        <label><input type="radio" name="paid" value="yes"${trade.paid ? ' checked' : ''}><span>💵 नकद बिक्री (Cash)</span></label>
-        <label><input type="radio" name="paid" value="no"${trade.paid ? '' : ' checked'}><span>📒 उधार बिक्री (Credit Khata)</span></label>
-      </div>
+    <!-- 5. Payment Mode Toggle -->
+    <div class="pos-pay-toggle">
+      <label class="pos-pay-opt"><input type="radio" name="paid" value="yes"${trade.paid ? ' checked' : ''}><span>💵 नकद बिक्री (Cash)</span></label>
+      <label class="pos-pay-opt"><input type="radio" name="paid" value="no"${trade.paid ? '' : ' checked'}><span>📒 उधार बिक्री (Khata)</span></label>
     </div>
 
     <!-- Udhaar Photo Card -->
-    <div id="tr-udhaar-photo-card" style="display:${trade.paid ? 'none' : 'block'};background:#fffbeb;border:1.5px solid #f59e0b;border-radius:14px;padding:14px;margin:14px 0;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-        <span style="font-weight:800;color:#b45309;font-size:13.5px;display:flex;align-items:center;gap:6px;">
-          <span>📸</span> <span>उधार ग्राहक फोटो सत्यापन</span>
-        </span>
-        <span class="tiny-chip" style="background:#fef3c7;color:#92400e;font-weight:700;">सुरक्षित खाता</span>
+    <div id="tr-udhaar-photo-card" style="display:${trade.paid ? 'none' : 'block'};background:#fffbeb;border:1.5px solid #f59e0b;border-radius:12px;padding:10px;margin:8px 0;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <span style="font-weight:750;color:#b45309;font-size:12px;">📸 उधार ग्राहक फोटो सत्यापन</span>
+        <span class="tiny-chip" style="background:#fef3c7;color:#92400e;font-size:10px;">सुरक्षित खाता</span>
       </div>
-      <p class="tiny" style="color:#78350f;margin-bottom:12px;line-height:1.4;">
-        उधार पर सामान देते समय ग्राहक का फोटो खींचें ताकि बाद में कोई गलतफहमी न हो।
-      </p>
-
-      <div style="display:flex;align-items:center;gap:14px;">
-        <div id="tr-photo-preview-wrap" style="width:64px;height:64px;border-radius:50%;overflow:hidden;border:2.5px solid #f59e0b;background:#fff;display:grid;place-items:center;flex-shrink:0;cursor:pointer;" onclick="document.getElementById('tr-photo-file').click();">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <div id="tr-photo-preview-wrap" style="width:48px;height:48px;border-radius:50%;overflow:hidden;border:2px solid #f59e0b;background:#fff;display:grid;place-items:center;flex-shrink:0;cursor:pointer;" onclick="document.getElementById('tr-photo-file').click();">
           <img id="tr-photo-img" src="${matchedCustomer ? esc(matchedCustomer.photo || '') : ''}" style="${matchedCustomer && matchedCustomer.photo ? '' : 'display:none;'}width:100%;height:100%;object-fit:cover;">
-          <span id="tr-photo-ph" style="${matchedCustomer && matchedCustomer.photo ? 'display:none;' : ''}font-size:28px;">👤</span>
+          <span id="tr-photo-ph" style="${matchedCustomer && matchedCustomer.photo ? 'display:none;' : ''}font-size:22px;">👤</span>
         </div>
-
         <div style="flex:1;">
-          <div id="tr-photo-cust-name" style="font-size:14px;font-weight:800;color:#0f172a;margin-bottom:2px;">
+          <div id="tr-photo-cust-name" style="font-size:12px;font-weight:750;color:#0f172a;">
             ${matchedCustomer ? esc(matchedCustomer.name) + (matchedCustomer.village ? ` (${esc(matchedCustomer.village)})` : '') : 'ग्राहक का नाम ऊपर लिखें'}
           </div>
-          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px;">
-            <label class="btn btn-sm btn-primary" style="background:#d97706;padding:6px 12px;border-radius:8px;font-weight:700;display:inline-flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;">
-              <span>📷</span> <span id="tr-photo-btn-txt">${matchedCustomer && matchedCustomer.photo ? 'नया फोटो लें' : 'ग्राहक का फोटो खींचें'}</span>
+          <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
+            <label class="btn btn-sm btn-primary" style="background:#d97706;padding:4px 9px;border-radius:6px;font-weight:700;cursor:pointer;font-size:11px;">
+              <span>📷</span> <span id="tr-photo-btn-txt">${matchedCustomer && matchedCustomer.photo ? 'फोटो बदलें' : 'फोटो खींचें'}</span>
               <input type="file" id="tr-photo-file" accept="image/*" capture="user" style="display:none;">
             </label>
-            <button type="button" class="btn btn-sm btn-ghost" id="tr-photo-clear" style="${matchedCustomer && matchedCustomer.photo ? 'display:inline-flex;' : 'display:none;'}color:#dc2626;font-size:12px;padding:4px 8px;">हटाएं</button>
+            <button type="button" class="btn btn-sm btn-ghost" id="tr-photo-clear" style="${matchedCustomer && matchedCustomer.photo ? 'display:inline-flex;' : 'display:none;'}color:#dc2626;font-size:11px;padding:3px 6px;">हटाएं</button>
           </div>
         </div>
       </div>
       <input type="hidden" id="tr-photo" name="photo" value="${matchedCustomer ? esc(matchedCustomer.photo || '') : ''}">
     </div>
 
-    <div class="field">
-      <label for="tr-note">टिप्पणी / विवरण (Note)</label>
-      <input id="tr-note" name="note" maxlength="120" value="${esc(trade.note)}" placeholder="e.g. 5 लीटर कैन / डिस्काउंट">
+    <!-- 6. Note & Auto-Save Checkbox -->
+    <div class="pos-field" style="margin-bottom:6px;">
+      <input id="tr-note" name="note" maxlength="120" value="${esc(trade.note)}" placeholder="नोट (वैकल्पिक e.g. कैन पैक / डिस्काउंट)">
     </div>
 
-    <label class="check" style="margin-bottom:14px;font-size:13px;color:#475569;">
-      <input type="checkbox" name="saveProduct" value="1" checked> इस सामान को हमेशा के लिए मेरी उत्पाद सूची में जोड़ें
+    <label class="check" style="margin-bottom:8px;font-size:12px;color:#64748b;">
+      <input type="checkbox" name="saveProduct" value="1" checked> इस सामान को हमेशा के लिए उत्पाद सूची में जोड़ें
     </label>
 
-    <button class="btn btn-primary btn-block" type="submit" style="background:#059669;border-color:#059669;padding:14px;font-size:15px;font-weight:800;">
+    <button class="btn btn-primary btn-block pos-submit-btn" type="submit" style="background:#059669;border-color:#059669;">
       🛒 सामान बिक्री सुरक्षित करें (Save Sale)
     </button>
   </form>`;
@@ -446,46 +399,43 @@ function renderPurchaseTab(data) {
   });
 
   return `
-  <form class="card" data-form="trade">
+  <form class="card pos-card" data-form="trade">
     <input type="hidden" name="kind" value="purchase">
 
-    <!-- Quick Dynamic Purchase Grain Chips -->
-    <div class="section-head" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-      <h2 class="section-title">खरीदी जाने वाली फसल / कच्चा माल</h2>
-      <button type="button" class="btn btn-sm btn-ghost" data-act="open-product-modal" data-type="purchase" style="font-size:12px;color:#d97706;font-weight:700;">+ नया आइटम जोड़ें</button>
+    <!-- 1. Quick Saved Crop Chips -->
+    <div class="pos-sec-head">
+      <span>📥 खरीदी जाने वाली फसल / माल</span>
+      <button type="button" class="btn btn-sm btn-ghost" data-act="open-product-modal" data-type="purchase" style="font-size:11.5px;color:#d97706;font-weight:700;padding:2px 6px;">+ नई फसल</button>
     </div>
 
     ${presets.length ? `
-    <div class="trade-presets-grid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(130px, 1fr));gap:8px;margin-bottom:14px;">
+    <div class="pos-chip-grid">
       ${presets.map((p) => `
-        <button type="button" class="btn btn-soft trade-preset-btn ${trade.item === p.item ? 'is-active' : ''}"
-          data-act="pick-trade-preset" data-item="${esc(p.item)}" data-unit="${esc(p.unit)}" data-rate="${p.rate || ''}"
-          style="padding:10px 8px;text-align:left;display:flex;flex-direction:column;gap:3px;border-radius:12px;font-size:12px;border:1.5px solid ${trade.item === p.item ? '#d97706' : '#e2e8f0'};background:${trade.item === p.item ? '#fffbeb' : '#fff'};cursor:pointer;">
-          <span style="font-size:15px;">${p.icon || '🌾'} <strong>${esc(p.item)}</strong></span>
-          <span style="color:#64748b;font-size:11px;">${p.rate ? inr(p.rate * 100) + ' / ' + unitOf(p.unit) : unitOf(p.unit)}</span>
+        <button type="button" class="pos-chip-btn ${trade.item === p.item ? 'is-purchase-active' : ''}"
+          data-act="pick-trade-preset" data-item="${esc(p.item)}" data-unit="${esc(p.unit)}" data-rate="${p.rate || ''}">
+          <strong>${p.icon || '🌾'} ${esc(p.item)}</strong>
+          <span>${p.rate ? inr(p.rate * 100) + '/' + unitOf(p.unit) : unitOf(p.unit)}</span>
         </button>
       `).join('')}
     </div>` : `
-    <div style="background:#f8fafc;border:1px dashed #cbd5e1;border-radius:12px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;">
-      <div style="font-size:12px;color:#64748b;">
-        <span>🌾 अभी कोई फसल सेव नहीं है। नीचे नाम लिखकर खरीदें या <strong>+ नई फसल जोड़ें</strong>।</span>
-      </div>
-      <button type="button" class="btn btn-sm btn-soft" data-act="open-product-modal" data-type="purchase" style="font-size:11px;font-weight:700;color:#d97706;white-space:nowrap;">+ नई फसल</button>
+    <div style="background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;padding:8px 10px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:6px;">
+      <span style="font-size:11.5px;color:#64748b;">🌾 कोई फसल सेव नहीं है।</span>
+      <button type="button" class="btn btn-sm btn-soft" data-act="open-product-modal" data-type="purchase" style="font-size:11px;font-weight:700;color:#d97706;padding:3px 8px;">+ जोड़ें</button>
     </div>`}
 
-    <div class="two-col">
-      <div class="field">
-        <label for="tr-item">फसल / सामग्री का नाम *</label>
+    <!-- 2. Crop Name & Unit (2-in-1 Compact Row) -->
+    <div class="pos-row-2">
+      <div class="pos-field">
+        <label for="tr-item">फसल / माल का नाम *</label>
         <input id="tr-item" name="item" list="purchase-items-datalist" maxlength="60" value="${esc(trade.item)}"
-          placeholder="e.g. सरसों, गेहूँ, मक्का, धान, खली..." required autocomplete="off">
+          placeholder="जैसे: सरसों, गेहूँ, मक्का..." required autocomplete="off">
         <datalist id="purchase-items-datalist">
           ${presets.map((p) => `<option value="${esc(p.item)}">${p.rate ? inr(p.rate * 100) + ' / ' + unitOf(p.unit) : ''}</option>`).join('')}
         </datalist>
       </div>
-
-      <div class="field">
+      <div class="pos-field">
         <label for="tr-unit">इकाई (Unit)</label>
-        <select id="tr-unit" name="unit" style="padding:10px 12px;border-radius:12px;border:1px solid #cbd5e1;background:#fff;font-weight:700;">
+        <select id="tr-unit" name="unit">
           <option value="kg"${trade.unit === 'kg' ? ' selected' : ''}>किलो (kg)</option>
           <option value="qtl"${trade.unit === 'qtl' ? ' selected' : ''}>क्विंटल (qtl)</option>
           <option value="bag"${trade.unit === 'bag' ? ' selected' : ''}>बोरी (bag)</option>
@@ -494,80 +444,74 @@ function renderPurchaseTab(data) {
       </div>
     </div>
 
-    <!-- Hardware Scale Bar -->
-    <div class="hardware-quick-bar" style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 14px">
-      <button type="button" class="btn btn-sm btn-ghost" data-act="hw-scale-ocr" style="flex:1;min-width:110px;display:flex;align-items:center;justify-content:center;gap:6px">
-        <span>📷</span> <span>Scale OCR वजन</span>
-      </button>
-      <button type="button" class="btn btn-sm btn-ghost" data-act="hw-scale-bt" style="flex:1;min-width:110px;display:flex;align-items:center;justify-content:center;gap:6px">
-        <span>⚖️</span> <span>${scaleConnected ? 'कांटा: ' + liveWt + 'kg' : 'Bluetooth कांटा'}</span>
-      </button>
-    </div>
-
-    <div class="two-col">
-      <div class="field">
-        <label for="tr-qty" style="display:flex;justify-content:space-between">
-          <span>तौल / वजन (Quantity) *</span>
-          ${scaleConnected ? `<span class="tiny-chip" style="background:#dcfce7;color:#15803d">● Live ${liveWt} kg</span>` : ''}
-        </label>
-        <input id="tr-qty" name="qty" type="number" step="any" min="0" inputmode="decimal"
-          value="${trade.qty}" placeholder="0.00" required>
+    <!-- 3. POS Core Billing Dashboard Box (Qty + Rate = Payable) -->
+    <div class="pos-billing-strip">
+      <div class="pos-bill-input-group">
+        <div class="pos-bill-field">
+          <label for="tr-qty">तौल / वजन * ${scaleConnected ? `<span style="color:#15803d;font-weight:700;">● ${liveWt}</span>` : ''}</label>
+          <input id="tr-qty" name="qty" type="number" step="any" min="0" inputmode="decimal"
+            value="${trade.qty}" placeholder="0.00" required>
+        </div>
+        <div class="pos-bill-field">
+          <label for="tr-rate">खरीद भाव (₹)</label>
+          <input id="tr-rate" name="rate" type="number" step="any" min="0" inputmode="decimal"
+            value="${trade.rate}" placeholder="0.00">
+        </div>
       </div>
-      <div class="field">
-        <label for="tr-rate">खरीद भाव / रेट (₹ प्रति इकाई)</label>
-        <input id="tr-rate" name="rate" type="number" step="any" min="0" inputmode="decimal"
-          value="${trade.rate}" placeholder="0.00">
+      <div class="pos-bill-total is-purchase">
+        <div class="pos-total-sub">किसान को देय</div>
+        <div class="pos-total-val" id="tr-amount-preview">${inr(amountPaise)}</div>
       </div>
     </div>
 
-    <div class="amount-box" style="margin:12px 0;background:#fffbeb;border-color:#fde68a;">
-      <span class="amt-label" style="color:#92400e;">किसान को देय कुल रकम (Payable)</span>
-      <span class="amt-value" id="tr-amount-preview" style="color:#d97706;">${inr(amountPaise)}</span>
+    <!-- Quick Scale Shortcuts for Purchase -->
+    <div style="display:flex;gap:6px;margin-bottom:8px;">
+      <button type="button" class="btn btn-sm btn-ghost" data-act="hw-scale-ocr" style="flex:1;padding:6px;font-size:11.5px;height:34px;border-radius:8px;">📷 OCR वजन</button>
+      <button type="button" class="btn btn-sm btn-ghost" data-act="hw-scale-bt" style="flex:1;padding:6px;font-size:11.5px;height:34px;border-radius:8px;">⚖️ ${scaleConnected ? 'कांटा: ' + liveWt + 'kg' : 'कांटा जोड़ें'}</button>
     </div>
 
-    <div class="two-col">
-      <div class="field">
-        <label for="tr-name">किसान / सप्लायर का नाम</label>
+    <!-- 4. Farmer Info (2-in-1 Compact Row) -->
+    <div class="pos-row-2">
+      <div class="pos-field">
+        <label for="tr-name">किसान का नाम</label>
         <input id="tr-name" name="name" list="cust-names" maxlength="60" value="${esc(trade.name)}"
           placeholder="किसान का नाम" autocomplete="off">
       </div>
-      <div class="field">
+      <div class="pos-field">
         <label for="tr-village">गाँव / पता</label>
         <input id="tr-village" name="village" list="cust-villages" maxlength="60" value="${esc(trade.village || '')}"
           placeholder="गाँव या स्थान" autocomplete="off">
       </div>
     </div>
 
-    <div class="field">
+    <div class="pos-field">
       <label for="tr-phone">मोबाइल नंबर</label>
       <input id="tr-phone" name="phone" type="tel" inputmode="numeric" maxlength="10"
         value="${esc(trade.phone)}" placeholder="10 Digits">
     </div>
 
-    <div id="tr-cust-balance-banner" class="cust-banner ${matchedCustomer ? (matchedCustomer.balancePaise > 0 ? 'due' : (matchedCustomer.balancePaise < 0 ? 'adv' : 'zero')) : ''}" style="${matchedCustomer ? '' : 'display:none'}">
+    <div id="tr-cust-balance-banner" class="cust-banner ${matchedCustomer ? (matchedCustomer.balancePaise > 0 ? 'due' : (matchedCustomer.balancePaise < 0 ? 'adv' : 'zero')) : ''}" style="${matchedCustomer ? '' : 'display:none'};margin-bottom:8px;">
       <span>${matchedCustomer ? (matchedCustomer.village ? `<strong>${esc(matchedCustomer.name)} (${esc(matchedCustomer.village)})</strong>` : `<strong>${esc(matchedCustomer.name)}</strong>`) + ' खाता:' : ''}</span>
       <strong>${matchedCustomer ? (matchedCustomer.balancePaise > 0 ? inr(matchedCustomer.balancePaise) + ' ' + t('dueTag') : (matchedCustomer.balancePaise < 0 ? inr(-matchedCustomer.balancePaise) + ' ' + t('advTag') : t('settledTag'))) : ''}</strong>
     </div>
 
-    <div class="field">
-      <label>भुगतान की स्थिति</label>
-      <div class="seg">
-        <label><input type="radio" name="paid" value="yes"${trade.paid ? ' checked' : ''}><span>🟢 तुरंत नकद दिया (Paid Cash)</span></label>
-        <label><input type="radio" name="paid" value="no"${trade.paid ? '' : ' checked'}><span>🟣 किसान खाते में जमा (Payable / Khata)</span></label>
-      </div>
+    <!-- 5. Payment Mode Toggle -->
+    <div class="pos-pay-toggle">
+      <label class="pos-pay-opt"><input type="radio" name="paid" value="yes"${trade.paid ? ' checked' : ''}><span>🟢 तुरंत नकद दिया</span></label>
+      <label class="pos-pay-opt"><input type="radio" name="paid" value="no"${trade.paid ? '' : ' checked'}><span>🟣 किसान खाते में जमा</span></label>
     </div>
 
-    <div class="field">
-      <label for="tr-note">टिप्पणी / विवरण (Note)</label>
-      <input id="tr-note" name="note" maxlength="120" value="${esc(trade.note)}" placeholder="e.g. नमी काट 1kg / ग्रेड A">
+    <!-- 6. Note & Auto-Save Checkbox -->
+    <div class="pos-field" style="margin-bottom:6px;">
+      <input id="tr-note" name="note" maxlength="120" value="${esc(trade.note)}" placeholder="टिप्पणी (e.g. नमी काट 1kg / ग्रेड A)">
     </div>
 
-    <label class="check" style="margin-bottom:14px;font-size:13px;color:#475569;">
-      <input type="checkbox" name="saveProduct" value="1" checked> इस फसल को हमेशा के लिए मेरी खरीद सूची में जोड़ें
+    <label class="check" style="margin-bottom:8px;font-size:12px;color:#64748b;">
+      <input type="checkbox" name="saveProduct" value="1" checked> इस फसल को हमेशा के लिए खरीद सूची में जोड़ें
     </label>
 
-    <button class="btn btn-primary btn-block" type="submit" style="background:#d97706;border-color:#d97706;padding:14px;font-size:15px;font-weight:800;">
-      📥 कच्चा माल खरीद बिल सुरक्षित करें (Save Purchase)
+    <button class="btn btn-primary btn-block pos-submit-btn" type="submit" style="background:#d97706;border-color:#d97706;">
+      📥 खरीद बिल सुरक्षित करें (Save Purchase)
     </button>
   </form>`;
 }

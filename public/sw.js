@@ -1,12 +1,12 @@
 // Service Worker for TolMaal (तौल-माल by Solidrix) PWA & Native App
-const CACHE_NAME = 'tolmaal-v2.4.1';
+const CACHE_NAME = 'tolmaal-v2.4.2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/styles.css',
-  '/styles.css?v=2.4.1',
+  '/styles.css?v=2.4.2',
   '/app.js',
-  '/app.js?v=2.4.1',
+  '/app.js?v=2.4.2',
   '/manifest.json',
   '/icon.svg',
   '/js/sync.js',

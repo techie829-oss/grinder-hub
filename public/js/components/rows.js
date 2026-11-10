@@ -145,11 +145,13 @@ export function serviceCards(target) {
   return data.services.map((s) => {
     const lossRateG = s.lossRateG || 0;
     return `
-    <button type="button" class="svc-card${chosen === s.id ? ' is-on' : ''}"
+    <button type="button" class="svc-card pos-svc-card${chosen === s.id ? ' is-on' : ''}"
       data-act="pick-svc" data-target="${target}" data-id="${s.id}">
       <strong>${esc(s.name)}</strong>
-      <span>${inr(s.ratePaise, true)} / ${unitOf(s.unit)}</span>
-      ${lossRateG > 0 ? `<span class="tiny-chip" style="margin-top:4px;background:#fff7ed;color:#c2410c">-${lossRateG}g/${unitOf(s.unit)}</span>` : ''}
+      <div class="pos-svc-sub">
+        <span>${inr(s.ratePaise, true)}/${unitOf(s.unit)}</span>
+        ${lossRateG > 0 ? `<span class="pos-svc-loss">-${lossRateG}g</span>` : ''}
+      </div>
     </button>`;
   }).join('');
 }

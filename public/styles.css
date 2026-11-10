@@ -1381,3 +1381,434 @@ body:has(#modal:not(:empty)) .tabbar {
   opacity: 0.4;
   animation: pulse 1.5s infinite ease-out;
 }
+
+/* ============================================================
+   TolMaal Compact POS (Point-Of-Sale) Architecture
+   ============================================================ */
+
+.btn-block {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  white-space: normal !important;
+  text-align: center !important;
+}
+
+/* POS Header & Segmented Tabs */
+.pos-header {
+  margin-bottom: 8px;
+  width: 100%;
+}
+.pos-tabs {
+  display: flex;
+  background: #e2e8f0;
+  padding: 3px;
+  border-radius: 12px;
+  gap: 3px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.pos-tab {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 8px 4px;
+  border: 0;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 750;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  white-space: nowrap;
+  transition: all 0.14s ease;
+}
+.pos-tab.is-active.is-grind {
+  background: #fff;
+  color: #4f46e5;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+.pos-tab.is-active.is-sale {
+  background: #fff;
+  color: #059669;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+.pos-tab.is-active.is-purchase {
+  background: #fff;
+  color: #d97706;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+/* POS Card Container */
+.pos-card {
+  padding: 12px 14px !important;
+  border-radius: 16px !important;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.04) !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow-x: hidden !important;
+}
+
+/* POS Section Headings */
+.pos-sec-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  font-size: 11.5px;
+  font-weight: 750;
+  color: #475569;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* POS Service Grid: ultra compact touch buttons */
+.pos-svc-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(135px, 1fr));
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.pos-svc-card {
+  border: 1.5px solid #e2e8f0;
+  background: #fff;
+  border-radius: 10px;
+  padding: 6px 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  transition: all 0.12s ease;
+  min-height: 42px;
+  box-sizing: border-box;
+}
+.pos-svc-card.is-on {
+  border-color: #4f46e5;
+  background: #eef2ff;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15);
+}
+.pos-svc-card strong {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1e293b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pos-svc-card.is-on strong {
+  color: #4338ca;
+}
+.pos-svc-sub {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 600;
+}
+.pos-svc-loss {
+  font-size: 9.5px;
+  background: #fff7ed;
+  color: #c2410c;
+  padding: 0 4px;
+  border-radius: 4px;
+}
+
+/* POS Dynamic Chips (Products & Crops) */
+.pos-chip-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.pos-chip-btn {
+  border: 1.5px solid #e2e8f0;
+  background: #fff;
+  border-radius: 10px;
+  padding: 6px 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  box-sizing: border-box;
+  transition: all 0.12s ease;
+}
+.pos-chip-btn strong {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #1e293b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pos-chip-btn span {
+  font-size: 10.5px;
+  color: #64748b;
+}
+.pos-chip-btn.is-sale-active {
+  border-color: #059669;
+  background: #ecfdf5;
+  box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.15);
+}
+.pos-chip-btn.is-purchase-active {
+  border-color: #d97706;
+  background: #fffbeb;
+  box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.15);
+}
+
+/* POS Compact Fields & Rows */
+.pos-row-2 {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 8px !important;
+  margin-bottom: 8px;
+}
+.pos-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  margin-bottom: 8px;
+}
+.pos-field label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #475569;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.pos-field input,
+.pos-field select {
+  padding: 8px 10px !important;
+  font-size: 13.5px !important;
+  border-radius: 10px !important;
+  border: 1px solid #cbd5e1 !important;
+  background: #fff !important;
+  height: 38px !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+}
+
+/* POS Core Billing Dashboard Box */
+.pos-billing-strip {
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 8px 10px;
+  margin: 8px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.pos-bill-input-group {
+  display: flex;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.pos-bill-field {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.pos-bill-field label {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #64748b;
+  white-space: nowrap;
+}
+.pos-bill-field input {
+  padding: 7px 8px !important;
+  font-size: 15px !important;
+  font-weight: 750 !important;
+  border-radius: 9px !important;
+  border: 1.5px solid #cbd5e1 !important;
+  background: #fff !important;
+  height: 38px !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+}
+.pos-bill-total {
+  flex: 0 0 auto;
+  min-width: 95px;
+  text-align: right;
+  padding: 4px 8px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+}
+.pos-bill-total.is-sale {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  color: #059669;
+}
+.pos-bill-total.is-purchase {
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #d97706;
+}
+.pos-bill-total.is-grind {
+  background: #eef2ff;
+  border-color: #c7d2fe;
+  color: #4f46e5;
+}
+.pos-total-sub {
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+}
+.pos-total-val {
+  font-size: 18px;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+/* POS Loss Deduction Inline Strip */
+.pos-loss-strip {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 10px;
+  padding: 6px 8px;
+  margin: 6px 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 11.5px;
+}
+.pos-loss-left {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.pos-loss-input {
+  width: 48px !important;
+  height: 28px !important;
+  padding: 2px 4px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  border-radius: 6px !important;
+  border: 1px solid #fdba74 !important;
+  text-align: center;
+  box-sizing: border-box !important;
+}
+.pos-loss-pill {
+  padding: 2px 5px;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 6px;
+  border: 1px solid #fed7aa;
+  background: #fff;
+  color: #c2410c;
+  cursor: pointer;
+}
+.pos-loss-right {
+  font-size: 11px;
+  font-weight: 750;
+  color: #15803d;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* POS Payment Toggle */
+.pos-pay-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin: 8px 0;
+  background: #f1f5f9;
+  padding: 3px;
+  border-radius: 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.pos-pay-opt {
+  display: block;
+  cursor: pointer;
+  margin: 0;
+}
+.pos-pay-opt input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.pos-pay-opt span {
+  display: block;
+  text-align: center;
+  padding: 7px 6px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 750;
+  color: #64748b;
+  transition: all 0.12s ease;
+  white-space: nowrap;
+}
+.pos-pay-opt input:checked + span {
+  background: #fff;
+  color: #0f172a;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* POS Action Button */
+.pos-submit-btn {
+  width: 100% !important;
+  max-width: 100% !important;
+  padding: 11px 14px !important;
+  font-size: 14.5px !important;
+  font-weight: 800 !important;
+  border-radius: 12px !important;
+  white-space: normal !important;
+  line-height: 1.3 !important;
+  text-align: center !important;
+  cursor: pointer !important;
+  box-sizing: border-box !important;
+}
+
+/* Universal Overflow Prevention for Mobile */
+@media (max-width: 768px) {
+  html, body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+  .page {
+    padding: 8px 10px 85px !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+  }
+  .card {
+    padding: 12px 10px !important;
+    border-radius: 14px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+  }
+  .two-col {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+  .field {
+    margin-bottom: 8px !important;
+    gap: 3px !important;
+  }
+  .field input, .field select {
+    padding: 8px 10px !important;
+    font-size: 13.5px !important;
+    height: 38px !important;
+    border-radius: 10px !important;
+  }
+}
