@@ -1,4 +1,4 @@
-name = "chakki-book"
+name = "tolmaal"
 main = "src/worker.js"
 compatibility_date = "2026-11-01"
 
