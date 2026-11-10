@@ -13,6 +13,9 @@ let testCustomerId = '';
 let testTokenId = '';
 let testTokenNo = 0;
 let testJobEntryId = '';
+let testSaleEntryId = '';
+let testPaymentEntryId = '';
+let testPurchaseEntryId = '';
 
 async function runAudit() {
   const results = { pass: 0, fail: 0, errors: [] };
@@ -237,6 +240,7 @@ async function runAudit() {
     assert.equal(res.status, 200);
     const data = await res.json();
     assert.equal(data.ok, true);
+    testSaleEntryId = data.entryId;
 
     // Verify customer balance reflects credit due (2.5 * 150 = 375 = 37500 paise)
     const cust = (data.state.customers || []).find(c => c.name === 'सुरेश उधार ग्राहक');
@@ -261,6 +265,7 @@ async function runAudit() {
     assert.equal(res.status, 200);
     const data = await res.json();
     assert.equal(data.ok, true);
+    testPaymentEntryId = data.entryId;
 
     const cust = (data.state.customers || []).find(c => c.id === testUdhaarCustId);
     assert.equal(cust.balancePaise, 0, 'Customer balance should be settled to 0');
@@ -289,22 +294,25 @@ async function runAudit() {
     assert.equal(res.status, 200);
     const data = await res.json();
     assert.equal(data.ok, true);
+    testPurchaseEntryId = data.entryId;
     assert.ok(data.state.stats.purchasePaise > 0, 'Purchase paise should be recorded in stats');
   })();
 
   console.log('\n--- 7. Cleanup & Rollback of Test Records ---');
 
-  await check('Delete test job and payment entries cleanly', async () => {
-    if (testJobEntryId) {
-      const res = await fetch(`${BASE_URL}/api/entries/delete`, {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          'authorization': `Bearer ${authToken}`,
-        },
-        body: JSON.stringify({ id: testJobEntryId }),
-      });
-      assert.equal(res.status, 200);
+  await check('Delete test job, sale, payment and purchase entries cleanly', async () => {
+    for (const id of [testJobEntryId, testSaleEntryId, testPaymentEntryId, testPurchaseEntryId]) {
+      if (id) {
+        const res = await fetch(`${BASE_URL}/api/entries/delete`, {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            'authorization': `Bearer ${authToken}`,
+          },
+          body: JSON.stringify({ id }),
+        });
+        assert.equal(res.status, 200);
+      }
     }
   })();
 

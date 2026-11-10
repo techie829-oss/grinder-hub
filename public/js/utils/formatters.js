@@ -10,10 +10,12 @@ const decFmt = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 });
 
 export const inr = (paise, forceDecimals) => {
   const num = (Number(paise) || 0) / 100;
-  if (forceDecimals || num % 1 !== 0) {
-    return '₹' + num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  }
-  return '₹' + num.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+  const isNeg = num < 0;
+  const abs = Math.abs(num);
+  const formatted = (forceDecimals || abs % 1 !== 0)
+    ? abs.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : abs.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+  return (isNeg ? '-₹' : '₹') + formatted;
 };
 
 export const qtyFmt = (q) => decFmt.format(Number(q) || 0);

@@ -147,14 +147,15 @@ export async function createPayment(request, env, business, range) {
   if (amountPaise > 100000000) return bad('रकम बहुत ज़्यादा है');
 
   const now = Date.now();
+  const entryId = crypto.randomUUID();
   await env.DB.prepare(
     `INSERT INTO entries (id, business_id, customer_id, kind, name, village, amount_paise, paid, note, day, created_at)
      VALUES (?, ?, ?, 'payment', ?, ?, ?, 1, ?, ?, ?)`
   )
-    .bind(crypto.randomUUID(), business.id, customer.id, customer.name, customer.village || '', amountPaise, clean(body.note, 120), dayKey(now), now)
+    .bind(entryId, business.id, customer.id, customer.name, customer.village || '', amountPaise, clean(body.note, 120), dayKey(now), now)
     .run();
 
-  return json({ ok: true, state: await buildState(env, business.id, range) });
+  return json({ ok: true, entryId, state: await buildState(env, business.id, range) });
 }
 
 export async function deleteEntry(request, env, business, range) {

@@ -38,10 +38,10 @@ export function viewReports() {
       <div class="kpi-value" style="${(stats.purchasePaise || 0) > 0 ? 'color:#d97706;' : ''}">${inr(stats.purchasePaise || 0)}</div>
       <div class="kpi-sub">${stats.purchases || 0} फसल खरीद</div>
     </div>
-    <div class="kpi green">
-      <div class="kpi-label">${t('cashRecovered')}</div>
-      <div class="kpi-value">${inr(stats.cashPaise || 0)}</div>
-      <div class="kpi-sub">${t('cashInHand')}</div>
+    <div class="kpi ${(stats.cashPaise || 0) >= 0 ? 'green' : 'amber'}" style="${(stats.cashPaise || 0) < 0 ? 'background:#fff7ed;border-color:#fed7aa;' : ''}">
+      <div class="kpi-label" style="${(stats.cashPaise || 0) < 0 ? 'color:#c2410c;' : ''}">${t('cashRecovered')}</div>
+      <div class="kpi-value" style="${(stats.cashPaise || 0) < 0 ? 'color:#ea580c;' : ''}">${inr(stats.cashPaise || 0)}</div>
+      <div class="kpi-sub">${(stats.cashPaise || 0) < 0 ? 'खरीद भुगतान बिक्री आवक से अधिक' : t('cashInHand')}</div>
     </div>
     <div class="kpi">
       <div class="kpi-label">${t('totalOutstanding')}</div>

@@ -64,7 +64,7 @@ describe('Chakki Book Calculations & Formatters Suite', () => {
       assert.equal(inr(0), '₹0');
       assert.equal(inr(9000), '₹90');
       assert.equal(inr(125000), '₹1,250');
-      assert.equal(inr(-5000), '₹-50');
+      assert.equal(inr(-5000), '-₹50');
     });
 
     it('should resolve standard units or fallback to kg', () => {

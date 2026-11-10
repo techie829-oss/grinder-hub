@@ -48,10 +48,10 @@ export function viewDashboard() {
       <div class="kpi-value">${inr(s.salePaise)}</div>
       <div class="kpi-sub">${s.jobs || 0} सेवा कार्य · ${s.sales || 0} माल बिक्री</div>
     </div>
-    <div class="kpi green">
-      <div class="kpi-label">शुद्ध नकद गल्ला (Cash)</div>
-      <div class="kpi-value">${inr(s.cashPaise)}</div>
-      <div class="kpi-sub">गल्ले में शुद्ध रोकड़</div>
+    <div class="kpi ${s.cashPaise >= 0 ? 'green' : 'amber'}" style="${s.cashPaise < 0 ? 'background:#fff7ed;border-color:#fed7aa;' : ''}">
+      <div class="kpi-label" style="${s.cashPaise < 0 ? 'color:#c2410c;' : ''}">शुद्ध नकद गल्ला (Cash)</div>
+      <div class="kpi-value" style="${s.cashPaise < 0 ? 'color:#ea580c;' : ''}">${inr(s.cashPaise)}</div>
+      <div class="kpi-sub">${s.cashPaise < 0 ? 'खरीद भुगतान बिक्री आवक से अधिक' : 'गल्ले में शुद्ध रोकड़'}</div>
     </div>
     <div class="kpi amber">
       <div class="kpi-label">नया उधार (Credit)</div>
