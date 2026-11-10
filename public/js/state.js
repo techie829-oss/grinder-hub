@@ -45,6 +45,24 @@ export const ICONS = {
   sliders: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h16M4 17h16"/><circle cx="9" cy="7" r="2.1" fill="currentColor" stroke="none"/><circle cx="15" cy="12" r="2.1" fill="currentColor" stroke="none"/><circle cx="8" cy="17" r="2.1" fill="currentColor" stroke="none"/></svg>',
 };
 
+export const TRADE_SALE_PRESETS = [
+  { item: 'शुद्ध सरसों तेल', unit: 'ltr', rate: 140, icon: '🛢️' },
+  { item: 'ताजा चक्की आटा', unit: 'kg', rate: 32, icon: '🌾' },
+  { item: 'खली (पशु आहार)', unit: 'kg', rate: 28, icon: '🐄' },
+  { item: 'धान पॉलिश / चोकर', unit: 'kg', rate: 22, icon: '🌾' },
+  { item: 'मक्का आटा', unit: 'kg', rate: 30, icon: '🌽' },
+  { item: 'चना बेसन', unit: 'kg', rate: 85, icon: '🟡' },
+];
+
+export const TRADE_PURCHASE_PRESETS = [
+  { item: 'सरसों खरीद', unit: 'kg', rate: 52, icon: '🌻' },
+  { item: 'गेहूँ खरीद', unit: 'kg', rate: 24, icon: '🌾' },
+  { item: 'मक्का खरीद', unit: 'kg', rate: 20, icon: '🌽' },
+  { item: 'धान खरीद', unit: 'kg', rate: 22, icon: '🌾' },
+  { item: 'खली थोक खरीद', unit: 'kg', rate: 25, icon: '🐄' },
+  { item: 'धान पॉलिश खरीद', unit: 'kg', rate: 18, icon: '🌾' },
+];
+
 export const state = {
   view: 'dashboard',
   range: 'today',
@@ -53,6 +71,7 @@ export const state = {
   data: null,
   customer: null,
   busy: false,
+  jobTab: 'grind', // 'grind' | 'sale' | 'purchase'
   job: {
     serviceId: null,
     qty: '',
@@ -68,6 +87,19 @@ export const state = {
     withToken: false,
     tokenId: null,
     tokenNo: null,
+  },
+  trade: {
+    item: '',
+    unit: 'kg',
+    qty: '',
+    rate: '',
+    amount: '',
+    paid: true,
+    name: '',
+    village: '',
+    phone: '',
+    photo: '',
+    note: '',
   },
   tokenForm: {
     serviceId: null,

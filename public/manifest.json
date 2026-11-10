@@ -1,13 +1,13 @@
 {
-  "name": "चक्की बुक — हर दुकान का अपना हिसाब",
-  "short_name": "चक्की बुक",
-  "description": "आटा चक्की, मसाला पिसाई, तेल घानी और छोटे काम-धंधे के लिए टोकन, हिसाब और उधार का सिस्टम।",
+  "name": "तौल-माल — हर दुकान और व्यापार का अपना हिसाब",
+  "short_name": "तौल-माल",
+  "description": "आटा चक्की, गल्ला मंडी, तेल मिल, किराना और हर तौल व्यापार के लिए बिल, खाता, उधार व पर्ची सिस्टम।",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#f5f6fa",
-  "theme_color": "#4f46e5",
+  "background_color": "#0b1120",
+  "theme_color": "#0f172a",
   "icons": [
     {
       "src": "/icon.svg",
@@ -17,4 +17,3 @@
     }
   ]
 }
-

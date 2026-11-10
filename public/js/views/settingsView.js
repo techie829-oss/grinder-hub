@@ -119,6 +119,46 @@ export function viewSettings() {
     </form>
   </section>
 
+  <section class="card">
+    <div class="section-head" style="display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <h2 class="section-title">📦 ख़रीद व बिक्री सामान (Products & Commodities)</h2>
+        <span class="muted">${(data.products || []).length} सक्रिय सामान</span>
+      </div>
+      <button type="button" class="btn btn-sm btn-soft" data-act="open-product-modal" style="font-weight:700;">
+        + नया सामान
+      </button>
+    </div>
+    <p class="tiny muted" style="margin-bottom:12px">
+      दुकान में बेचे जाने वाले उत्पाद (तेल, आटा, खली) और किसानों से खरीदी जाने वाली फसलें (सरसों, गेहूँ, धान) यहाँ जोड़ें।
+    </p>
+
+    <div class="row-list">
+      ${(data.products || []).length ? data.products.map((p) => {
+        const typeBadge = p.type === 'both' ? '🔄 खरीद व बिक्री' : (p.type === 'sale' ? '🛒 बिक्री' : '📥 खरीद');
+        const badgeBg = p.type === 'both' ? '#eff6ff;color:#2563eb' : (p.type === 'sale' ? '#ecfdf5;color:#059669' : '#fffbeb;color:#d97706');
+        return `
+        <div class="row-item" style="display:flex;align-items:center;justify-content:space-between;">
+          <div style="flex:1;">
+            <div style="font-weight:700;font-size:14px;color:#0f172a;">${esc(p.name)}</div>
+            <div class="tiny" style="color:#64748b;margin-top:2px;">
+              इकाई: <strong>${unitOf(p.unit)}</strong> ${p.defaultRatePaise ? `· डिफ़ॉल्ट भाव: <strong>${inr(p.defaultRatePaise)}</strong>` : ''}
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span class="tiny-chip" style="background:${badgeBg};font-weight:700;">${typeBadge}</span>
+            <button type="button" class="btn btn-sm btn-ghost" data-act="edit-product" data-id="${p.id}" title="बदलें">✏️</button>
+            <button type="button" class="icon-btn" data-act="del-product" data-id="${p.id}" title="हटाएं">✕</button>
+          </div>
+        </div>`;
+      }).join('') : `
+        <div style="padding:16px;text-align:center;color:#64748b;font-size:13px;background:#f8fafc;border-radius:12px;border:1px dashed #cbd5e1;">
+          अभी तक कोई सामान नहीं जोड़ा गया है। ऊपर <b>"+ नया सामान"</b> पर क्लिक करके अपनी पसंद का सामान जोड़ें।
+        </div>
+      `}
+    </div>
+  </section>
+
   <form class="card" data-form="password">
     <div class="section-head"><h2 class="section-title">${t('changePasswordTitle')}</h2></div>
     <div class="two-col">

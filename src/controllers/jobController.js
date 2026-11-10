@@ -40,11 +40,13 @@ export async function createJob(request, env, business, range) {
   if (!paid && !name) return bad('उधार के लिए ग्राहक का नाम ज़रूरी है');
 
   let customerId = null;
+  const photo = typeof body.photo === 'string' ? body.photo.slice(0, 200000) : '';
+
   if (name) {
     const key = normName(name);
     const vKey = normVillage(village);
     const found = await env.DB.prepare(
-      'SELECT id, phone, village FROM customers WHERE business_id = ? AND name_key = ? AND village_key = ?'
+      'SELECT id, phone, village, photo FROM customers WHERE business_id = ? AND name_key = ? AND village_key = ?'
     )
       .bind(business.id, key, vKey)
       .first();
@@ -55,13 +57,18 @@ export async function createJob(request, env, business, range) {
           .bind(phone, found.id, business.id)
           .run();
       }
+      if (photo && !found.photo) {
+        await env.DB.prepare('UPDATE customers SET photo = ? WHERE id = ? AND business_id = ?')
+          .bind(photo, found.id, business.id)
+          .run();
+      }
     } else {
       customerId = crypto.randomUUID();
       try {
         await env.DB.prepare(
-          'INSERT INTO customers (id, business_id, name, name_key, village, village_key, phone, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+          'INSERT INTO customers (id, business_id, name, name_key, village, village_key, phone, photo, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
         )
-          .bind(customerId, business.id, name, key, village, vKey, phone, Date.now())
+          .bind(customerId, business.id, name, key, village, vKey, phone, photo, Date.now())
           .run();
       } catch (err) {
         const again = await env.DB.prepare(

@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">चक्की बुक (Grinder Hub)</string>
-    <string name="title_activity_main">चक्की बुक (Grinder Hub)</string>
-    <string name="package_name">com.solidrix.chakkibook</string>
-    <string name="custom_url_scheme">com.solidrix.chakkibook</string>
+    <string name="app_name">तौल-माल (TolMaal)</string>
+    <string name="title_activity_main">तौल-माल (TolMaal)</string>
+    <string name="package_name">com.solidrix.tolmaal</string>
+    <string name="custom_url_scheme">com.solidrix.tolmaal</string>
 </resources>

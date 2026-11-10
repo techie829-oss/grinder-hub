@@ -5,15 +5,17 @@ import { buildState } from '../services/stateService.js';
 
 export async function customerDetail(request, env, business, url) {
   const id = clean(url.searchParams.get('id'), 40);
-  const customer = await env.DB.prepare('SELECT id, name, village, phone FROM customers WHERE id = ? AND business_id = ?')
+  const customer = await env.DB.prepare('SELECT id, name, village, phone, COALESCE(photo, "") AS photo FROM customers WHERE id = ? AND business_id = ?')
     .bind(id, business.id)
     .first();
   if (!customer) return bad('ग्राहक नहीं मिला', 404);
 
   const rows = await env.DB.prepare(
-    `SELECT e.id, e.kind, COALESCE(e.gross_weight, 0) AS gross_weight, COALESCE(e.loss_g, 0) AS loss_g,
+    `SELECT e.id, e.kind, COALESCE(e.item_name, '') AS item_name,
+            COALESCE(e.gross_weight, 0) AS gross_weight, COALESCE(e.loss_g, 0) AS loss_g,
             e.net_weight, e.rate_paise, e.amount_paise, e.paid, e.note, e.token_no,
-            e.created_at, s.name AS service_name, s.unit AS unit
+            e.created_at, COALESCE(s.name, e.item_name, '') AS service_name,
+            COALESCE(e.unit, s.unit, 'kg') AS unit
        FROM entries e LEFT JOIN services s ON s.id = e.service_id AND s.business_id = e.business_id
       WHERE e.business_id = ? AND e.customer_id = ?
       ORDER BY e.created_at DESC LIMIT 200`
@@ -23,10 +25,11 @@ export async function customerDetail(request, env, business, url) {
 
   return json({
     ok: true,
-    customer: { id: customer.id, name: customer.name, village: customer.village || '', phone: customer.phone || '' },
+    customer: { id: customer.id, name: customer.name, village: customer.village || '', phone: customer.phone || '', photo: customer.photo || '' },
     entries: rows.results.map((e) => ({
       id: e.id,
       kind: e.kind,
+      itemName: e.item_name || '',
       grossWeight: e.gross_weight,
       lossG: Number(e.loss_g) || 0,
       netWeight: e.net_weight != null ? Number(e.net_weight) : (e.gross_weight ? Math.max(0, e.gross_weight - ((Number(e.loss_g) || 0) / 1000)) : null),
@@ -35,7 +38,7 @@ export async function customerDetail(request, env, business, url) {
       paid: !!e.paid,
       note: e.note || '',
       tokenNo: e.token_no,
-      serviceName: e.service_name || '',
+      serviceName: e.service_name || e.item_name || '',
       unit: e.unit || 'kg',
       at: e.created_at,
     })),
@@ -48,13 +51,14 @@ export async function saveCustomer(request, env, business, range) {
   const name = clean(body.name, 60);
   const village = clean(body.village, 60);
   const phone = normalizePhone(body.phone);
+  const photo = typeof body.photo === 'string' ? body.photo.slice(0, 200000) : '';
   if (name.length < 2) return bad('ग्राहक का नाम लिखें');
 
   const key = normName(name);
   const vKey = normVillage(village);
 
   if (id) {
-    const existing = await env.DB.prepare('SELECT id FROM customers WHERE id = ? AND business_id = ?')
+    const existing = await env.DB.prepare('SELECT id, photo FROM customers WHERE id = ? AND business_id = ?')
       .bind(id, business.id)
       .first();
     if (!existing) return bad('ग्राहक नहीं मिला', 404);
@@ -66,10 +70,11 @@ export async function saveCustomer(request, env, business, range) {
       .first();
     if (conflict) return bad('इस नाम और गाँव का ग्राहक पहले से मौजूद है');
 
+    const finalPhoto = photo || (existing.photo || '');
     await env.DB.prepare(
-      'UPDATE customers SET name = ?, name_key = ?, village = ?, village_key = ?, phone = ? WHERE id = ? AND business_id = ?'
+      'UPDATE customers SET name = ?, name_key = ?, village = ?, village_key = ?, phone = ?, photo = ? WHERE id = ? AND business_id = ?'
     )
-      .bind(name, key, village, vKey, phone, id, business.id)
+      .bind(name, key, village, vKey, phone, finalPhoto, id, business.id)
       .run();
   } else {
     const exists = await env.DB.prepare(
@@ -80,9 +85,9 @@ export async function saveCustomer(request, env, business, range) {
     if (exists) return bad('इस नाम और गाँव का ग्राहक पहले से मौजूद है');
 
     await env.DB.prepare(
-      'INSERT INTO customers (id, business_id, name, name_key, village, village_key, phone, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+      'INSERT INTO customers (id, business_id, name, name_key, village, village_key, phone, photo, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
     )
-      .bind(crypto.randomUUID(), business.id, name, key, village, vKey, phone, Date.now())
+      .bind(crypto.randomUUID(), business.id, name, key, village, vKey, phone, photo, Date.now())
       .run();
   }
 
@@ -94,7 +99,8 @@ export async function deleteCustomer(request, env, business, range) {
   const id = clean(body.id, 40);
 
   const balanceRow = await env.DB.prepare(
-    `SELECT COALESCE(SUM(CASE WHEN kind = 'job' AND paid = 0 THEN amount_paise
+    `SELECT COALESCE(SUM(CASE WHEN kind IN ('job', 'sale') AND paid = 0 THEN amount_paise
+                             WHEN kind = 'purchase' AND paid = 0 THEN -amount_paise
                              WHEN kind = 'payment' THEN -amount_paise ELSE 0 END), 0) AS balance_paise
        FROM entries WHERE business_id = ? AND customer_id = ?`
   ).bind(business.id, id).first();

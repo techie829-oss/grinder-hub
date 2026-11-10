@@ -35,13 +35,25 @@ export function renderCustomerModal() {
   const label = balance > 0 ? t('dueTitle') : (balance < 0 ? t('advTitle') : t('settledTitle'));
 
   showModal(`
-    <div class="sheet-head">
-      <div>
-        <h3>${esc(current.customer.name)}${current.customer.village ? ` <span class="tiny-chip">${esc(current.customer.village)}</span>` : ''}</h3>
-        <div class="muted">${current.customer.phone ? phoneFmt(current.customer.phone) : '—'} · ${current.entries.length} entries</div>
+    <div class="sheet-head" style="align-items:center;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        ${current.customer.photo
+          ? `<img src="${current.customer.photo}" alt="${esc(current.customer.name)}" style="width:58px;height:58px;border-radius:50%;object-fit:cover;border:2.5px solid #4f46e5;box-shadow:0 4px 12px rgba(79,70,229,0.25);">`
+          : `<div class="avatar" style="width:58px;height:58px;border-radius:50%;font-size:24px;font-weight:800;background:#e0e7ff;color:#3730a3;">${esc(current.customer.name.charAt(0) || '?')}</div>`}
+        <div>
+          <h3 style="margin:0;font-size:18px;font-weight:800;color:#0f172a;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+            ${esc(current.customer.name)}${current.customer.village ? ` <span class="tiny-chip" style="background:#f1f5f9;color:#334155;">${esc(current.customer.village)}</span>` : ''}
+          </h3>
+          <div class="muted" style="margin-top:2px;">
+            ${current.customer.phone
+              ? `<a href="tel:${current.customer.phone}" style="color:#4f46e5;font-weight:700;display:inline-flex;align-items:center;gap:4px;">📞 ${phoneFmt(current.customer.phone)}</a>`
+              : '<span style="color:#94a3b8;">फोन नंबर नहीं दर्ज</span>'}
+            · ${current.entries.length} हिसाब प्रविष्टियाँ
+          </div>
+        </div>
       </div>
       <div style="display:flex;align-items:center;gap:6px">
-        <button class="btn btn-sm btn-ghost" data-act="edit-cust" data-id="${current.customer.id}">${t('editCustomer')}</button>
+        <button class="btn btn-sm btn-ghost" data-act="edit-cust" data-id="${current.customer.id}" title="नाम, गाँव या फोटो बदलें">✏️ ${t('editCustomer')}</button>
         ${balance === 0 ? `<button class="btn btn-sm btn-ghost" data-act="del-cust" data-id="${current.customer.id}" style="color:var(--red)">${t('deleteCustomer')}</button>` : ''}
         <button class="icon-btn" data-act="close-modal" aria-label="Close">✕</button>
       </div>
@@ -106,11 +118,29 @@ export function openCustomerEditModal(id) {
   const isNew = !cust;
   showModal(`
     <div class="sheet-head">
-      <h3>${isNew ? t('addCustomerModalTitle') : t('editCustomerModalTitle')}</h3>
+      <h3>${isNew ? 'नया ग्राहक संपर्क जोड़ें' : 'ग्राहक संपर्क विवरण बदलें'}</h3>
       <button class="icon-btn" data-act="close-modal" aria-label="Close">✕</button>
     </div>
     <form data-form="customer">
       <input type="hidden" name="id" value="${cust ? cust.id : ''}">
+
+      <!-- Customer Photo Identification Section -->
+      <div style="text-align:center;margin-bottom:16px;">
+        <div id="cust-photo-preview" style="width:84px;height:84px;border-radius:50%;overflow:hidden;border:3px solid #4f46e5;margin:0 auto 8px;display:grid;place-items:center;background:#f8fafc;box-shadow:0 4px 12px rgba(0,0,0,0.08);cursor:pointer;" onclick="document.getElementById('cust-photo-file').click();">
+          <img id="cust-photo-img" src="${cust ? esc(cust.photo || '') : ''}" style="${cust && cust.photo ? '' : 'display:none;'}width:100%;height:100%;object-fit:cover;">
+          <span id="cust-photo-placeholder" style="${cust && cust.photo ? 'display:none;' : ''}font-size:36px;">👤</span>
+        </div>
+        <input type="file" id="cust-photo-file" accept="image/*" capture="user" style="display:none;">
+        <input type="hidden" id="ec-photo" name="photo" value="${cust ? esc(cust.photo || '') : ''}">
+        <div style="display:flex;justify-content:center;gap:8px;">
+          <button type="button" class="btn btn-sm btn-subtle" onclick="document.getElementById('cust-photo-file').click();" style="border:1.5px solid #cbd5e1;padding:6px 14px;border-radius:10px;font-weight:700;display:inline-flex;align-items:center;gap:6px;background:#fff;">
+            <span>📷</span> <span id="cust-photo-btn-text">${cust && cust.photo ? 'फोटो बदलें' : 'ग्राहक का फोटो लें'}</span>
+          </button>
+          <button type="button" class="btn btn-sm btn-ghost" id="cust-photo-clear" style="${cust && cust.photo ? '' : 'display:none;'}color:#dc2626;padding:6px 10px;">हटाएं</button>
+        </div>
+        <div style="font-size:11.5px;color:#64748b;margin-top:4px;">उधार के समय सही पहचान के लिए फोटो बहुत उपयोगी है</div>
+      </div>
+
       <div class="field">
         <label for="ec-name">${t('customerName')} <span class="req">*</span></label>
         <input id="ec-name" name="name" maxlength="60" value="${esc(cust ? cust.name : '')}" placeholder="Customer name" required autocomplete="off">
@@ -130,34 +160,59 @@ export function openCustomerEditModal(id) {
 
 export function showJobDone(payload) {
   const { entryId, token, state: snapshot } = payload;
-  const entry = snapshot.entries.find((e) => e.id === entryId);
-  const customer = entry && entry.customerId ? snapshot.customers.find((c) => c.id === entry.customerId) : null;
-  const nameDisplay = (customer ? customer.name : entry?.name) || 'Customer';
-  const villageDisplay = (customer ? customer.village : entry?.village) || '';
+  const currentSnapshot = snapshot || state.data;
+  const entry = entryId && currentSnapshot ? currentSnapshot.entries.find((e) => e.id === entryId) : null;
+  const customer = entry && entry.customerId && currentSnapshot ? currentSnapshot.customers.find((c) => c.id === entry.customerId) : null;
+  const nameDisplay = (customer ? customer.name : (entry?.name || payload.name)) || 'Customer';
+  const villageDisplay = (customer ? customer.village : (entry?.village || payload.village)) || '';
+
+  const kind = entry ? entry.kind : (payload.kind || 'job');
+  const itemName = (entry ? (entry.serviceName || entry.itemName) : payload.serviceName) || 'माल';
+  const qtyVal = entry ? (entry.grossWeight || entry.qty) : payload.qty;
+  const unitVal = entry ? entry.unit : (payload.unit || 'kg');
+  const amountPaise = entry ? entry.amountPaise : (payload.amountPaise || 0);
+  const isPaid = entry ? entry.paid : payload.paid;
 
   const lossG = entry ? (entry.lossG || 0) : 0;
   const netWeight = entry ? entry.netWeight : null;
-  const hasLoss = entry && (lossG > 0 || netWeight != null);
+  const hasLoss = kind === 'job' && (lossG > 0 || netWeight != null);
+
+  let title = t('jobDoneTitle');
+  let kindBadge = '⚙️ पिसाई';
+  if (kind === 'sale') {
+    title = 'बिक्री पर्ची तैयार है';
+    kindBadge = '🛒 सामान बिक्री';
+  } else if (kind === 'purchase') {
+    title = 'ख़रीद रसीद तैयार है';
+    kindBadge = '📥 कच्चा माल ख़रीद';
+  }
 
   showModal(`
-    <div class="done-mark">✓</div>
-    <h3 style="text-align:center;font-size:18px">${t('jobDoneTitle')}</h3>
+    <div class="done-mark" style="${kind === 'sale' ? 'background:#ecfdf5;color:#059669;' : (kind === 'purchase' ? 'background:#fffbeb;color:#d97706;' : '')}">✓</div>
+    <div style="text-align:center;margin-top:6px;">
+      <span class="tiny-chip" style="${kind === 'sale' ? 'background:#ecfdf5;color:#059669;font-weight:700;' : (kind === 'purchase' ? 'background:#fffbeb;color:#d97706;font-weight:700;' : 'background:#e0e7ff;color:#3730a3;font-weight:700;')}">${kindBadge}</span>
+      <h3 style="margin:4px 0 0;font-size:18px;">${title}</h3>
+    </div>
     <div class="done-card">
-      <div class="done-amount">${inr(entry ? entry.amountPaise : 0)}</div>
-      <div class="muted" style="font-weight:600">${entry ? esc(entry.serviceName) + ' · ' + qtyFmt(entry.qty) + ' ' + unitOf(entry.unit) : ''}</div>
+      <div class="done-amount" style="${kind === 'purchase' ? 'color:#d97706;' : (kind === 'sale' ? 'color:#059669;' : '')}">${inr(amountPaise)}</div>
+      <div class="muted" style="font-weight:600">${esc(itemName)}${qtyVal ? ' · ' + qtyFmt(qtyVal) + ' ' + unitOf(unitVal) : ''}</div>
       ${hasLoss ? `
       <div style="margin:8px 0;padding:6px 10px;background:#f8fafc;border-radius:8px;font-size:12px;display:flex;justify-content:space-around">
-        <span style="color:#ea580c">Loss: -${lossG}g</span>
-        <span style="color:#16a34a;font-weight:700">Output: ${qtyFmt(netWeight)} ${unitOf(entry.unit)}</span>
+        <span style="color:#ea580c">घटौती: -${lossG}g</span>
+        <span style="color:#16a34a;font-weight:700">शुद्ध आटा: ${qtyFmt(netWeight)} ${unitOf(unitVal)}</span>
       </div>` : ''}
-      <div class="muted">${entry ? (entry.paid ? t('cashPaid') : t('creditDue')) : ''} · ${esc(nameDisplay)}${villageDisplay ? ' (' + esc(villageDisplay) + ')' : ''}</div>
-      ${token ? `<div class="mt-8"><span class="token-chip">Token #${token.no}</span></div>` : ''}
-      ${customer && customer.balancePaise > 0 ? `<div class="mt-8"><span class="badge amber">Total Due ${inr(customer.balancePaise)}</span></div>` : ''}
+      <div class="muted" style="margin-top:4px;">
+        <span style="font-weight:700;color:${isPaid ? '#16a34a' : '#d97706'}">${isPaid ? (kind === 'purchase' ? 'नकद दिया' : t('cashPaid')) : (kind === 'purchase' ? 'खाते में जमा' : t('creditDue'))}</span> · ${esc(nameDisplay)}${villageDisplay ? ' (' + esc(villageDisplay) + ')' : ''}
+      </div>
+      ${token ? `<div class="mt-8"><span class="token-chip">टोकन #${token.no}</span></div>` : ''}
+      ${customer && customer.balancePaise > 0 ? `<div class="mt-8"><span class="badge amber">कुल बाकी: ${inr(customer.balancePaise)}</span></div>` : ''}
     </div>
     <div class="sheet-actions" style="display:flex;gap:8px;flex-wrap:wrap">
-      <button type="button" class="btn btn-ghost" data-act="print-entry" data-id="${entryId}">${t('printSlip')}</button>
-      <button type="button" class="btn btn-ghost" data-act="pos-print-entry" data-id="${entryId}">🖨️ POS Print</button>
-      <button type="button" class="btn btn-ghost" data-act="wa-entry" data-id="${entryId}">${t('shareWhatsApp')}</button>
+      ${entryId ? `
+        <button type="button" class="btn btn-ghost" data-act="print-entry" data-id="${entryId}">${t('printSlip')}</button>
+        <button type="button" class="btn btn-ghost" data-act="pos-print-entry" data-id="${entryId}">🖨️ POS Print</button>
+        <button type="button" class="btn btn-ghost" data-act="wa-entry" data-id="${entryId}">${t('shareWhatsApp')}</button>
+      ` : ''}
     </div>
     <button type="button" class="btn btn-primary btn-block" data-act="close-modal">${t('okBtn')}</button>
   `);
@@ -313,3 +368,77 @@ export function renderStatusResult(res) {
     </div>
   `;
 }
+
+export function openProductModal(productId = null, defaultType = 'both') {
+  const p = productId && state.data && state.data.products ? state.data.products.find((x) => x.id === productId) : null;
+  const isEdit = !!p;
+  const type = p ? p.type : (defaultType || 'both');
+  const unit = p ? p.unit : 'kg';
+  const rate = p && p.defaultRatePaise ? (p.defaultRatePaise / 100) : '';
+
+  showModal(`
+    <div class="sheet-head">
+      <div>
+        <h3 style="margin:0;font-size:18px;font-weight:800;color:#0f172a;">
+          ${isEdit ? '✏️ सामान विवरण बदलें' : '📦 नया सामान / उत्पाद जोड़ें'}
+        </h3>
+        <p class="tiny muted" style="margin-top:2px;">
+          दुकान में ख़रीदने या बेचने वाली फ़सल, तेल, खली, अनाज या अन्य सामग्री दर्ज करें
+        </p>
+      </div>
+      <button class="icon-btn" data-act="close-modal" aria-label="Close">✕</button>
+    </div>
+
+    <form data-form="product" style="display:flex;flex-direction:column;gap:12px;margin-top:12px;">
+      ${isEdit ? `<input type="hidden" name="id" value="${esc(p.id)}">` : ''}
+
+      <div class="field">
+        <label for="prod-name">सामान का नाम *</label>
+        <input id="prod-name" name="name" maxlength="60" value="${isEdit ? esc(p.name) : ''}"
+          placeholder="e.g. शुद्ध सरसों तेल, ताजा आटा, मक्का, खली, धान 1509..." required autofocus>
+      </div>
+
+      <div class="two-col">
+        <div class="field">
+          <label for="prod-type">प्रकार (Category)</label>
+          <select id="prod-type" name="type" style="padding:10px 12px;border-radius:12px;border:1px solid #cbd5e1;background:#fff;font-weight:700;">
+            <option value="both"${type === 'both' ? ' selected' : ''}>🔄 दोनों (ख़रीद व बिक्री)</option>
+            <option value="sale"${type === 'sale' ? ' selected' : ''}>🛒 सिर्फ बिक्री (Sale)</option>
+            <option value="purchase"${type === 'purchase' ? ' selected' : ''}>📥 सिर्फ ख़रीद (Purchase)</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="prod-unit">मापक इकाई (Unit)</label>
+          <select id="prod-unit" name="unit" style="padding:10px 12px;border-radius:12px;border:1px solid #cbd5e1;background:#fff;font-weight:700;">
+            <option value="kg"${unit === 'kg' ? ' selected' : ''}>किलो (kg)</option>
+            <option value="ltr"${unit === 'ltr' ? ' selected' : ''}>लीटर (ltr)</option>
+            <option value="qtl"${unit === 'qtl' ? ' selected' : ''}>क्विंटल (qtl)</option>
+            <option value="bag"${unit === 'bag' ? ' selected' : ''}>बोरी (bag)</option>
+            <option value="pkt"${unit === 'pkt' ? ' selected' : ''}>पैकेट (pkt)</option>
+            <option value="pc"${unit === 'pc' ? ' selected' : ''}>नग / पीस (pc)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="prod-rate">डिफ़ॉल्ट भाव / रेट (₹ प्रति इकाई - वैकल्पिक)</label>
+        <input id="prod-rate" name="rate" type="number" step="0.25" min="0" inputmode="decimal"
+          value="${rate}" placeholder="0.00">
+        <span class="tiny muted">बिल बनाते समय यह भाव अपने आप भर जाएगा (जिसे आप कभी भी बदल सकते हैं)</span>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <button class="btn btn-primary" type="submit" style="flex:1;padding:12px;font-weight:800;">
+          ${isEdit ? 'बदलाव सुरक्षित करें' : 'सामान जोड़ें ✓'}
+        </button>
+        ${isEdit ? `
+          <button type="button" class="btn btn-ghost" data-act="del-product" data-id="${esc(p.id)}" style="color:#dc2626;font-weight:700;">
+            हटाएं
+          </button>
+        ` : ''}
+      </div>
+    </form>
+  `);
+}
+

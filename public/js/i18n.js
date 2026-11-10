@@ -12,8 +12,8 @@ export const LANGUAGES = [
 
 export const TRANSLATIONS = {
   hi: {
-    appName: 'चक्की बुक',
-    tagline: 'हर दुकान का अपना हिसाब',
+    appName: 'तौल-माल',
+    tagline: 'हर दुकान और व्यापार का अपना हिसाब',
     navHome: 'होम',
     navToken: 'टोकन',
     navJob: 'नया काम',
@@ -171,8 +171,8 @@ export const TRANSLATIONS = {
   },
   
   en: {
-    appName: 'Chakki Book',
-    tagline: 'Smart Flour Mill & Billing Ledger',
+    appName: 'TolMaal',
+    tagline: 'Smart Trade & Billing for Every Business',
     navHome: 'Home',
     navToken: 'Token',
     navJob: 'New Order',
@@ -330,8 +330,8 @@ export const TRANSLATIONS = {
   },
   
   mr: {
-    appName: 'चक्की बुक',
-    tagline: 'प्रत्येक गिरणीचा स्वतंत्र हिशोब',
+    appName: 'तौल-माल',
+    tagline: 'प्रत्येक दुकानाचा व व्यापाराचा स्वतंत्र हिशोब',
     navHome: 'होम',
     navToken: 'टोकन',
     navJob: 'नवीन काम',
@@ -489,8 +489,8 @@ export const TRANSLATIONS = {
   },
   
   gu: {
-    appName: 'ચક્કી બુક',
-    tagline: 'દરેક ઘંટીનો પોતાનો હિસાબ',
+    appName: 'તોલ-માલ',
+    tagline: 'દરેક વેપારનો પોતાનો હિસાબ',
     navHome: 'હોમ',
     navToken: 'ટોકન',
     navJob: 'નવું કામ',

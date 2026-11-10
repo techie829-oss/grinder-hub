@@ -25,22 +25,22 @@ export function viewReports() {
     <div class="kpi accent">
       <div class="kpi-label">${t('totalSale')}</div>
       <div class="kpi-value">${inr(stats.salePaise)}</div>
-      <div class="kpi-sub">${stats.jobs} orders</div>
+      <div class="kpi-sub">${stats.jobs || 0} पिसाई · ${stats.sales || 0} बिक्री</div>
+    </div>
+    <div class="kpi" style="${stats.purchasePaise > 0 ? 'background:#fffbeb;border-color:#fde68a;' : ''}">
+      <div class="kpi-label" style="${stats.purchasePaise > 0 ? 'color:#b45309;' : ''}">कच्चा माल खरीद</div>
+      <div class="kpi-value" style="${stats.purchasePaise > 0 ? 'color:#d97706;' : ''}">${inr(stats.purchasePaise)}</div>
+      <div class="kpi-sub">${stats.purchases || 0} फसल खरीद</div>
     </div>
     <div class="kpi green">
       <div class="kpi-label">${t('cashRecovered')}</div>
       <div class="kpi-value">${inr(stats.cashPaise)}</div>
       <div class="kpi-sub">${t('cashInHand')}</div>
     </div>
-    <div class="kpi amber">
-      <div class="kpi-label">${t('newCredit')}</div>
-      <div class="kpi-value">${inr(stats.creditPaise)}</div>
-      <div class="kpi-sub">Receivable Credit</div>
-    </div>
     <div class="kpi">
       <div class="kpi-label">${t('totalOutstanding')}</div>
       <div class="kpi-value">${inr(stats.outstandingPaise)}</div>
-      <div class="kpi-sub">${stats.outstandingCount} customers</div>
+      <div class="kpi-sub">${stats.outstandingCount} ग्राहक से बाकी</div>
     </div>
   </div>
 

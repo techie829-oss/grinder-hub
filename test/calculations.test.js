@@ -98,6 +98,41 @@ describe('Chakki Book Calculations & Formatters Suite', () => {
 
       assert.equal(balance, 40); // 90 - 50 = 40 remaining udhaar
     });
+
+    it('should properly track combined ledger with trade sales and raw material purchases', () => {
+      const ledger = [
+        { kind: 'job', amount: 120, paid: false },      // ₹120 grinding due (+120)
+        { kind: 'sale', amount: 350, paid: false },     // ₹350 oil sale due (+350)
+        { kind: 'purchase', amount: 200, paid: false }, // ₹200 mustard bought from farmer on khata (-200)
+        { kind: 'payment', amount: 150 },               // ₹150 customer payment (-150)
+      ];
+
+      const netBalance = ledger.reduce((acc, tx) => {
+        if ((tx.kind === 'job' || tx.kind === 'sale') && !tx.paid) return acc + tx.amount;
+        if (tx.kind === 'purchase' && !tx.paid) return acc - tx.amount;
+        if (tx.kind === 'payment') return acc - tx.amount;
+        return acc;
+      }, 0);
+
+      assert.equal(netBalance, 120 + 350 - 200 - 150); // ₹120 net due
+    });
+
+    it('should calculate net cash in hand including cash sales and cash purchases', () => {
+      const entries = [
+        { kind: 'job', amount: 300, paid: true },        // +300 cash grinding
+        { kind: 'sale', amount: 700, paid: true },       // +700 cash product sale
+        { kind: 'payment', amount: 150 },                // +150 udhaar recovered
+        { kind: 'purchase', amount: 400, paid: true },   // -400 cash paid to farmer for crop
+        { kind: 'sale', amount: 500, paid: false },      // udhaar sale (no immediate cash)
+      ];
+
+      const cashSales = entries.filter((e) => (e.kind === 'job' || e.kind === 'sale') && e.paid).reduce((s, e) => s + e.amount, 0);
+      const recovered = entries.filter((e) => e.kind === 'payment').reduce((s, e) => s + e.amount, 0);
+      const cashPurchasePaid = entries.filter((e) => e.kind === 'purchase' && e.paid).reduce((s, e) => s + e.amount, 0);
+      const netCash = cashSales + recovered - cashPurchasePaid;
+
+      assert.equal(netCash, 300 + 700 + 150 - 400); // ₹750 in drawer
+    });
   });
 
 });

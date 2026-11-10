@@ -13,10 +13,44 @@ export function entryRow(entry, options = {}) {
     <div class="row-item">
       <span class="avatar small pay">₹</span>
       <span class="grow">
-        <span class="row-title">Payment Received</span>
+        <span class="row-title" style="display:flex;align-items:center;gap:6px;">
+          <span>💵 भुगतान मिला</span>
+        </span>
         <span class="row-sub">${esc(entry.name || 'Customer')}${entry.village ? ' (' + esc(entry.village) + ')' : ''} · ${dateTxt(entry.at)} · ${timeTxt(entry.at)}</span>
       </span>
       <span class="row-amt amt-plus">+${inr(entry.amountPaise)}</span>
+      ${delBtn}
+    </div>`;
+  }
+
+  if (entry.kind === 'sale') {
+    return `
+    <div class="row-item">
+      <span class="avatar small" style="background:#ecfdf5;color:#059669;font-weight:700;">🛒</span>
+      <span class="grow">
+        <span class="row-title ellipsis">
+          <strong>${esc(entry.serviceName || entry.itemName || 'माल बिक्री')}</strong> · ${qtyFmt(entry.grossWeight)} ${unitOf(entry.unit)}
+        </span>
+        <span class="row-sub">${esc(entry.name || 'नकद ग्राहक')}${entry.village ? ' (' + esc(entry.village) + ')' : ''} · ${dateTxt(entry.at)}</span>
+      </span>
+      <span class="badge ${entry.paid ? 'green' : 'amber'}">${entry.paid ? 'नकद बिक्री' : 'उधार बिक्री'}</span>
+      <span class="row-amt">${inr(entry.amountPaise)}</span>
+      ${delBtn}
+    </div>`;
+  }
+
+  if (entry.kind === 'purchase') {
+    return `
+    <div class="row-item">
+      <span class="avatar small" style="background:#fffbeb;color:#d97706;font-weight:700;">📥</span>
+      <span class="grow">
+        <span class="row-title ellipsis">
+          <strong>${esc(entry.serviceName || entry.itemName || 'फसल खरीद')}</strong> · ${qtyFmt(entry.grossWeight)} ${unitOf(entry.unit)}
+        </span>
+        <span class="row-sub">${esc(entry.name || 'किसान/सप्लायर')}${entry.village ? ' (' + esc(entry.village) + ')' : ''} · ${dateTxt(entry.at)}</span>
+      </span>
+      <span class="badge" style="background:${entry.paid ? '#eff6ff;color:#2563eb' : '#f5f3ff;color:#7c3aed'}">${entry.paid ? 'नकद दिया' : 'खाते में जमा'}</span>
+      <span class="row-amt" style="color:#d97706;">-${inr(entry.amountPaise)}</span>
       ${delBtn}
     </div>`;
   }
@@ -89,12 +123,16 @@ export function customerRows(list) {
     const text = c.balancePaise > 0
       ? inr(c.balancePaise) + ' ' + t('dueTag')
       : (c.balancePaise < 0 ? inr(-c.balancePaise) + ' ' + t('advTag') : t('settledTag'));
+    const avatarHtml = c.photo
+      ? `<img src="${c.photo}" class="avatar" alt="${esc(c.name)}" style="object-fit:cover;border:1.5px solid #cbd5e1;box-shadow:0 1px 3px rgba(0,0,0,0.08);">`
+      : `<span class="avatar">${esc(c.name.trim().charAt(0) || '?')}</span>`;
+
     return `
     <button type="button" class="row-item" data-act="open-cust" data-id="${c.id}">
-      <span class="avatar">${esc(c.name.trim().charAt(0) || '?')}</span>
+      ${avatarHtml}
       <span class="grow">
         <span class="row-title ellipsis">${esc(c.name)}${c.village ? ` <span class="tiny-chip">${esc(c.village)}</span>` : ''}</span>
-        <span class="row-sub">${c.phone ? c.phone : '—'}${c.lastAt ? ' · ' + relTxt(c.lastAt) : ''}</span>
+        <span class="row-sub">${c.phone ? '📞 ' + esc(c.phone) : '—'}${c.lastAt ? ' · ' + relTxt(c.lastAt) : ''}</span>
       </span>
       <span class="bal ${cls}">${text}</span>
     </button>`;

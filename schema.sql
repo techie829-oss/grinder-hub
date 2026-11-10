@@ -38,6 +38,18 @@ CREATE TABLE IF NOT EXISTS services (
 );
 CREATE INDEX IF NOT EXISTS services_biz ON services(business_id);
 
+CREATE TABLE IF NOT EXISTS products (
+  id                 TEXT PRIMARY KEY,
+  business_id        TEXT NOT NULL,
+  name               TEXT NOT NULL,
+  type               TEXT NOT NULL DEFAULT 'both',
+  unit               TEXT NOT NULL DEFAULT 'kg',
+  default_rate_paise INTEGER NOT NULL DEFAULT 0,
+  active             INTEGER NOT NULL DEFAULT 1,
+  created_at         INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS products_biz ON products(business_id);
+
 CREATE TABLE IF NOT EXISTS customers (
   id           TEXT PRIMARY KEY,
   business_id  TEXT NOT NULL,
@@ -46,6 +58,7 @@ CREATE TABLE IF NOT EXISTS customers (
   village      TEXT NOT NULL DEFAULT '',
   village_key  TEXT NOT NULL DEFAULT '',
   phone        TEXT NOT NULL DEFAULT '',
+  photo        TEXT NOT NULL DEFAULT '',
   created_at   INTEGER NOT NULL
 );
 CREATE UNIQUE INDEX IF NOT EXISTS customers_biz_name_village ON customers(business_id, name_key, village_key);
@@ -56,6 +69,8 @@ CREATE TABLE IF NOT EXISTS entries (
   customer_id  TEXT,
   kind         TEXT NOT NULL,
   service_id   TEXT,
+  item_name    TEXT NOT NULL DEFAULT '',
+  unit         TEXT NOT NULL DEFAULT 'kg',
   name         TEXT NOT NULL DEFAULT '',
   village      TEXT NOT NULL DEFAULT '',
   gross_weight REAL,

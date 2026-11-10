@@ -20,8 +20,9 @@ export async function buildState(env, businessId, range) {
     ).bind(businessId),
     // 1: customers
     env.DB.prepare(
-      `SELECT c.id, c.name, COALESCE(c.village, '') AS village, c.phone, c.created_at,
-              COALESCE(SUM(CASE WHEN e.kind = 'job' AND e.paid = 0 THEN e.amount_paise
+      `SELECT c.id, c.name, COALESCE(c.village, '') AS village, c.phone, COALESCE(c.photo, '') AS photo, c.created_at,
+              COALESCE(SUM(CASE WHEN e.kind IN ('job', 'sale') AND e.paid = 0 THEN e.amount_paise
+                                WHEN e.kind = 'purchase' AND e.paid = 0 THEN -e.amount_paise
                                 WHEN e.kind = 'payment' THEN -e.amount_paise ELSE 0 END), 0) AS balance_paise,
               MAX(e.created_at) AS last_at
          FROM customers c
@@ -33,9 +34,11 @@ export async function buildState(env, businessId, range) {
     // 2: recent entries for range
     env.DB.prepare(
       `SELECT e.id, e.kind, e.customer_id, e.name, COALESCE(e.village, '') AS village,
+              COALESCE(e.item_name, '') AS item_name,
               COALESCE(e.gross_weight, 0) AS gross_weight, COALESCE(e.loss_g, 0) AS loss_g, e.net_weight,
               e.rate_paise, e.amount_paise, e.paid, e.note, e.token_no, e.created_at,
-              s.name AS service_name, s.unit AS unit
+              COALESCE(s.name, e.item_name, 'Other') AS service_name,
+              COALESCE(e.unit, s.unit, 'kg') AS unit
          FROM entries e
          LEFT JOIN services s ON s.id = e.service_id AND s.business_id = e.business_id
         WHERE e.business_id = ? AND ${entriesTimeCondition}
@@ -52,10 +55,17 @@ export async function buildState(env, businessId, range) {
     // 4: summary stats for range
     env.DB.prepare(
       `SELECT COUNT(CASE WHEN kind = 'job' THEN 1 END) AS jobs,
-              COALESCE(SUM(CASE WHEN kind = 'job' THEN amount_paise ELSE 0 END), 0) AS sale,
-              COALESCE(SUM(CASE WHEN kind = 'job' AND paid = 1 THEN amount_paise ELSE 0 END), 0) AS cash_jobs,
+              COUNT(CASE WHEN kind = 'sale' THEN 1 END) AS sales,
+              COUNT(CASE WHEN kind = 'purchase' THEN 1 END) AS purchases,
+              COALESCE(SUM(CASE WHEN kind IN ('job', 'sale') THEN amount_paise ELSE 0 END), 0) AS sale,
+              COALESCE(SUM(CASE WHEN kind = 'job' THEN amount_paise ELSE 0 END), 0) AS grinding_sale,
+              COALESCE(SUM(CASE WHEN kind = 'sale' THEN amount_paise ELSE 0 END), 0) AS product_sale,
+              COALESCE(SUM(CASE WHEN kind = 'purchase' THEN amount_paise ELSE 0 END), 0) AS purchase_total,
+              COALESCE(SUM(CASE WHEN kind IN ('job', 'sale') AND paid = 1 THEN amount_paise ELSE 0 END), 0) AS cash_sales,
               COALESCE(SUM(CASE WHEN kind = 'payment' THEN amount_paise ELSE 0 END), 0) AS recovered,
-              COALESCE(SUM(CASE WHEN kind = 'job' AND paid = 0 THEN amount_paise ELSE 0 END), 0) AS credit,
+              COALESCE(SUM(CASE WHEN kind = 'purchase' AND paid = 1 THEN amount_paise ELSE 0 END), 0) AS cash_purchase_paid,
+              COALESCE(SUM(CASE WHEN kind IN ('job', 'sale') AND paid = 0 THEN amount_paise ELSE 0 END), 0) AS credit,
+              COALESCE(SUM(CASE WHEN kind = 'purchase' AND paid = 0 THEN amount_paise ELSE 0 END), 0) AS farmer_payable,
               COALESCE(SUM(CASE WHEN kind = 'job' THEN gross_weight ELSE 0 END), 0) AS gross_weight,
               COALESCE(SUM(CASE WHEN kind = 'job' THEN loss_g ELSE 0 END), 0) AS loss_g,
               COALESCE(SUM(CASE WHEN kind = 'job' THEN net_weight ELSE 0 END), 0) AS net_weight
@@ -76,6 +86,8 @@ export async function buildState(env, businessId, range) {
     env.DB.prepare('SELECT last_no FROM day_counters WHERE business_id = ? AND day = ?').bind(businessId, day),
     // 7: business info
     env.DB.prepare('SELECT id, name, phone, address, upi, note, COALESCE(status, \'active\') AS status, COALESCE(plan, \'free\') AS plan, COALESCE(is_super_admin, 0) AS is_super_admin, created_at FROM businesses WHERE id = ?').bind(businessId),
+    // 8: dynamic products
+    env.DB.prepare('SELECT id, name, type, unit, default_rate_paise, active FROM products WHERE business_id = ? AND active = 1 ORDER BY name ASC').bind(businessId),
   ]);
 
   const services = results[0].results.map((s) => ({
@@ -91,6 +103,7 @@ export async function buildState(env, businessId, range) {
     name: c.name,
     village: c.village || '',
     phone: c.phone || '',
+    photo: c.photo || '',
     balancePaise: c.balance_paise || 0,
     lastAt: c.last_at || null,
   }));
@@ -104,6 +117,7 @@ export async function buildState(env, businessId, range) {
       customerId: e.customer_id,
       name: e.name || '',
       village: e.village || '',
+      itemName: e.item_name || '',
       grossWeight: e.gross_weight,
       lossG,
       netWeight,
@@ -112,7 +126,7 @@ export async function buildState(env, businessId, range) {
       paid: !!e.paid,
       note: e.note || '',
       tokenNo: e.token_no,
-      serviceName: e.service_name || '',
+      serviceName: e.service_name || e.item_name || '',
       unit: e.unit || 'kg',
       at: e.created_at,
     };
@@ -134,18 +148,33 @@ export async function buildState(env, businessId, range) {
   const s = results[4].results[0] || {};
   const counter = results[6].results[0];
   const biz = results[7].results[0] || {};
+  const products = (results[8]?.results || []).map((p) => ({
+    id: p.id,
+    name: p.name,
+    type: p.type || 'both',
+    unit: p.unit || 'kg',
+    defaultRatePaise: p.default_rate_paise || 0,
+  }));
 
   let outstandingPaise = 0;
   let outstandingCount = 0;
+  let farmerPayablePaise = 0;
   for (const c of customers) {
     if (c.balancePaise > 0) {
       outstandingPaise += c.balancePaise;
       outstandingCount += 1;
+    } else if (c.balancePaise < 0) {
+      farmerPayablePaise += (-c.balancePaise);
     }
   }
 
   const maxTokenNo = tokensToday.reduce((m, t) => Math.max(m, t.no), 0);
   const lastNo = counter && counter.last_no ? counter.last_no : maxTokenNo;
+
+  const cashSales = Number(s.cash_sales) || 0;
+  const recovered = Number(s.recovered) || 0;
+  const cashPurchasePaid = Number(s.cash_purchase_paid) || 0;
+  const netCashInHand = cashSales + recovered - cashPurchasePaid;
 
   return {
     business: {
@@ -161,6 +190,7 @@ export async function buildState(env, businessId, range) {
       since: biz.created_at,
     },
     services,
+    products,
     customers,
     entries,
     tokens: {
@@ -174,9 +204,15 @@ export async function buildState(env, businessId, range) {
     stats: {
       range: safeRange,
       jobs: s.jobs || 0,
+      sales: s.sales || 0,
+      purchases: s.purchases || 0,
       salePaise: s.sale || 0,
-      cashPaise: (s.cash_jobs || 0) + (s.recovered || 0),
+      grindingSalePaise: s.grinding_sale || 0,
+      productSalePaise: s.product_sale || 0,
+      purchasePaise: s.purchase_total || 0,
+      cashPaise: netCashInHand,
       creditPaise: s.credit || 0,
+      farmerPayablePaise,
       grossWeight: s.gross_weight || 0,
       lossG: s.loss_g || 0,
       netWeight: s.net_weight || 0,

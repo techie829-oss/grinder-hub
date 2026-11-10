@@ -1,14 +1,15 @@
 {
-  "appId": "com.solidrix.chakkibook",
-  "appName": "चक्की बुक (Grinder Hub)",
+  "appId": "com.solidrix.tolmaal",
+  "appName": "तौल-माल (TolMaal)",
   "webDir": "public",
   "bundledWebRuntime": false,
   "server": {
+    "url": "https://tolmaal.solidrix.com",
     "androidScheme": "https",
     "cleartext": true,
     "allowNavigation": [
-      "chakkibook.solidrix.com"
+      "tolmaal.solidrix.com",
+      "*.solidrix.com"
     ]
   }
 }
-

@@ -115,6 +115,49 @@ export function goTo(view) {
 export function setupEventListeners() {
   // Global click handler
   document.addEventListener('click', async (ev) => {
+    // Photo clear buttons
+    if (ev.target && ev.target.id === 'job-photo-clear') {
+      const hidden = document.getElementById('j-photo');
+      const img = document.getElementById('job-photo-img');
+      const ph = document.getElementById('job-photo-ph');
+      const btnTxt = document.getElementById('job-photo-btn-txt');
+      if (hidden) hidden.value = '';
+      if (img) { img.src = ''; img.style.display = 'none'; }
+      if (ph) ph.style.display = 'block';
+      ev.target.style.display = 'none';
+      if (btnTxt) btnTxt.textContent = 'ग्राहक का फोटो खींचें';
+      toast('फोटो हटाई गई');
+      return;
+    }
+
+    if (ev.target && ev.target.id === 'cust-photo-clear') {
+      const hidden = document.getElementById('ec-photo');
+      const img = document.getElementById('cust-photo-img');
+      const ph = document.getElementById('cust-photo-placeholder');
+      const btnTxt = document.getElementById('cust-photo-btn-text');
+      if (hidden) hidden.value = '';
+      if (img) { img.src = ''; img.style.display = 'none'; }
+      if (ph) ph.style.display = 'block';
+      ev.target.style.display = 'none';
+      if (btnTxt) btnTxt.textContent = 'ग्राहक का फोटो लें';
+      toast('फोटो हटाई गई');
+      return;
+    }
+
+    if (ev.target && ev.target.id === 'tr-photo-clear') {
+      const hidden = document.getElementById('tr-photo');
+      const img = document.getElementById('tr-photo-img');
+      const ph = document.getElementById('tr-photo-ph');
+      const btnTxt = document.getElementById('tr-photo-btn-txt');
+      if (hidden) hidden.value = '';
+      if (img) { img.src = ''; img.style.display = 'none'; }
+      if (ph) ph.style.display = 'block';
+      ev.target.style.display = 'none';
+      if (btnTxt) btnTxt.textContent = 'ग्राहक का फोटो खींचें';
+      toast('फोटो हटाई गई');
+      return;
+    }
+
     const backdrop = ev.target.closest('.sheet-backdrop');
     if (backdrop && ev.target === backdrop) {
       closeModal();
@@ -148,6 +191,19 @@ export function setupEventListeners() {
 
       case 'pick-svc':
         pickService(el.dataset.target, el.dataset.id);
+        break;
+
+      case 'switch-job-tab':
+        state.jobTab = el.dataset.tab || 'grind';
+        if (el.dataset.goto) goTo(el.dataset.goto);
+        else window.__appRender?.();
+        break;
+
+      case 'pick-trade-preset':
+        state.trade.item = el.dataset.item || '';
+        state.trade.unit = el.dataset.unit || 'kg';
+        state.trade.rate = el.dataset.rate || '';
+        window.__appRender?.();
         break;
 
       case 'clear-job-token':
@@ -543,10 +599,12 @@ export function setupEventListeners() {
         await openCustomer(el.dataset.id);
         break;
 
+      case 'new-cust':
       case 'add-cust-modal':
         openCustomerEditModal();
         break;
 
+      case 'edit-cust':
       case 'edit-cust-modal':
         openCustomerEditModal(el.dataset.id);
         break;
@@ -664,6 +722,31 @@ export function setupEventListeners() {
         break;
       }
 
+      case 'open-product-modal': {
+        const { openProductModal } = await import('./components/modals.js');
+        openProductModal(null, el.dataset.type || 'both');
+        break;
+      }
+
+      case 'edit-product': {
+        const { openProductModal } = await import('./components/modals.js');
+        openProductModal(el.dataset.id);
+        break;
+      }
+
+      case 'del-product': {
+        const id = el.dataset.id;
+        if (!confirm('क्या आप वाकई इस सामान को सूची से हटाना चाहते हैं?')) return;
+        await withBusy(el, async () => {
+          const data = await api('/api/products/delete', { id });
+          if (data && data.state) {
+            applyState(data.state);
+            toast('सामान हटा दिया गया');
+          }
+        });
+        break;
+      }
+
       case 'del-service':
         if (!confirm('Delete this product / service?')) return;
         await withBusy(el, async () => {
@@ -694,13 +777,104 @@ export function setupEventListeners() {
     }
   });
 
-  // Global change listener (language selector)
-  document.addEventListener('change', (ev) => {
+  // Global change listener (language selector, photo pickers, payment mode)
+  document.addEventListener('change', async (ev) => {
     const tEl = ev.target;
-    if (tEl && tEl.dataset.act === 'change-lang') {
+    if (!tEl) return;
+
+    if (tEl.dataset.act === 'change-lang') {
       setLanguage(tEl.value);
       window.__appRender?.();
       toast(tEl.value === 'hi' ? 'भाषा बदली गई' : 'Language updated');
+      return;
+    }
+
+    if (tEl.name === 'paid') {
+      const form = tEl.closest('form');
+      if (form && form.dataset.form === 'trade') {
+        const trUdhaarCard = document.getElementById('tr-udhaar-photo-card');
+        if (trUdhaarCard) {
+          trUdhaarCard.style.display = tEl.value === 'no' ? 'block' : 'none';
+        }
+      } else {
+        const udhaarCard = document.getElementById('udhaar-photo-card');
+        if (udhaarCard) {
+          udhaarCard.style.display = tEl.value === 'no' ? 'block' : 'none';
+        }
+      }
+      return;
+    }
+
+    if (tEl.id === 'job-photo-file') {
+      const file = tEl.files?.[0];
+      if (file) {
+        try {
+          const { processImageFile } = await import('./utils/photo.js');
+          const dataUrl = await processImageFile(file);
+          const hidden = document.getElementById('j-photo');
+          const img = document.getElementById('job-photo-img');
+          const ph = document.getElementById('job-photo-ph');
+          const clearBtn = document.getElementById('job-photo-clear');
+          const btnTxt = document.getElementById('job-photo-btn-txt');
+          if (hidden) hidden.value = dataUrl;
+          if (img) { img.src = dataUrl; img.style.display = 'block'; }
+          if (ph) ph.style.display = 'none';
+          if (clearBtn) clearBtn.style.display = 'inline-flex';
+          if (btnTxt) btnTxt.textContent = 'फोटो बदलें';
+          toast('उधार ग्राहक का फोटो सुरक्षित हुआ ✓');
+        } catch (err) {
+          toast(err.message || 'फोटो प्रोसेस नहीं हो सकी');
+        }
+      }
+      return;
+    }
+
+    if (tEl.id === 'cust-photo-file') {
+      const file = tEl.files?.[0];
+      if (file) {
+        try {
+          const { processImageFile } = await import('./utils/photo.js');
+          const dataUrl = await processImageFile(file);
+          const hidden = document.getElementById('ec-photo');
+          const img = document.getElementById('cust-photo-img');
+          const ph = document.getElementById('cust-photo-placeholder');
+          const clearBtn = document.getElementById('cust-photo-clear');
+          const btnTxt = document.getElementById('cust-photo-btn-text');
+          if (hidden) hidden.value = dataUrl;
+          if (img) { img.src = dataUrl; img.style.display = 'block'; }
+          if (ph) ph.style.display = 'none';
+          if (clearBtn) clearBtn.style.display = 'inline-flex';
+          if (btnTxt) btnTxt.textContent = 'फोटो बदलें';
+          toast('ग्राहक का फोटो सुरक्षित हुआ ✓');
+        } catch (err) {
+          toast(err.message || 'फोटो प्रोसेस नहीं हो सकी');
+        }
+      }
+      return;
+    }
+
+    if (tEl.id === 'tr-photo-file') {
+      const file = tEl.files?.[0];
+      if (file) {
+        try {
+          const { processImageFile } = await import('./utils/photo.js');
+          const dataUrl = await processImageFile(file);
+          const hidden = document.getElementById('tr-photo');
+          const img = document.getElementById('tr-photo-img');
+          const ph = document.getElementById('tr-photo-ph');
+          const clearBtn = document.getElementById('tr-photo-clear');
+          const btnTxt = document.getElementById('tr-photo-btn-txt');
+          if (hidden) hidden.value = dataUrl;
+          if (img) { img.src = dataUrl; img.style.display = 'block'; }
+          if (ph) ph.style.display = 'none';
+          if (clearBtn) clearBtn.style.display = 'inline-flex';
+          if (btnTxt) btnTxt.textContent = 'फोटो बदलें';
+          toast('ग्राहक फोटो सुरक्षित हुआ ✓');
+        } catch (err) {
+          toast(err.message || 'फोटो प्रोसेस नहीं हो सकी');
+        }
+      }
+      return;
     }
   });
 
@@ -726,15 +900,33 @@ export function setupEventListeners() {
       return;
     }
 
-    // 2-entity lookup banner in Job Form
+    // 2-entity lookup banner and udhaar photo in Job Form
     if (tEl.id === 'j-name' || tEl.id === 'j-village') {
-      const nameVal = (document.getElementById('j-name')?.value || '').trim().toLowerCase();
-      const villageVal = (document.getElementById('j-village')?.value || '').trim().toLowerCase();
+      const rawName = (document.getElementById('j-name')?.value || '').trim();
+      const rawVillage = (document.getElementById('j-village')?.value || '').trim();
+      const nameVal = rawName.toLowerCase();
+      const villageVal = rawVillage.toLowerCase();
       const banner = document.getElementById('cust-balance-banner');
+      const jobPhotoCustName = document.getElementById('job-photo-cust-name');
+      const jobPhotoImg = document.getElementById('job-photo-img');
+      const jobPhotoPh = document.getElementById('job-photo-ph');
+      const jobPhotoHidden = document.getElementById('j-photo');
+      const jobPhotoBtnTxt = document.getElementById('job-photo-btn-txt');
+      const jobPhotoClear = document.getElementById('job-photo-clear');
+
+      if (jobPhotoCustName) {
+        jobPhotoCustName.textContent = rawName ? `${rawName}${rawVillage ? ' (' + rawVillage + ')' : ''}` : 'ग्राहक का नाम ऊपर लिखें';
+      }
+
       if (!banner || !state.data) return;
 
       if (!nameVal) {
         banner.style.display = 'none';
+        if (jobPhotoImg) { jobPhotoImg.src = ''; jobPhotoImg.style.display = 'none'; }
+        if (jobPhotoPh) jobPhotoPh.style.display = 'block';
+        if (jobPhotoHidden) jobPhotoHidden.value = '';
+        if (jobPhotoBtnTxt) jobPhotoBtnTxt.textContent = 'ग्राहक का फोटो खींचें';
+        if (jobPhotoClear) jobPhotoClear.style.display = 'none';
         return;
       }
 
@@ -762,8 +954,104 @@ export function setupEventListeners() {
         if (phoneInput && !phoneInput.value && match.phone) {
           phoneInput.value = match.phone;
         }
+
+        // Live photo sync for Udhaar verification
+        if (match.photo) {
+          if (jobPhotoImg) { jobPhotoImg.src = match.photo; jobPhotoImg.style.display = 'block'; }
+          if (jobPhotoPh) jobPhotoPh.style.display = 'none';
+          if (jobPhotoHidden) jobPhotoHidden.value = match.photo;
+          if (jobPhotoBtnTxt) jobPhotoBtnTxt.textContent = 'नया फोटो लें';
+          if (jobPhotoClear) jobPhotoClear.style.display = 'inline-flex';
+        } else {
+          if (jobPhotoImg) { jobPhotoImg.src = ''; jobPhotoImg.style.display = 'none'; }
+          if (jobPhotoPh) jobPhotoPh.style.display = 'block';
+          if (jobPhotoHidden) jobPhotoHidden.value = '';
+          if (jobPhotoBtnTxt) jobPhotoBtnTxt.textContent = 'ग्राहक का फोटो खींचें';
+          if (jobPhotoClear) jobPhotoClear.style.display = 'none';
+        }
       } else {
         banner.style.display = 'none';
+        if (jobPhotoImg) { jobPhotoImg.src = ''; jobPhotoImg.style.display = 'none'; }
+        if (jobPhotoPh) jobPhotoPh.style.display = 'block';
+        if (jobPhotoHidden) jobPhotoHidden.value = '';
+        if (jobPhotoBtnTxt) jobPhotoBtnTxt.textContent = 'ग्राहक का फोटो खींचें';
+        if (jobPhotoClear) jobPhotoClear.style.display = 'none';
+      }
+    }
+
+    // Live calculation for Trade (Sale / Purchase)
+    if (tEl.id === 'tr-qty' || tEl.id === 'tr-rate') {
+      const qty = Number(document.getElementById('tr-qty')?.value) || 0;
+      const rate = Number(document.getElementById('tr-rate')?.value) || 0;
+      const preview = document.getElementById('tr-amount-preview');
+      if (preview) {
+        preview.textContent = inr(Math.round(qty * rate * 100));
+      }
+    }
+
+    // Live Customer Lookup and Photo for Trade
+    if (tEl.id === 'tr-name' || tEl.id === 'tr-village') {
+      const rawName = (document.getElementById('tr-name')?.value || '').trim();
+      const rawVillage = (document.getElementById('tr-village')?.value || '').trim();
+      const nameVal = rawName.toLowerCase();
+      const villageVal = rawVillage.toLowerCase();
+      const banner = document.getElementById('tr-cust-balance-banner');
+      const custNameEl = document.getElementById('tr-photo-cust-name');
+      const photoImg = document.getElementById('tr-photo-img');
+      const photoPh = document.getElementById('tr-photo-ph');
+      const photoHidden = document.getElementById('tr-photo');
+      const photoClear = document.getElementById('tr-photo-clear');
+      const photoBtnTxt = document.getElementById('tr-photo-btn-txt');
+
+      if (custNameEl) {
+        custNameEl.textContent = rawName ? `${rawName}${rawVillage ? ' (' + rawVillage + ')' : ''}` : 'ग्राहक का नाम ऊपर लिखें';
+      }
+
+      if (banner && state.data) {
+        if (!nameVal) {
+          banner.style.display = 'none';
+          if (photoImg) { photoImg.src = ''; photoImg.style.display = 'none'; }
+          if (photoPh) photoPh.style.display = 'block';
+          if (photoHidden) photoHidden.value = '';
+          if (photoBtnTxt) photoBtnTxt.textContent = 'ग्राहक का फोटो खींचें';
+          if (photoClear) photoClear.style.display = 'none';
+        } else {
+          const match = state.data.customers.find((c) => {
+            const mName = c.name.toLowerCase() === nameVal;
+            if (!mName) return false;
+            if (villageVal) return (c.village || '').toLowerCase() === villageVal;
+            return true;
+          });
+          if (match) {
+            const cls = match.balancePaise > 0 ? 'due' : (match.balancePaise < 0 ? 'adv' : 'zero');
+            const text = match.balancePaise > 0
+              ? inr(match.balancePaise) + ' ' + t('dueTag')
+              : (match.balancePaise < 0 ? inr(-match.balancePaise) + ' ' + t('advTag') : t('settledTag'));
+            banner.className = 'cust-banner ' + cls;
+            banner.innerHTML = `<span><strong>${esc(match.name)}${match.village ? ' (' + esc(match.village) + ')' : ''}</strong> खाता:</span> <strong>${text}</strong>`;
+            banner.style.display = 'flex';
+
+            const phoneInput = document.getElementById('tr-phone');
+            if (phoneInput && !phoneInput.value && match.phone) {
+              phoneInput.value = match.phone;
+            }
+
+            if (match.photo) {
+              if (photoImg) { photoImg.src = match.photo; photoImg.style.display = 'block'; }
+              if (photoPh) photoPh.style.display = 'none';
+              if (photoHidden) photoHidden.value = match.photo;
+              if (photoBtnTxt) photoBtnTxt.textContent = 'नया फोटो लें';
+              if (photoClear) photoClear.style.display = 'inline-flex';
+            }
+          } else {
+            banner.style.display = 'none';
+            if (photoImg) { photoImg.src = ''; photoImg.style.display = 'none'; }
+            if (photoPh) photoPh.style.display = 'block';
+            if (photoHidden) photoHidden.value = '';
+            if (photoBtnTxt) photoBtnTxt.textContent = 'ग्राहक का फोटो खींचें';
+            if (photoClear) photoClear.style.display = 'none';
+          }
+        }
       }
     }
   });
@@ -917,6 +1205,7 @@ export function setupEventListeners() {
         name: state.job.name,
         village: state.job.village,
         phone: state.job.phone,
+        photo: String(fd.get('photo') || '').trim(),
         note: state.job.note,
         withToken: state.job.withToken,
         tokenId: state.job.tokenId,
@@ -1071,6 +1360,7 @@ export function setupEventListeners() {
           name: String(fd.get('name') || '').trim(),
           village: String(fd.get('village') || '').trim(),
           phone: String(fd.get('phone') || '').trim(),
+          photo: String(fd.get('photo') || '').trim(),
         };
         const id = fd.get('id');
         if (id) payload.id = id;
@@ -1084,21 +1374,30 @@ export function setupEventListeners() {
               name: payload.name,
               village: payload.village,
               phone: payload.phone,
+              photo: payload.photo || '',
               balancePaise: 0,
               lastAt: Date.now(),
             });
+          } else {
+            const existing = state.data.customers.find((c) => c.id === id);
+            if (existing) {
+              existing.name = payload.name;
+              existing.village = payload.village;
+              existing.phone = payload.phone;
+              if (payload.photo) existing.photo = payload.photo;
+            }
           }
           saveOfflineSnapshot(state.data);
           closeModal();
           window.__appRender?.();
-          toast('Customer saved (offline)');
+          toast('ग्राहक संपर्क सुरक्षित (ऑफलाइन)');
           return;
         }
 
         if (data) {
           applyState(data.state);
           closeModal();
-          toast('Customer saved ✓');
+          toast('ग्राहक संपर्क सुरक्षित ✓');
         }
       });
       return;
@@ -1202,6 +1501,103 @@ export function setupEventListeners() {
           toast('Product / Service saved');
         }
       });
+      return;
+    }
+
+    if (kind === 'product') {
+      const body = {
+        name: String(fd.get('name') || '').trim(),
+        type: String(fd.get('type') || 'both'),
+        unit: String(fd.get('unit') || 'kg'),
+        rate: Number(fd.get('rate')) || 0,
+      };
+      if (fd.get('id')) body.id = fd.get('id');
+      await withBusy(form.querySelector('[type="submit"]'), async () => {
+        const data = await api('/api/products', body);
+        if (data && data.state) {
+          applyState(data.state);
+          closeModal();
+          toast(body.id ? 'सामान अपडेट हुआ ✓' : 'नया सामान सूची में जुड़ा ✓');
+        }
+      });
+      return;
+    }
+
+    if (kind === 'trade') {
+      const subBtn = form.querySelector('[type="submit"]');
+      const trKind = String(fd.get('kind') || 'sale');
+      const item = String(fd.get('item') || '').trim();
+      const unit = String(fd.get('unit') || 'kg');
+      const qty = Number(fd.get('qty'));
+      const rate = Number(fd.get('rate')) || 0;
+      const paid = fd.get('paid') === 'yes';
+      const name = String(fd.get('name') || '').trim();
+      const village = String(fd.get('village') || '').trim();
+      const phone = String(fd.get('phone') || '').trim();
+      const photo = String(fd.get('photo') || '').trim();
+      const note = String(fd.get('note') || '').trim();
+      const saveProduct = fd.get('saveProduct') === '1';
+
+      if (!item) {
+        toast(trKind === 'purchase' ? 'फ़सल का नाम भरें' : 'सामान का नाम भरें');
+        return;
+      }
+      if (!qty || qty <= 0) {
+        toast('मात्रा या वज़न सही भरें');
+        return;
+      }
+      if (!paid && !name) {
+        toast(trKind === 'purchase' ? 'खाते में रखने के लिए किसान का नाम भरें' : 'उधार के लिए ग्राहक का नाम भरें');
+        return;
+      }
+
+      const amount = rate > 0 ? (qty * rate) : 0;
+      const payload = {
+        kind: trKind,
+        item,
+        unit,
+        qty,
+        rate,
+        amount,
+        paid,
+        name,
+        village,
+        phone,
+        photo,
+        note,
+        saveProduct,
+      };
+
+      await withBusy(subBtn, async () => {
+        const data = await api('/api/trades', payload);
+        if (data && data.offline) {
+          const offlineId = 'offline-' + crypto.randomUUID();
+          enqueueOfflineAction('trade', { ...payload, offlineId, at: Date.now() });
+          toast('बिल सुरक्षित (ऑफलाइन)');
+          state.trade = { item: '', unit: 'kg', qty: '', rate: '', amount: '', paid: true, name: '', village: '', phone: '', photo: '', note: '' };
+          window.__appRender?.();
+          return;
+        }
+
+        if (data && data.state) {
+          applyState(data.state);
+          state.trade = { item: '', unit: 'kg', qty: '', rate: '', amount: '', paid: true, name: '', village: '', phone: '', photo: '', note: '' };
+          toast(trKind === 'purchase' ? 'कच्चा माल खरीद बिल सुरक्षित हुआ ✓' : 'सामान बिक्री बिल सुरक्षित हुआ ✓');
+
+          const { showJobDone } = await import('./components/modals.js');
+          showJobDone({
+            kind: trKind,
+            name: payload.name || (trKind === 'purchase' ? 'किसान' : 'ग्राहक'),
+            serviceName: payload.item,
+            qty: payload.qty,
+            unit: payload.unit,
+            amountPaise: Math.round(payload.amount * 100),
+            paid: payload.paid,
+            note: payload.note,
+          });
+        }
+      });
+      return;
     }
   });
 }

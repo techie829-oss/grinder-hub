@@ -1,5 +1,5 @@
 /* ============================================================
-   चक्की बुक — design system
+   तौल-माल (TolMaal by Solidrix) — Design System
    ============================================================ */
 
 :root {
@@ -839,15 +839,32 @@ button.row-item:hover { background: #fafaff; }
 
 /* -------------------------------- sheet & modals ------------------------------ */
 
-#modal {
-  position: relative;
-  z-index: 2000;
+#modal:empty {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+#modal:not(:empty) {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  display: block;
+}
+
+body.no-scroll .tabbar,
+#modal:not(:empty) ~ * .tabbar,
+body:has(#modal:not(:empty)) .tabbar {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  transform: translateY(100%) !important;
 }
 
 .sheet-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 2000;
+  z-index: 999999;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -863,7 +880,7 @@ button.row-item:hover { background: #fafaff; }
   -webkit-overflow-scrolling: touch;
   background: #fff;
   border-radius: 22px 22px 0 0;
-  padding: 20px 20px calc(28px + env(safe-area-inset-bottom, 0px));
+  padding: 20px 20px calc(38px + env(safe-area-inset-bottom, 0px));
   animation: sheet-up .22s cubic-bezier(0.16, 1, 0.3, 1);
   box-shadow: 0 -20px 50px -20px rgba(17, 18, 37, .4);
 }
@@ -937,8 +954,19 @@ button.row-item:hover { background: #fafaff; }
 /* ------------------------------ responsive ---------------------------- */
 
 @media (max-width: 960px) {
-  .grid-2 { grid-template-columns: minmax(0, 1fr); }
-  .grid-2 > .card + .card { margin-top: 14px; }
+  .grid-2 {
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 14px !important;
+  }
+  .grid-2 > .card {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+  .grid-2 > .card + .card { margin-top: 14px !important; }
 }
 
 @media (max-width: 900px) {
@@ -952,7 +980,7 @@ button.row-item:hover { background: #fafaff; }
   .hide-mobile { display: none !important; }
 
   .topbar {
-    padding: max(14px, calc(8px + env(safe-area-inset-top, 0px))) 12px 8px;
+    padding: max(16px, calc(10px + env(safe-area-inset-top, 0px))) 14px 10px;
     gap: 8px;
     justify-content: space-between;
     width: 100%;
@@ -960,7 +988,7 @@ button.row-item:hover { background: #fafaff; }
     box-sizing: border-box;
   }
   .topbar-info {
-    max-width: 160px;
+    max-width: 175px;
     min-width: 0;
     flex: 1 1 auto;
     overflow: hidden;
@@ -986,6 +1014,11 @@ button.row-item:hover { background: #fafaff; }
   .topbar .btn-topbar-status {
     padding: 5px 9px !important;
     font-size: 12px !important;
+  }
+
+  .two-col {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
   }
 
   .page {

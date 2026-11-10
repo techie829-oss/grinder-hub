@@ -4,9 +4,11 @@ import { currentBusiness } from './middleware/auth.js';
 import { buildState } from './services/stateService.js';
 import { signup, login, logout, changePassword } from './controllers/authController.js';
 import { createJob, createPayment, deleteEntry } from './controllers/jobController.js';
+import { createTrade } from './controllers/tradeController.js';
 import { createToken, setTokenStatus, deleteToken } from './controllers/tokenController.js';
 import { customerDetail, saveCustomer, deleteCustomer } from './controllers/customerController.js';
 import { saveService, deleteService } from './controllers/serviceController.js';
+import { saveProduct, deleteProduct } from './controllers/productController.js';
 import { saveSettings, exportData } from './controllers/settingsController.js';
 import { syncBatch } from './controllers/syncController.js';
 import {
@@ -118,12 +120,15 @@ async function route(request, env, url) {
   }
   if (path === '/api/sync' && method === 'POST') return syncBatch(request, env, business, range);
   if (path === '/api/jobs' && method === 'POST') return createJob(request, env, business, range);
+  if (path === '/api/trades' && method === 'POST') return createTrade(request, env, business, range);
   if (path === '/api/payments' && method === 'POST') return createPayment(request, env, business, range);
   if (path === '/api/tokens' && method === 'POST') return createToken(request, env, business, range);
   if (path === '/api/tokens/status' && method === 'POST') return setTokenStatus(request, env, business, range);
   if (path === '/api/tokens/delete' && method === 'POST') return deleteToken(request, env, business, range);
   if (path === '/api/services' && method === 'POST') return saveService(request, env, business, range);
   if (path === '/api/services/delete' && method === 'POST') return deleteService(request, env, business, range);
+  if (path === '/api/products' && method === 'POST') return saveProduct(request, env, business, range);
+  if (path === '/api/products/delete' && method === 'POST') return deleteProduct(request, env, business, range);
   if (path === '/api/settings' && method === 'POST') return saveSettings(request, env, business, range);
   if (path === '/api/entries/delete' && method === 'POST') return deleteEntry(request, env, business, range);
   if (path === '/api/customer' && method === 'GET') return customerDetail(request, env, business, url);

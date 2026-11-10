@@ -50,21 +50,21 @@ export function topbar() {
   const titleKey = TITLES[state.view] || 'navHome';
   return `
   <header class="topbar">
-    <div class="mobile-brand">${logoMark(34)}</div>
-    <div class="topbar-info">
-      <div class="topbar-title">${t(titleKey)}</div>
-      <div class="topbar-sub">${esc(d.business.name)}</div>
+    <div class="mobile-brand" style="flex:0 0 auto;">${logoMark(34)}</div>
+    <div class="topbar-info" style="min-width:0;flex:1 1 auto;">
+      <div class="topbar-title ellipsis" style="font-size:15px;font-weight:800;color:#0f172a;line-height:1.2;">${esc(d.business.name)}</div>
+      <div class="topbar-sub ellipsis" style="font-size:11px;color:#64748b;line-height:1.2;">${t('appName')} · ${t(titleKey)}</div>
     </div>
     <div class="topbar-spacer"></div>
-    <button type="button" id="sync-indicator" class="sync-badge" data-act="trigger-sync" title="Sync Status" style="margin-right:4px;border:none;background:none;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;gap:4px"></button>
-    <button type="button" class="btn btn-sm btn-subtle btn-topbar-status" data-act="open-status-modal" title="टोकन व पिसाई स्टेटस देखें" style="border:1.5px solid #cbd5e1;padding:5px 10px;border-radius:10px;font-weight:700;display:inline-flex;align-items:center;gap:4px;font-size:12px;margin-right:4px;background:#fff;">
+    <button type="button" id="sync-indicator" class="sync-badge" data-act="trigger-sync" title="Sync Status" style="margin-right:2px;border:none;background:none;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;gap:4px"></button>
+    <button type="button" class="btn btn-sm btn-subtle btn-topbar-status" data-act="open-status-modal" title="टोकन व पिसाई स्टेटस देखें" style="border:1.5px solid #cbd5e1;padding:5px 9px;border-radius:10px;font-weight:700;display:inline-flex;align-items:center;gap:4px;font-size:12px;margin-right:4px;background:#fff;flex:0 0 auto;">
       <span>🔍</span> <span class="hide-mobile">स्टेटस</span>
     </button>
     <a href="/chakkibook.apk" download="chakkibook.apk" class="btn btn-sm btn-apk-dl hide-mobile" title="Android ऐप डाउनलोड करें" style="background:linear-gradient(135deg, #10b981, #059669);color:#fff;font-weight:700;display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:10px;text-decoration:none;box-shadow:0 2px 8px rgba(16,185,129,0.25);font-size:12px;white-space:nowrap;margin-right:6px;">
       <span>📥</span> <span>APK डाउनलोड</span>
     </a>
     <span class="pill-date hide-mobile">${todayTxt()}</span>
-    <div class="topbar-lang">${langSelector()}</div>
+    <div class="topbar-lang" style="flex:0 0 auto;">${langSelector()}</div>
     <div class="topbar-cta hide-mobile">
       <button class="btn btn-primary btn-sm" data-act="goto" data-view="job">+ ${t('navJob')}</button>
       <button class="icon-btn" data-act="goto" data-view="settings" aria-label="${t('navSettings')}">${ICONS.sliders}</button>

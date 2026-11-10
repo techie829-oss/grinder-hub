@@ -15,6 +15,8 @@ export async function syncBatch(request, env, business, range) {
     try {
       if (type === 'job') {
         await processJob(env, business, data);
+      } else if (type === 'trade') {
+        await processTrade(env, business, data);
       } else if (type === 'payment') {
         await processPayment(env, business, data);
       } else if (type === 'token') {
@@ -67,8 +69,9 @@ async function processJob(env, business, data) {
   if (name) {
     const key = normName(name);
     const vKey = normVillage(village);
+    const photo = typeof action.payload?.photo === 'string' ? action.payload.photo.slice(0, 200000) : '';
     const found = await env.DB.prepare(
-      'SELECT id, phone FROM customers WHERE business_id = ? AND name_key = ? AND village_key = ?'
+      'SELECT id, phone, photo FROM customers WHERE business_id = ? AND name_key = ? AND village_key = ?'
     )
       .bind(business.id, key, vKey)
       .first();
@@ -80,13 +83,18 @@ async function processJob(env, business, data) {
           .bind(phone, found.id, business.id)
           .run();
       }
+      if (photo && !found.photo) {
+        await env.DB.prepare('UPDATE customers SET photo = ? WHERE id = ? AND business_id = ?')
+          .bind(photo, found.id, business.id)
+          .run();
+      }
     } else {
       customerId = crypto.randomUUID();
       try {
         await env.DB.prepare(
-          'INSERT INTO customers (id, business_id, name, name_key, village, village_key, phone, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+          'INSERT INTO customers (id, business_id, name, name_key, village, village_key, phone, photo, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
         )
-          .bind(customerId, business.id, name, key, village, vKey, phone, Date.now())
+          .bind(customerId, business.id, name, key, village, vKey, phone, photo, Date.now())
           .run();
       } catch (e) {
         const existing = await env.DB.prepare(
@@ -211,5 +219,102 @@ async function processCustomer(env, business, data) {
       .bind(crypto.randomUUID(), business.id, name, key, village, vKey, phone, Date.now())
       .run();
   }
+}
+
+async function processTrade(env, business, data) {
+  const kind = data.kind === 'purchase' ? 'purchase' : 'sale';
+  const itemName = clean(data.itemName || data.item, 60);
+  if (!itemName) return;
+  const unit = clean(data.unit || 'kg', 16);
+  const qty = Number(data.qty != null ? data.qty : data.grossWeight) || 0;
+  if (qty <= 0) return;
+
+  let rate = Number(data.rate);
+  let amountPaise = 0;
+  if (data.amount != null && Number(data.amount) > 0) {
+    amountPaise = Math.round(Number(data.amount) * 100);
+    if (!Number.isFinite(rate) || rate <= 0) rate = amountPaise / (qty * 100);
+  } else if (Number.isFinite(rate) && rate > 0) {
+    amountPaise = Math.round(qty * rate * 100);
+  }
+  if (amountPaise <= 0) return;
+
+  const paid = data.paid ? 1 : 0;
+  const name = clean(data.name, 60);
+  const village = clean(data.village, 60);
+  const phone = normalizePhone(data.phone);
+  const note = clean(data.note, 120);
+
+  let customerId = null;
+  const photo = typeof data.photo === 'string' ? data.photo.slice(0, 200000) : '';
+
+  if (name) {
+    const key = normName(name);
+    const vKey = normVillage(village);
+    const found = await env.DB.prepare(
+      'SELECT id, phone, photo FROM customers WHERE business_id = ? AND name_key = ? AND village_key = ?'
+    )
+      .bind(business.id, key, vKey)
+      .first();
+
+    if (found) {
+      customerId = found.id;
+      if (!found.phone && phone) {
+        await env.DB.prepare('UPDATE customers SET phone = ? WHERE id = ? AND business_id = ?')
+          .bind(phone, found.id, business.id)
+          .run();
+      }
+      if (photo && !found.photo) {
+        await env.DB.prepare('UPDATE customers SET photo = ? WHERE id = ? AND business_id = ?')
+          .bind(photo, found.id, business.id)
+          .run();
+      }
+    } else {
+      customerId = crypto.randomUUID();
+      try {
+        await env.DB.prepare(
+          'INSERT INTO customers (id, business_id, name, name_key, village, village_key, phone, photo, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+        )
+          .bind(customerId, business.id, name, key, village, vKey, phone, photo, Date.now())
+          .run();
+      } catch (e) {
+        const existing = await env.DB.prepare(
+          'SELECT id FROM customers WHERE business_id = ? AND name_key = ? AND village_key = ?'
+        )
+          .bind(business.id, key, vKey)
+          .first();
+        if (existing) customerId = existing.id;
+      }
+    }
+  }
+
+  const entryId = data.offlineId || crypto.randomUUID();
+  const at = Number(data.at) || Date.now();
+  const ratePaise = Math.round(rate * 100);
+
+  await env.DB.prepare(
+    `INSERT OR IGNORE INTO entries (id, business_id, customer_id, kind, item_name, unit, name, village, gross_weight,
+       loss_g, net_weight, rate_paise, amount_paise, paid, note, day, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?)`
+  )
+    .bind(
+      entryId,
+      business.id,
+      customerId,
+      kind,
+      itemName,
+      unit,
+      name,
+      village,
+      qty,
+      qty,
+      ratePaise,
+      amountPaise,
+      paid,
+      note,
+      dayKey(at),
+      at
+    )
+    .run();
 }
 

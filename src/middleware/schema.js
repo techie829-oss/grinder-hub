@@ -4,12 +4,40 @@ let schemaInitialized = false;
 export async function ensureSchema(env) {
   if (schemaInitialized) return;
 
-  // Customers: ensure 2-entity verification columns
+  // Customers: ensure 2-entity verification columns and photo
   try {
     await env.DB.exec("ALTER TABLE customers ADD COLUMN village TEXT NOT NULL DEFAULT '';");
   } catch (e) {}
   try {
     await env.DB.exec("ALTER TABLE customers ADD COLUMN village_key TEXT NOT NULL DEFAULT '';");
+  } catch (e) {}
+  try {
+    await env.DB.exec("ALTER TABLE customers ADD COLUMN photo TEXT NOT NULL DEFAULT '';");
+  } catch (e) {}
+
+  // Entries: purchase and product sales support
+  try {
+    await env.DB.exec("ALTER TABLE entries ADD COLUMN item_name TEXT NOT NULL DEFAULT '';");
+  } catch (e) {}
+  try {
+    await env.DB.exec("ALTER TABLE entries ADD COLUMN unit TEXT NOT NULL DEFAULT 'kg';");
+  } catch (e) {}
+
+  // Products table for dynamic store items (grain, commodities, oils, feeds)
+  try {
+    await env.DB.exec(`
+      CREATE TABLE IF NOT EXISTS products (
+        id                 TEXT PRIMARY KEY,
+        business_id        TEXT NOT NULL,
+        name               TEXT NOT NULL,
+        type               TEXT NOT NULL DEFAULT 'both',
+        unit               TEXT NOT NULL DEFAULT 'kg',
+        default_rate_paise INTEGER NOT NULL DEFAULT 0,
+        active             INTEGER NOT NULL DEFAULT 1,
+        created_at         INTEGER NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS products_biz ON products(business_id);
+    `);
   } catch (e) {}
 
   // Services: loss_rate_g (deduction per unit in grams)

@@ -1,9 +1,9 @@
 {
-  "name": "chakki-book",
-  "version": "2.2.0",
+  "name": "tolmaal",
+  "version": "2.4.0",
   "private": true,
   "type": "module",
-  "description": "हर दुकान का अपना हिसाब — multi-tenant chakki / small-business billing",
+  "description": "तौल-माल (TolMaal by Solidrix) — हर दुकान और व्यापार का अपना हिसाब (Chakki, Mandi, Feeds, Oil Mill, Trading)",
   "scripts": {
     "test": "node --test test/*.test.js",
     "dev": "wrangler dev --port 8787 --local",

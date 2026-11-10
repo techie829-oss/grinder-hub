@@ -1,12 +1,12 @@
-// Service Worker for Chakki Book (Grinder Hub) PWA
-const CACHE_NAME = 'chakkibook-v2.3.1';
+// Service Worker for TolMaal (तौल-माल by Solidrix) PWA & Native App
+const CACHE_NAME = 'tolmaal-v2.4.0';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/styles.css',
-  '/styles.css?v=2.3.1',
+  '/styles.css?v=2.4.0',
   '/app.js',
-  '/app.js?v=2.3.0',
+  '/app.js?v=2.4.0',
   '/manifest.json',
   '/icon.svg',
   '/js/sync.js',
@@ -14,6 +14,7 @@ const STATIC_ASSETS = [
   '/js/i18n.js',
   '/js/api.js',
   '/js/events.js',
+  '/js/utils/photo.js',
   '/js/hardware/scaleBluetooth.js',
   '/js/hardware/scaleOcr.js',
   '/js/hardware/qrScanner.js',
