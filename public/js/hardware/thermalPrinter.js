@@ -128,6 +128,21 @@ class EscPosBuilder {
     return this.raw([0x1d, 0x56, 0x42, 0x00]); // GS V B 0
   }
 
+  qr(text, size = 6) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(text);
+    const len = data.length + 3;
+    const pL = len % 256;
+    const pH = Math.floor(len / 256);
+
+    return this
+      .raw([0x1d, 0x28, 0x6b, 0x04, 0x00, 0x31, 0x41, 0x32, 0x00]) // Model 2
+      .raw([0x1d, 0x28, 0x6b, 0x03, 0x00, 0x31, 0x43, size])       // Module size
+      .raw([0x1d, 0x28, 0x6b, 0x03, 0x00, 0x31, 0x45, 0x31])       // Error correction M
+      .raw([0x1d, 0x28, 0x6b, pL, pH, 0x31, 0x50, 0x30, ...data])   // Store data
+      .raw([0x1d, 0x28, 0x6b, 0x03, 0x00, 0x31, 0x51, 0x30]);      // Print QR
+  }
+
   getBytes() {
     return new Uint8Array(this.buffer);
   }
@@ -200,6 +215,9 @@ export async function printThermalToken(tokenRow) {
   builder
     .hr()
     .align('center')
+    .qr(`TOKEN:${tokenRow.no}`, 6)
+    .line(`TOKEN #${tokenRow.no}`)
+    .line('Scan to check status')
     .line('Please show this slip at pickup')
     .feed(3)
     .cut();
@@ -274,6 +292,14 @@ export async function printThermalBill(entry) {
 
   if (biz.upi) {
     builder.align('center').line('UPI: ' + biz.upi);
+  }
+
+  if (entry.tokenNo) {
+    builder
+      .feed(1)
+      .align('center')
+      .qr(`TOKEN:${entry.tokenNo}`, 5)
+      .line(`TOKEN #${entry.tokenNo}`);
   }
 
   builder

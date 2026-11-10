@@ -1,7 +1,23 @@
 // Token Sequence and Allocation Service
 import { dayKey, normName, normVillage, normalizePhone } from '../utils/helpers.js';
 
-export async function nextTokenNo(env, businessId, day) {
+export async function nextTokenNo(env, businessId, day, tokenMode = 'daily') {
+  if (tokenMode === 'loop100') {
+    const row = await env.DB.prepare(
+      `INSERT INTO day_counters (business_id, day, last_no) VALUES (?, ?, 1)
+       ON CONFLICT(business_id, day) DO UPDATE SET last_no = CASE WHEN last_no >= 100 THEN 1 ELSE last_no + 1 END
+       RETURNING last_no`
+    )
+      .bind(businessId, day)
+      .first();
+    if (row && row.last_no) return row.last_no;
+    const max = await env.DB.prepare('SELECT COALESCE(MAX(no), 0) AS n FROM tokens WHERE business_id = ? AND day = ?')
+      .bind(businessId, day)
+      .first();
+    const nextVal = (max ? max.n : 0) + 1;
+    return nextVal > 100 ? 1 : nextVal;
+  }
+
   const row = await env.DB.prepare(
     `INSERT INTO day_counters (business_id, day, last_no) VALUES (?, ?, 1)
      ON CONFLICT(business_id, day) DO UPDATE SET last_no = last_no + 1
@@ -16,9 +32,13 @@ export async function nextTokenNo(env, businessId, day) {
   return (max ? max.n : 0) + 1;
 }
 
-export async function issueToken(env, businessId, name, village, serviceId, grossWeight = 0, totalLossG = 0, netWeight = 0, phone = '', note = '') {
+export async function issueToken(env, businessId, name, village, serviceId, grossWeight = 0, totalLossG = 0, netWeight = 0, phone = '', note = '', tokenMode = null) {
   const day = dayKey();
-  const no = await nextTokenNo(env, businessId, day);
+  if (!tokenMode) {
+    const biz = await env.DB.prepare('SELECT COALESCE(token_mode, "daily") AS token_mode FROM businesses WHERE id = ?').bind(businessId).first();
+    tokenMode = (biz && biz.token_mode) || 'daily';
+  }
+  const no = await nextTokenNo(env, businessId, day, tokenMode);
   const anyServing = await env.DB.prepare(
     "SELECT id FROM tokens WHERE business_id = ? AND day = ? AND status = 'serving' LIMIT 1"
   )

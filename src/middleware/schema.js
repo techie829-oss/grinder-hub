@@ -111,6 +111,9 @@ export async function ensureSchema(env) {
   try {
     await env.DB.exec('ALTER TABLE businesses ADD COLUMN last_active_at INTEGER NOT NULL DEFAULT 0;');
   } catch (e) {}
+  try {
+    await env.DB.exec("ALTER TABLE businesses ADD COLUMN token_mode TEXT NOT NULL DEFAULT 'daily';");
+  } catch (e) {}
 
   schemaInitialized = true;
 }

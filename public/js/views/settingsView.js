@@ -51,7 +51,34 @@ export function viewSettings() {
       <label for="s-note">${t('receiptNoteLabel')}</label>
       <input id="s-note" name="note" maxlength="120" value="${esc(biz.note)}" placeholder="${t('receiptNotePlaceholder')}">
     </div>
-    <button class="btn btn-primary" type="submit">${t('saveSettingsBtn')}</button>
+
+    <!-- Token Numbering Mode (Restart from 1 after 100 vs Daily start from 1) -->
+    <div class="field" style="margin-top:14px;padding:12px;background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:12px;">
+      <label style="font-weight:800;color:#0f172a;margin-bottom:8px;display:block;">${t('tokenModeTitle')}</label>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <label style="display:flex;align-items:flex-start;gap:8px;font-size:13px;cursor:pointer;">
+          <input type="radio" name="tokenMode" value="daily" ${biz.tokenMode !== 'loop100' ? 'checked' : ''} style="margin-top:2px;">
+          <div>
+            <div><strong>${t('tokenModeDaily')}</strong></div>
+            <div style="color:#64748b;font-size:11.5px;">${t('tokenModeDailySub')}</div>
+          </div>
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:8px;font-size:13px;cursor:pointer;">
+          <input type="radio" name="tokenMode" value="loop100" ${biz.tokenMode === 'loop100' ? 'checked' : ''} style="margin-top:2px;">
+          <div>
+            <div><strong>${t('tokenModeLoop100')}</strong></div>
+            <div style="color:#64748b;font-size:11.5px;">${t('tokenModeLoop100Sub')}</div>
+          </div>
+        </label>
+      </div>
+      <div style="margin-top:10px;">
+        <button type="button" class="btn btn-xs btn-subtle" data-act="reset-token-counter" style="border:1px solid #cbd5e1;padding:6px 12px;border-radius:8px;font-weight:700;background:#fff;">
+          ${t('resetTokenCounterBtn')}
+        </button>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" type="submit" style="margin-top:10px;">${t('saveSettingsBtn')}</button>
   </form>
 
   <section class="card">

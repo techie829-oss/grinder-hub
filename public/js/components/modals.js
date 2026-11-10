@@ -31,84 +31,108 @@ export function renderCustomerModal() {
   const current = state.customer;
   if (!current) return;
   const balance = customerBalance(current.customer.id);
-  const cls = balance > 0 ? 'due' : (balance < 0 ? 'adv' : '');
-  const label = balance > 0 ? t('dueTitle') : (balance < 0 ? t('advTitle') : t('settledTitle'));
+  const isDue = balance > 0;
+  const isAdv = balance < 0;
+  const statusColor = isDue ? '#b45309' : (isAdv ? '#4338ca' : '#15803d');
+  const statusBg = isDue ? '#fffbeb' : (isAdv ? '#eef2ff' : '#f0fdf4');
+  const statusBorder = isDue ? '#fde68a' : (isAdv ? '#c7d2fe' : '#bbf7d0');
+  const statusLabel = isDue ? t('dueTitle') : (isAdv ? t('advTitle') : t('settledTitle'));
 
   showModal(`
-    <div class="sheet-head" style="align-items:center;">
-      <div style="display:flex;align-items:center;gap:12px;">
+    <!-- Ultra-Compact Customer Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:10px;border-bottom:1px solid #e2e8f0;margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1 1 auto;">
         ${current.customer.photo
-          ? `<img src="${current.customer.photo}" alt="${esc(current.customer.name)}" style="width:58px;height:58px;border-radius:50%;object-fit:cover;border:2.5px solid #4f46e5;box-shadow:0 4px 12px rgba(79,70,229,0.25);">`
-          : `<div class="avatar" style="width:58px;height:58px;border-radius:50%;font-size:24px;font-weight:800;background:#e0e7ff;color:#3730a3;">${esc(current.customer.name.charAt(0) || '?')}</div>`}
-        <div>
-          <h3 style="margin:0;font-size:18px;font-weight:800;color:#0f172a;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-            ${esc(current.customer.name)}${current.customer.village ? ` <span class="tiny-chip" style="background:#f1f5f9;color:#334155;">${esc(current.customer.village)}</span>` : ''}
-          </h3>
-          <div class="muted" style="margin-top:2px;">
+          ? `<img src="${current.customer.photo}" alt="${esc(current.customer.name)}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid #4f46e5;flex:0 0 40px;">`
+          : `<div style="width:40px;height:40px;border-radius:50%;font-size:17px;font-weight:800;background:#e0e7ff;color:#3730a3;display:grid;place-items:center;flex:0 0 40px;">${esc(current.customer.name.charAt(0) || '?')}</div>`}
+        <div style="min-width:0;flex:1 1 auto;line-height:1.2;">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+            <span style="font-size:16px;font-weight:800;color:#0f172a;letter-spacing:-0.2px;">${esc(current.customer.name)}</span>
+            ${current.customer.village ? `<span style="font-size:11px;background:#f1f5f9;color:#334155;padding:1px 6px;border-radius:6px;font-weight:600;">📍 ${esc(current.customer.village)}</span>` : ''}
+          </div>
+          <div style="font-size:11.5px;color:#64748b;margin-top:2px;">
             ${current.customer.phone
-              ? `<a href="tel:${current.customer.phone}" style="color:#4f46e5;font-weight:700;display:inline-flex;align-items:center;gap:4px;">📞 ${phoneFmt(current.customer.phone)}</a>`
-              : '<span style="color:#94a3b8;">फोन नंबर नहीं दर्ज</span>'}
-            · ${current.entries.length} हिसाब प्रविष्टियाँ
+              ? `<a href="tel:${current.customer.phone}" style="color:#4f46e5;font-weight:700;text-decoration:none;">📞 ${phoneFmt(current.customer.phone)}</a>`
+              : '<span style="color:#94a3b8;">बिना फोन</span>'}
+            <span style="margin:0 4px;color:#cbd5e1;">•</span>
+            <span>${current.entries.length} हिसाब प्रविष्टियाँ</span>
           </div>
         </div>
       </div>
-      <div style="display:flex;align-items:center;gap:6px">
-        <button class="btn btn-sm btn-ghost" data-act="edit-cust" data-id="${current.customer.id}" title="नाम, गाँव या फोटो बदलें">✏️ ${t('editCustomer')}</button>
-        ${balance === 0 ? `<button class="btn btn-sm btn-ghost" data-act="del-cust" data-id="${current.customer.id}" style="color:var(--red)">${t('deleteCustomer')}</button>` : ''}
-        <button class="icon-btn" data-act="close-modal" aria-label="Close">✕</button>
+      <div style="display:flex;align-items:center;gap:4px;flex:0 0 auto;">
+        <button type="button" class="btn btn-sm btn-subtle" data-act="edit-cust" data-id="${current.customer.id}" title="नाम, गाँव या फोटो बदलें" style="padding:4px 8px;font-size:12px;height:32px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;">
+          ✏️
+        </button>
+        ${balance === 0 ? `
+        <button type="button" class="btn btn-sm btn-subtle" data-act="del-cust" data-id="${current.customer.id}" title="ग्राहक हटाएं" style="padding:4px 8px;font-size:12px;height:32px;border-radius:8px;border:1px solid #fecaca;color:#dc2626;background:#fff;">
+          🗑️
+        </button>` : ''}
+        <button type="button" class="icon-btn" data-act="close-modal" aria-label="Close" style="width:32px;height:32px;border-radius:8px;">✕</button>
       </div>
     </div>
 
-    <div class="bal-panel ${cls}">
-      <span class="bal-label">${label}</span>
-      <span class="bal-val">${inr(Math.abs(balance))}</span>
+    <!-- Balance & Primary Action Row -->
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;background:${statusBg};border:1.5px solid ${statusBorder};border-radius:12px;margin-bottom:10px;">
+      <div>
+        <div style="font-size:11px;font-weight:750;color:${statusColor};text-transform:uppercase;letter-spacing:0.3px;">${statusLabel}</div>
+        <div style="font-size:20px;font-weight:850;color:${statusColor};line-height:1.15;">${inr(Math.abs(balance))}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        ${isDue ? `
+        <button type="button" class="btn btn-sm" data-act="wa-remind" data-id="${current.customer.id}" title="WhatsApp पर तगादा भेजें" style="background:#25d366;color:#fff;font-weight:750;font-size:12px;height:34px;padding:0 10px;border-radius:8px;border:none;">
+          📲 तगादा
+        </button>` : ''}
+        <button type="button" class="btn btn-primary btn-sm" data-act="job-for-cust" data-id="${current.customer.id}" style="font-weight:800;font-size:12.5px;height:34px;padding:0 12px;border-radius:8px;">
+          + नया काम
+        </button>
+      </div>
     </div>
 
-    <form data-form="payment">
+    <!-- Compact Payment Input Bar -->
+    <form data-form="payment" style="display:flex;align-items:center;gap:6px;background:#f8fafc;padding:8px;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:12px;">
       <input type="hidden" name="customerId" value="${current.customer.id}">
-      <div class="two-col">
-        <div class="field">
-          <label for="p-amount">${t('amountRs')}</label>
-          <input id="p-amount" name="amount" type="number" step="any" min="0" inputmode="decimal"
-            value="${balance > 0 ? (balance / 100) : ''}" placeholder="0.00">
-        </div>
-        <div class="field">
-          <label for="p-note">${t('noteLabel')}</label>
-          <input id="p-note" name="note" maxlength="120" placeholder="e.g. Cash / UPI">
-        </div>
+      <div style="position:relative;flex:1 1 38%;">
+        <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-weight:800;color:#64748b;font-size:13px;">₹</span>
+        <input id="p-amount" name="amount" type="number" step="any" min="0" inputmode="decimal"
+          value="${balance > 0 ? (balance / 100) : ''}" placeholder="रकम"
+          style="width:100%;height:36px;padding:0 8px 0 22px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:13.5px;font-weight:750;background:#fff;box-sizing:border-box;">
       </div>
-      <button class="btn btn-primary btn-block" type="submit">${t('recordPaymentBtn')}</button>
+      <input id="p-note" name="note" maxlength="120" placeholder="नोट (Cash/UPI)"
+        style="flex:1 1 37%;height:36px;padding:0 8px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:12px;background:#fff;box-sizing:border-box;">
+      <button class="btn btn-primary" type="submit" style="flex:0 0 auto;height:36px;padding:0 12px;font-size:12.5px;font-weight:800;border-radius:8px;white-space:nowrap;">
+        + जमा
+      </button>
     </form>
 
-    <div class="btn-row mt-14">
-      ${balance > 0 ? `<button class="btn btn-ghost btn-sm" data-act="wa-remind" data-id="${current.customer.id}">${t('remindWhatsApp')}</button>` : ''}
-      <button class="btn btn-ghost btn-sm" data-act="job-for-cust" data-id="${current.customer.id}">${t('jobForCustomer')}</button>
+    <!-- Ledger Section -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <div style="font-size:13px;font-weight:800;color:#0f172a;">${t('oldLedger')} (${current.entries.length})</div>
     </div>
-
-    <div class="section-head mt-20"><h4 class="section-title">${t('oldLedger')}</h4></div>
-    <div class="row-list">
+    <div class="row-list" style="max-height:240px;overflow-y:auto;padding-right:2px;">
       ${current.entries.length
         ? current.entries.map((e) => {
             const lossG = e.lossG || 0;
             const netWeight = e.netWeight;
             const hasLoss = e.kind !== 'payment' && (lossG > 0 || netWeight != null);
             return `
-            <div class="row-item">
-              <span class="avatar small${e.kind === 'payment' ? ' pay' : ''}">${e.kind === 'payment' ? '₹' : esc((e.serviceName || 'C').charAt(0))}</span>
-              <span class="grow">
-                <span class="row-title ellipsis">${e.kind === 'payment' ? 'Payment' : esc(e.serviceName || 'Order') + ' · ' + qtyFmt(e.qty) + ' ' + unitOf(e.unit)}</span>
-                <span class="row-sub">
+            <div class="row-item" style="padding:8px 6px;gap:8px;">
+              <span class="avatar small${e.kind === 'payment' ? ' pay' : ''}" style="width:30px;height:30px;font-size:13px;flex:0 0 30px;">${e.kind === 'payment' ? '₹' : esc((e.serviceName || 'C').charAt(0))}</span>
+              <span class="grow" style="min-width:0;">
+                <span class="row-title ellipsis" style="font-size:13px;font-weight:750;">${e.kind === 'payment' ? 'भुगतान प्राप्त' : esc(e.serviceName || 'Order') + ' · ' + qtyFmt(e.qty) + ' ' + unitOf(e.unit)}</span>
+                <span class="row-sub" style="font-size:11px;">
                   ${dateTxt(e.at)} · ${timeTxt(e.at)}${e.tokenNo ? ' · #' + e.tokenNo : ''}
                   ${hasLoss ? ` · <span style="color:#ea580c">-${lossG}g</span> · <span style="color:#16a34a">${qtyFmt(netWeight)} ${unitOf(e.unit)}</span>` : ''}
                 </span>
               </span>
-              <span class="row-amt${e.kind === 'payment' ? ' amt-plus' : ''}">${e.kind === 'payment' ? '+' : ''}${inr(e.amountPaise)}</span>
-              <button type="button" class="icon-btn" data-act="print-entry" data-id="${e.id}" aria-label="Print Receipt">🧾</button>
-              <button type="button" class="icon-btn" data-act="wa-entry" data-id="${e.id}" aria-label="WhatsApp">📱</button>
-              <button type="button" class="icon-btn" data-act="del-entry" data-id="${e.id}" aria-label="Delete">✕</button>
+              <span class="row-amt${e.kind === 'payment' ? ' amt-plus' : ''}" style="font-size:13px;font-weight:800;white-space:nowrap;">${e.kind === 'payment' ? '+' : ''}${inr(e.amountPaise)}</span>
+              <div style="display:flex;align-items:center;gap:2px;flex:0 0 auto;">
+                <button type="button" class="icon-btn" data-act="print-entry" data-id="${e.id}" aria-label="Print Receipt" title="रसीद प्रिंट" style="width:28px;height:28px;font-size:12px;">🧾</button>
+                <button type="button" class="icon-btn" data-act="wa-entry" data-id="${e.id}" aria-label="WhatsApp" title="व्हाट्सएप रसीद" style="width:28px;height:28px;font-size:12px;">📱</button>
+                <button type="button" class="icon-btn" data-act="del-entry" data-id="${e.id}" aria-label="Delete" title="हटाएं" style="width:28px;height:28px;font-size:12px;color:#dc2626;">✕</button>
+              </div>
             </div>`;
           }).join('')
-        : emptyBlock('No entries', 'No previous ledger history found.')}
+        : `<div style="text-align:center;padding:16px 8px;color:#94a3b8;font-size:12px;background:#f8fafc;border-radius:10px;border:1px dashed #cbd5e1;">कोई पुराना हिसाब दर्ज नहीं है</div>`}
     </div>
   `);
 }
@@ -237,37 +261,47 @@ export function findEntry(id) {
 
 export function openStatusModal(initialTokenNo = '', initialPhone = '') {
   const isShopOwner = !!state.data;
+  const initialVal = initialTokenNo || initialPhone || '';
+
   showModal(`
-    <div class="sheet-head" style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e2e8f0;padding-bottom:12px;margin-bottom:16px;">
+    <div class="sheet-head" style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e2e8f0;padding-bottom:12px;margin-bottom:14px;">
       <div style="display:flex;align-items:center;gap:8px;">
-        <span style="font-size:24px;">🔍</span>
+        <span style="font-size:22px;">🔍</span>
         <div>
-          <div class="sheet-title" style="font-size:18px;font-weight:800;color:#0f172a;">${t('orderAndTokenStatus')}</div>
-          <div style="font-size:12px;color:#64748b;">${t('statusScanReceiptPrompt')}</div>
+          <div class="sheet-title" style="font-size:17px;font-weight:800;color:#0f172a;">${t('universalSearchTitle')}</div>
+          <div style="font-size:11.5px;color:#64748b;">${t('universalSearchPlaceholder')}</div>
         </div>
       </div>
       <button type="button" class="icon-btn" data-act="close-modal" aria-label="Close">✕</button>
     </div>
 
+    <!-- Universal Search Input Bar with Voice Search Button -->
+    <div style="position:relative;margin-bottom:10px;">
+      <input id="status-search-query" type="text" class="input" placeholder="${t('universalSearchPlaceholder')}" value="${esc(initialVal)}" style="padding:12px 48px 12px 14px;font-size:15px;height:48px;border:2px solid #6366f1;border-radius:12px;width:100%;font-weight:650;box-sizing:border-box;" autofocus autocomplete="off">
+      <button type="button" class="btn-voice-search" data-act="status-voice-search" title="${t('voiceSearchBtn')}" style="position:absolute;right:6px;top:6px;bottom:6px;width:36px;background:linear-gradient(135deg, #6366f1, #4f46e5);color:#fff;border:none;border-radius:8px;font-size:17px;display:flex;align-items:center;justify-content:center;cursor:pointer;">🎙️</button>
+    </div>
+
+    <!-- Voice Listening Pulse Banner -->
+    <div id="status-voice-pulse" style="display:none;background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;padding:8px 12px;border-radius:10px;font-size:12.5px;font-weight:750;text-align:center;margin-bottom:10px;">
+      🎙️ ${t('voiceListeningPrompt')}
+    </div>
+
     <!-- Quick Camera QR Scan Button -->
-    <div style="background:#f8fafc;border:1.5px dashed #cbd5e1;border-radius:14px;padding:14px;text-align:center;margin-bottom:18px;">
-      <button type="button" class="btn btn-primary" data-act="status-scan-qr" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px;font-weight:700;border-radius:10px;background:linear-gradient(135deg, #4338ca, #312e81);">
+    <div style="margin-bottom:12px;">
+      <button type="button" class="btn btn-sm btn-subtle" data-act="status-scan-qr" style="width:100%;padding:10px;border:1.5px dashed #cbd5e1;border-radius:10px;background:#f8fafc;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:6px;">
         <span>📷</span> <span>${t('scanReceiptQrBtn')}</span>
       </button>
-      <div style="font-size:11.5px;color:#64748b;margin-top:6px;">${t('qrModalSub')}</div>
     </div>
 
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
-      <div style="flex:1;height:1px;background:#e2e8f0;"></div>
-      <span style="font-size:12px;color:#94a3b8;font-weight:600;">${t('orSearchByNumber')}</span>
-      <div style="flex:1;height:1px;background:#e2e8f0;"></div>
-    </div>
+    <!-- Live Results Container -->
+    <div id="status-result-box" style="margin-top:10px;margin-bottom:12px;max-height:55vh;overflow-y:auto;"></div>
 
-    <!-- Manual Form -->
-    <form id="status-check-form" data-act="status-check-submit" style="display:flex;flex-direction:column;gap:12px;">
+    ${!isShopOwner ? `
+    <!-- Customer Public Status Lookup by Token & Phone -->
+    <form id="status-check-form" data-act="status-check-submit" style="display:flex;flex-direction:column;gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid #e2e8f0;">
       <div>
         <label for="status-phone" style="display:block;font-size:12px;font-weight:700;color:#334155;margin-bottom:4px;">
-          ${t('customerPhoneFieldLabel')} ${isShopOwner ? '<span style="color:#64748b;font-weight:400;">(optional)</span>' : '<span style="color:#dc2626;">*</span>'}
+          ${t('customerPhoneFieldLabel')} <span style="color:#dc2626;">*</span>
         </label>
         <input id="status-phone" type="tel" inputmode="numeric" maxlength="10" class="input" placeholder="9554880713" value="${esc(initialPhone)}" style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid #cbd5e1;font-size:14px;">
       </div>
@@ -279,14 +313,133 @@ export function openStatusModal(initialTokenNo = '', initialPhone = '') {
         <input id="status-token-no" type="number" inputmode="numeric" class="input" placeholder="${t('tokenNoPlaceholder')}" value="${esc(initialTokenNo)}" required style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid #cbd5e1;font-size:14px;">
       </div>
 
-      <button type="submit" class="btn btn-primary btn-block" style="padding:14px;border-radius:12px;font-weight:700;font-size:15px;margin-top:6px;min-height:50px;">
+      <button type="submit" class="btn btn-primary btn-block" style="padding:12px;border-radius:10px;font-weight:750;font-size:14px;">
         ${t('checkLiveStatusBtn')}
       </button>
     </form>
-
-    <!-- Results Container -->
-    <div id="status-result-box" style="margin-top:16px;margin-bottom:20px;"></div>
+    ` : ''}
   `);
+
+  if (initialVal && isShopOwner) {
+    renderUniversalSearchResults(initialVal);
+  }
+}
+
+export function renderUniversalSearchResults(query) {
+  const box = document.getElementById('status-result-box');
+  if (!box || !state.data) return;
+
+  const q = String(query || '').trim().toLowerCase();
+  if (!q) {
+    box.innerHTML = '';
+    return;
+  }
+
+  const cleanDigits = q.replace(/\D/g, '');
+  const isNumericOnly = /^\d+$/.test(q);
+
+  // 1. Match Customers by name OR phone OR village
+  const matchedCustomers = (state.data.customers || []).filter((c) => {
+    const nameMatch = (c.name || '').toLowerCase().includes(q);
+    const villageMatch = (c.village || '').toLowerCase().includes(q);
+    const phoneMatch = cleanDigits && cleanDigits.length >= 3 && (c.phone || '').includes(cleanDigits);
+    return nameMatch || villageMatch || phoneMatch;
+  }).slice(0, 6);
+
+  // 2. Match Tokens by token # OR customer name OR phone
+  const allTokens = [
+    ...(state.data.tokens?.serving ? [state.data.tokens.serving] : []),
+    ...(state.data.tokens?.waiting || []),
+    ...(state.data.tokens?.doneList || []),
+  ];
+  const matchedTokens = allTokens.filter((tok) => {
+    const numMatch = isNumericOnly && tok.no === parseInt(cleanDigits, 10);
+    const nameMatch = (tok.name || '').toLowerCase().includes(q);
+    const phoneMatch = cleanDigits && cleanDigits.length >= 3 && (tok.phone || '').includes(cleanDigits);
+    return numMatch || nameMatch || phoneMatch;
+  }).slice(0, 6);
+
+  if (matchedCustomers.length === 0 && matchedTokens.length === 0) {
+    box.innerHTML = `
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;color:#64748b;padding:16px;border-radius:12px;text-align:center;font-size:13px;font-weight:600;">
+        ${t('noMatchingRecords')} "${esc(query)}"
+      </div>`;
+    return;
+  }
+
+  let html = '';
+
+  // Render matching tokens
+  if (matchedTokens.length > 0) {
+    html += `
+      <div style="font-size:12px;font-weight:800;color:#475569;margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+        <span>🎫</span> <span>${t('matchingTokens')} (${matchedTokens.length})</span>
+      </div>
+      <div class="row-list" style="margin-bottom:12px;">
+        ${matchedTokens.map((tok) => {
+          const isDone = tok.status === 'done';
+          const isServing = tok.status === 'serving';
+          const badgeBg = isDone ? '#dcfce7' : (isServing ? '#dbeafe' : '#fef3c7');
+          const badgeColor = isDone ? '#15803d' : (isServing ? '#1d4ed8' : '#b45309');
+          const badgeText = isDone ? 'पूर्ण' : (isServing ? 'सक्रिय' : 'कतार में');
+          return `
+            <div style="padding:10px;background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+              <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+                <span style="width:34px;height:34px;background:#e0e7ff;color:#3730a3;font-weight:850;font-size:14px;border-radius:8px;display:grid;place-items:center;flex-shrink:0;">#${tok.no}</span>
+                <div style="min-width:0;">
+                  <div style="font-weight:750;font-size:13.5px;color:#0f172a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                    ${esc(tok.name)}${tok.village ? ` <span style="font-size:11px;color:#64748b;">(${esc(tok.village)})</span>` : ''}
+                  </div>
+                  <div style="font-size:11px;color:#64748b;margin-top:2px;">
+                    ${tok.serviceName || 'सेवा'} ${tok.grossWeight ? `· ⚖️ ${tok.grossWeight}kg` : ''} ${tok.phone ? `· 📞 ${tok.phone}` : ''}
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+                <span style="font-size:10.5px;font-weight:750;background:${badgeBg};color:${badgeColor};padding:3px 8px;border-radius:6px;">${badgeText}</span>
+                <button type="button" class="btn btn-sm btn-primary" data-act="token-to-job" data-id="${tok.id}" style="padding:6px 10px;font-size:12px;font-weight:750;">
+                  🧾 बिल
+                </button>
+              </div>
+            </div>`;
+        }).join('')}
+      </div>`;
+  }
+
+  // Render matching customers
+  if (matchedCustomers.length > 0) {
+    html += `
+      <div style="font-size:12px;font-weight:800;color:#475569;margin-bottom:6px;display:flex;align-items:center;gap:6px;">
+        <span>👤</span> <span>${t('matchingCustomers')} (${matchedCustomers.length})</span>
+      </div>
+      <div class="row-list">
+        ${matchedCustomers.map((c) => {
+          const bal = c.balancePaise || 0;
+          const balCls = bal > 0 ? '#b91c1c' : (bal < 0 ? '#15803d' : '#64748b');
+          const balBg = bal > 0 ? '#fef2f2' : (bal < 0 ? '#f0fdf4' : '#f8fafc');
+          const balTxt = bal > 0 ? inr(bal) + ' बाकी' : (bal < 0 ? inr(-bal) + ' जमा' : 'बराबर');
+          return `
+            <div style="padding:10px;background:#fff;border:1.5px solid #e2e8f0;border-radius:12px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+              <div style="min-width:0;">
+                <div style="font-weight:750;font-size:13.5px;color:#0f172a;">
+                  ${esc(c.name)}${c.village ? ` <span style="font-size:11px;color:#64748b;">(${esc(c.village)})</span>` : ''}
+                </div>
+                <div style="font-size:11px;color:#64748b;margin-top:2px;display:flex;align-items:center;gap:6px;">
+                  ${c.phone ? `<span>📞 ${c.phone}</span>` : ''}
+                  <span style="background:${balBg};color:${balCls};font-weight:750;padding:1px 6px;border-radius:4px;">${balTxt}</span>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+                <button type="button" class="btn btn-sm btn-primary" data-act="search-to-job" data-id="${c.id}" style="padding:6px 10px;font-size:12px;font-weight:750;">
+                  + नया काम
+                </button>
+              </div>
+            </div>`;
+        }).join('')}
+      </div>`;
+  }
+
+  box.innerHTML = html;
 }
 
 export function renderStatusResult(res) {

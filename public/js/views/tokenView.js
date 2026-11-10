@@ -14,15 +14,23 @@ export function viewTokens() {
 
   <div class="page-head mt-20" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:gap:10px;margin-bottom:14px;">
     <div>
-      <h1 class="page-title">${t('navToken')} / ${t('queueBoard')}</h1>
-      <p class="page-sub">${t('queueStatusSub', { n: tObj.total })}</p>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <h1 class="page-title" style="margin:0;">${t('navToken')} / ${t('queueBoard')}</h1>
+        <span class="tiny-chip" style="${tObj.tokenMode === 'loop100' ? 'background:#fef3c7;color:#b45309;' : 'background:#f1f5f9;color:#475569;'}font-weight:750;">
+          ${tObj.tokenMode === 'loop100' ? '🔄 1-100 चक्र' : '📅 प्रतिदिन 1 से'}
+        </span>
+      </div>
+      <p class="page-sub" style="margin-top:4px;">${t('queueStatusSub', { n: tObj.total })}</p>
     </div>
-    <div style="display:flex;gap:8px;align-items:center;">
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+      <button type="button" class="btn btn-subtle btn-sm" data-act="reset-token-counter" title="टोकन नंबर #1 पर रीसेट करें" style="border:1.5px solid #cbd5e1;padding:8px 10px;border-radius:10px;font-weight:700;display:inline-flex;align-items:center;gap:4px;background:#fff;font-size:12px;">
+        <span>🔄</span> <span>#1 रीसेट</span>
+      </button>
       <button type="button" class="btn btn-primary btn-sm" data-act="switch-job-tab" data-tab="grind" data-goto="job" style="border-radius:10px;font-weight:750;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;">
         <span>🎫</span> <span>${t('newTokenServices')}</span>
       </button>
       <button type="button" class="btn btn-subtle btn-sm" data-act="open-status-modal" style="border:1.5px solid #cbd5e1;padding:8px 14px;border-radius:10px;font-weight:700;display:inline-flex;align-items:center;gap:6px;background:#fff;">
-        <span>📷</span> <span>${t('qrScanBtn')}</span>
+        <span>🔍</span> <span>खोजें</span>
       </button>
     </div>
   </div>

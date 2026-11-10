@@ -9,7 +9,7 @@ import { createToken, setTokenStatus, deleteToken } from './controllers/tokenCon
 import { customerDetail, saveCustomer, deleteCustomer } from './controllers/customerController.js';
 import { saveService, deleteService } from './controllers/serviceController.js';
 import { saveProduct, deleteProduct } from './controllers/productController.js';
-import { saveSettings, exportData } from './controllers/settingsController.js';
+import { saveSettings, exportData, resetTokenCounter } from './controllers/settingsController.js';
 import { syncBatch } from './controllers/syncController.js';
 import {
   adminLogin,
@@ -126,6 +126,7 @@ async function route(request, env, url) {
   if (path === '/api/tokens' && method === 'POST') return createToken(request, env, business, range);
   if (path === '/api/tokens/status' && method === 'POST') return setTokenStatus(request, env, business, range);
   if (path === '/api/tokens/delete' && method === 'POST') return deleteToken(request, env, business, range);
+  if (path === '/api/tokens/reset-counter' && method === 'POST') return resetTokenCounter(request, env, business, range);
   if (path === '/api/services' && method === 'POST') return saveService(request, env, business, range);
   if (path === '/api/services/delete' && method === 'POST') return deleteService(request, env, business, range);
   if (path === '/api/products' && method === 'POST') return saveProduct(request, env, business, range);

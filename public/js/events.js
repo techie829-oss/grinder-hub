@@ -4,7 +4,7 @@ import { api, withBusy, loadState, applyState, toast, loadAdminData, getApiUrl, 
 import { inr, unitOf } from './utils/formatters.js';
 import { printReceipt } from './utils/print.js';
 import { entryWaText, openWhatsApp } from './utils/whatsapp.js';
-import { closeModal, openCustomer, openCustomerEditModal, showJobDone, findEntry, openStatusModal, renderStatusResult } from './components/modals.js';
+import { closeModal, openCustomer, openCustomerEditModal, showJobDone, findEntry, openStatusModal, renderStatusResult, renderUniversalSearchResults } from './components/modals.js';
 import { customerRows } from './components/rows.js';
 import { filteredCustomers } from './views/customerView.js';
 import { currentService } from './views/jobView.js';
@@ -473,10 +473,94 @@ export function setupEventListeners() {
         break;
       }
 
-      // --- Order / Token Status Check Actions ---
+      // --- Order / Token Status & Universal Search Actions ---
       case 'open-status-modal':
         openStatusModal();
         break;
+
+      case 'status-voice-search': {
+        const pulse = document.getElementById('status-voice-pulse');
+        const queryInput = document.getElementById('status-search-query');
+        const { startQuickVoiceSearch } = await import('./hardware/voiceCommander.js');
+        const { renderUniversalSearchResults } = await import('./components/modals.js');
+        try {
+          if (pulse) pulse.style.display = 'block';
+          startQuickVoiceSearch(
+            (transcript) => {
+              if (pulse) pulse.style.display = 'none';
+              if (queryInput) {
+                queryInput.value = transcript;
+                queryInput.focus();
+              }
+              renderUniversalSearchResults(transcript);
+              toast(`Voice: "${transcript}" ✓`);
+            },
+            (err) => {
+              if (pulse) pulse.style.display = 'none';
+              toast(`Voice search: ${err}`);
+            },
+            () => {
+              if (pulse) pulse.style.display = 'block';
+            }
+          );
+        } catch (err) {
+          if (pulse) pulse.style.display = 'none';
+          toast(err.message);
+        }
+        break;
+      }
+
+      case 'cust-voice-search': {
+        const queryInput = document.getElementById('cust-search');
+        const { startQuickVoiceSearch } = await import('./hardware/voiceCommander.js');
+        try {
+          startQuickVoiceSearch(
+            (transcript) => {
+              if (queryInput) {
+                queryInput.value = transcript;
+                state.q = transcript;
+                const list = document.getElementById('cust-list');
+                import('./views/customerView.js').then(({ filteredCustomers }) => {
+                  import('./components/rows.js').then(({ customerRows }) => {
+                    if (list) list.innerHTML = customerRows(filteredCustomers());
+                  });
+                });
+              }
+              toast(`Voice: "${transcript}" ✓`);
+            },
+            (err) => {
+              toast(`Voice search: ${err}`);
+            }
+          );
+        } catch (err) {
+          toast(err.message);
+        }
+        break;
+      }
+
+      case 'search-to-job': {
+        const cid = el.dataset.id;
+        const cust = (state.data?.customers || []).find((c) => c.id === cid);
+        if (cust) {
+          state.job.name = cust.name;
+          state.job.village = cust.village || '';
+          state.job.phone = cust.phone || '';
+          closeModal();
+          goTo('job');
+          toast(`Selected: ${cust.name}`);
+        }
+        break;
+      }
+
+      case 'reset-token-counter': {
+        if (!confirm('क्या आप टोकन नंबर को तुरंत #1 पर रीसेट करना चाहते हैं?')) return;
+        const res = await api('/api/tokens/reset-counter', {});
+        if (res && res.ok && res.state) {
+          applyState(res.state);
+          toast('टोकन नंबर #1 पर रीसेट हो गया ✓');
+        }
+        break;
+      }
 
       case 'status-scan-qr': {
         const { openQrScannerModal } = await import('./hardware/hardwareModal.js');
@@ -1193,6 +1277,37 @@ export function setupEventListeners() {
       return;
     }
 
+    if (tEl.id === 'status-search-query') {
+      renderUniversalSearchResults(tEl.value);
+      return;
+    }
+
+    if (tEl.id === 'j-phone') {
+      const phoneDigits = (tEl.value || '').replace(/\D/g, '');
+      const banner = document.getElementById('cust-balance-banner');
+      if (phoneDigits.length >= 4 && state.data) {
+        const match = state.data.customers.find((c) => c.phone && c.phone.replace(/\D/g, '').includes(phoneDigits));
+        if (match) {
+          const nameInput = document.getElementById('j-name');
+          const villageInput = document.getElementById('j-village');
+          if (nameInput && (!nameInput.value || nameInput.value === 'Walk-in')) nameInput.value = match.name;
+          if (villageInput && !villageInput.value) villageInput.value = match.village || '';
+          if (banner) {
+            const cls = match.balancePaise > 0 ? 'due' : (match.balancePaise < 0 ? 'adv' : 'zero');
+            const text = match.balancePaise > 0
+              ? inr(match.balancePaise) + ' ' + t('dueTag')
+              : (match.balancePaise < 0 ? inr(-match.balancePaise) + ' ' + t('advTag') : t('settledTag'));
+            banner.className = `cust-banner ${cls}`;
+            banner.innerHTML = `
+              <span><strong>${match.name}${match.village ? ' (' + match.village + ')' : ''}</strong> ledger:</span>
+              <strong>${text}</strong>`;
+            banner.style.display = '';
+          }
+        }
+      }
+      return;
+    }
+
     if (tEl.id === 'j-amount') {
       tEl.dataset.manual = '1';
       state.job.amount = tEl.value;
@@ -1852,11 +1967,13 @@ export function setupEventListeners() {
 
     if (kind === 'settings') {
       await withBusy(form.querySelector('[type="submit"]'), async () => {
+        const tokenMode = form.querySelector('input[name="tokenMode"]:checked')?.value || 'daily';
         const data = await api('/api/settings', {
           name: fd.get('name'),
           address: fd.get('address'),
           upi: fd.get('upi'),
           note: fd.get('note'),
+          tokenMode,
         });
         if (data) {
           applyState(data.state);

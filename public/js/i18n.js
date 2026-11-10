@@ -304,7 +304,25 @@ export const TRANSLATIONS = {
     dueKhataFilter: 'बाकी (उधार)',
     advKhataFilter: 'जमा (अग्रिम)',
     zeroKhataFilter: 'हिसाब बराबर',
-    customerTipNote: 'गाँव में एक नाम के कई ग्राहक होते हैं - फोटो व गाँव देखकर खाता खोलें ताकि कोई त्रुटि न हो।'
+    customerTipNote: 'गाँव में एक नाम के कई ग्राहक होते हैं - फोटो व गाँव देखकर खाता खोलें ताकि कोई त्रुटि न हो।',
+
+    // Universal Search & Voice Search
+    universalSearchTitle: '🔍 ग्राहक, टोकन व रसीद खोजें',
+    universalSearchPlaceholder: 'नाम, 10-अंकों का मोबाइल नंबर, या टोकन #…',
+    voiceSearchBtn: 'बोलकर खोजें',
+    voiceListeningPrompt: 'सुन रहे हैं… नाम, नंबर या टोकन बोलें',
+    voiceBtnLabel: 'बोलें',
+    matchingCustomers: 'ग्राहक (Customers)',
+    matchingTokens: 'टोकन (Tokens)',
+    noMatchingRecords: 'कोई मेल नहीं मिला',
+
+    // Token Mode
+    tokenModeTitle: 'टोकन नंबर प्रणाली (Token Numbering Mode)',
+    tokenModeDaily: 'प्रतिदिन 1 से नया शुरू (Daily reset to 1)',
+    tokenModeDailySub: 'हर दिन टोकन #1 से चालू होगा (1, 2, 3...)',
+    tokenModeLoop100: '100 के बाद 1 से पुनः शुरू (Restart from 1 after 100)',
+    tokenModeLoop100Sub: '1 से 100 तक सिक्के/बैज होने पर; #100 के बाद वापस #1 बनेगा',
+    resetTokenCounterBtn: '🔄 टोकन नंबर #1 पर रीसेट करें'
   },
   
   en: {
@@ -600,7 +618,25 @@ export const TRANSLATIONS = {
     dueKhataFilter: 'Due (Credit)',
     advKhataFilter: 'Advance (Credit)',
     zeroKhataFilter: 'Settled',
-    customerTipNote: 'Multiple customers may have the same name - verify village & photo before opening ledger.'
+    customerTipNote: 'Multiple customers may have the same name - verify village & photo before opening ledger.',
+
+    // Universal Search & Voice Search
+    universalSearchTitle: '🔍 Search Customers, Tokens & Receipts',
+    universalSearchPlaceholder: 'Name, 10-digit phone, or token #…',
+    voiceSearchBtn: 'Voice Search',
+    voiceListeningPrompt: 'Listening… speak name, phone or token',
+    voiceBtnLabel: 'Voice',
+    matchingCustomers: 'Customers',
+    matchingTokens: 'Tokens',
+    noMatchingRecords: 'No matching records found',
+
+    // Token Mode
+    tokenModeTitle: 'Token Numbering Mode',
+    tokenModeDaily: 'Daily reset to 1',
+    tokenModeDailySub: 'Token resets to #1 every morning (1, 2, 3...)',
+    tokenModeLoop100: 'Restart from 1 after 100',
+    tokenModeLoop100Sub: 'For 1-100 coin/badge tokens; wraps to #1 after #100',
+    resetTokenCounterBtn: '🔄 Reset Token to #1'
   },
   
   mr: {
@@ -896,7 +932,25 @@ export const TRANSLATIONS = {
     dueKhataFilter: 'बाकी (उधार)',
     advKhataFilter: 'जमा (अग्रिम)',
     zeroKhataFilter: 'हिसाब बराबर',
-    customerTipNote: 'गाँव में एक नाम के कई ग्राहक होते हैं - फोटो व गाँव देखकर खाता खोलें ताकि कोई त्रुटि न हो।'
+    customerTipNote: 'गाँव में एक नाम के कई ग्राहक होते हैं - फोटो व गाँव देखकर खाता खोलें ताकि कोई त्रुटि न हो।',
+
+    // Universal Search & Voice Search
+    universalSearchTitle: '🔍 ग्राहक, टोकन व रसीद खोजें',
+    universalSearchPlaceholder: 'नाम, 10-अंकों का मोबाइल नंबर, या टोकन #…',
+    voiceSearchBtn: 'बोलकर खोजें',
+    voiceListeningPrompt: 'सुन रहे हैं… नाम, नंबर या टोकन बोलें',
+    voiceBtnLabel: 'बोलें',
+    matchingCustomers: 'ग्राहक (Customers)',
+    matchingTokens: 'टोकन (Tokens)',
+    noMatchingRecords: 'कोई मेल नहीं मिला',
+
+    // Token Mode
+    tokenModeTitle: 'टोकन नंबर प्रणाली (Token Numbering Mode)',
+    tokenModeDaily: 'प्रतिदिन 1 से नया शुरू (Daily reset to 1)',
+    tokenModeDailySub: 'हर दिन टोकन #1 से चालू होगा (1, 2, 3...)',
+    tokenModeLoop100: '100 के बाद 1 से पुनः शुरू (Restart from 1 after 100)',
+    tokenModeLoop100Sub: '1 से 100 तक सिक्के/बैज होने पर; #100 के बाद वापस #1 बनेगा',
+    resetTokenCounterBtn: '🔄 टोकन नंबर #1 पर रीसेट करें'
   },
   
   gu: {

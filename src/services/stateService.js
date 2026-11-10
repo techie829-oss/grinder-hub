@@ -85,7 +85,7 @@ export async function buildState(env, businessId, range) {
     // 6: day counter
     env.DB.prepare('SELECT last_no FROM day_counters WHERE business_id = ? AND day = ?').bind(businessId, day),
     // 7: business info
-    env.DB.prepare('SELECT id, name, phone, address, upi, note, COALESCE(status, \'active\') AS status, COALESCE(plan, \'free\') AS plan, COALESCE(is_super_admin, 0) AS is_super_admin, created_at FROM businesses WHERE id = ?').bind(businessId),
+    env.DB.prepare('SELECT id, name, phone, address, upi, note, COALESCE(token_mode, \'daily\') AS token_mode, COALESCE(status, \'active\') AS status, COALESCE(plan, \'free\') AS plan, COALESCE(is_super_admin, 0) AS is_super_admin, created_at FROM businesses WHERE id = ?').bind(businessId),
     // 8: dynamic products
     env.DB.prepare('SELECT id, name, type, unit, default_rate_paise, active FROM products WHERE business_id = ? AND active = 1 ORDER BY name ASC').bind(businessId),
   ]);
@@ -187,6 +187,7 @@ export async function buildState(env, businessId, range) {
       address: biz.address || '',
       upi: biz.upi || '',
       note: biz.note || '',
+      tokenMode: biz.token_mode || 'daily',
       status: biz.status || 'active',
       plan: biz.plan || 'free',
       isSuperAdmin: Number(biz.is_super_admin) === 1,
@@ -198,12 +199,13 @@ export async function buildState(env, businessId, range) {
     entries,
     tokens: {
       day,
+      tokenMode: biz.token_mode || 'daily',
       serving: tokensToday.find((t) => t.status === 'serving') || null,
       waiting: tokensToday.filter((t) => t.status === 'waiting'),
       done: tokensToday.filter((t) => t.status === 'done').length,
       doneList: tokensToday.filter((t) => t.status === 'done').reverse(),
       total: tokensToday.length,
-      nextNo: lastNo + 1,
+      nextNo: (biz.token_mode === 'loop100') ? ((lastNo >= 100) ? 1 : (lastNo + 1)) : (lastNo + 1),
     },
     stats: {
       range: safeRange,

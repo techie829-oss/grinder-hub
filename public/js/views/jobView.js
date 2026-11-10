@@ -121,10 +121,14 @@ function renderGrindTab(data) {
     <div style="display:flex;gap:6px;align-items:flex-end;margin-bottom:8px;">
       <div class="pos-field" style="flex:1;margin-bottom:0;">
         <label for="j-phone">${t('phoneLabel')}</label>
-        <input id="j-phone" name="phone" type="tel" inputmode="numeric" maxlength="10"
+        <input id="j-phone" name="phone" list="cust-phones" type="tel" inputmode="numeric" maxlength="10"
           value="${esc(job.phone)}" placeholder="${t('phonePlaceholderTen')}">
+        <datalist id="cust-phones">
+          ${data.customers.filter((c) => c.phone).map((c) => `<option value="${esc(c.phone)}">${esc(c.name)}${c.village ? ' (' + esc(c.village) + ')' : ''}</option>`).join('')}
+        </datalist>
       </div>
       <div style="display:flex;gap:4px;flex-shrink:0;">
+        <button type="button" class="btn btn-sm btn-ghost" data-act="hw-voice-mic" style="padding:6px 8px;font-size:12px;height:38px;border-radius:10px;" title="बोलकर ऑर्डर भरें (Voice Order)">🎙️ ${t('voiceBtnLabel')}</button>
         <button type="button" class="btn btn-sm btn-ghost" data-act="hw-scale-ocr" style="padding:6px 8px;font-size:12px;height:38px;border-radius:10px;" title="Camera Scale OCR">${t('ocrBtnLabel')}</button>
         <button type="button" class="btn btn-sm btn-ghost" data-act="hw-scale-bt" style="padding:6px 8px;font-size:12px;height:38px;border-radius:10px;" title="Electronic Scale">⚖️ ${scaleConnected ? liveWt + 'k' : t('scaleBtnLabel')}</button>
         <button type="button" class="btn btn-sm btn-ghost" data-act="hw-qr-scan" style="padding:6px 8px;font-size:12px;height:38px;border-radius:10px;" title="QR / Barcode Scan">🔲 ${t('qrBtnLabel')}</button>

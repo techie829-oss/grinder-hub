@@ -77,6 +77,20 @@ export function stopVoiceRecognition() {
   isListening = false;
 }
 
+export function startQuickVoiceSearch(onText, onError, onStart) {
+  startVoiceRecognition({
+    onStart: () => {
+      if (onStart) onStart();
+    },
+    onTranscript: (transcript) => {
+      if (onText) onText(transcript);
+    },
+    onError: (err) => {
+      if (onError) onError(err);
+    }
+  });
+}
+
 // Parses voice transcript into { name, village, qty, serviceId, serviceName }
 export function parseMillVoiceCommand(rawTranscript) {
   const text = rawTranscript.toLowerCase();

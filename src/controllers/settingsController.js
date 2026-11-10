@@ -9,9 +9,20 @@ export async function saveSettings(request, env, business, range) {
   const address = clean(body.address, 160);
   const upi = clean(body.upi, 60);
   const note = clean(body.note, 120);
-  await env.DB.prepare('UPDATE businesses SET name = ?, address = ?, upi = ?, note = ? WHERE id = ?')
-    .bind(name, address, upi, note, business.id)
+  const tokenMode = body.tokenMode === 'loop100' ? 'loop100' : 'daily';
+
+  await env.DB.prepare('UPDATE businesses SET name = ?, address = ?, upi = ?, note = ?, token_mode = ? WHERE id = ?')
+    .bind(name, address, upi, note, tokenMode, business.id)
     .run();
+  return json({ ok: true, state: await buildState(env, business.id, range) });
+}
+
+export async function resetTokenCounter(request, env, business, range) {
+  const day = dayKey();
+  await env.DB.prepare(
+    `INSERT INTO day_counters (business_id, day, last_no) VALUES (?, ?, 0)
+     ON CONFLICT(business_id, day) DO UPDATE SET last_no = 0`
+  ).bind(business.id, day).run();
   return json({ ok: true, state: await buildState(env, business.id, range) });
 }
 
