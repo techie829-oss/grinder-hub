@@ -224,13 +224,13 @@ export function openStatusModal(initialTokenNo = '', initialPhone = '') {
         <input id="status-token-no" type="number" inputmode="numeric" class="input" placeholder="जैसे: 14" value="${esc(initialTokenNo)}" required style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid #cbd5e1;font-size:14px;">
       </div>
 
-      <button type="submit" class="btn btn-primary btn-block" style="padding:12px;border-radius:10px;font-weight:700;font-size:14px;margin-top:4px;">
+      <button type="submit" class="btn btn-primary btn-block" style="padding:14px;border-radius:12px;font-weight:700;font-size:15px;margin-top:6px;min-height:50px;">
         🔍 लाइव स्थिति देखें
       </button>
     </form>
 
     <!-- Results Container -->
-    <div id="status-result-box" style="margin-top:16px;"></div>
+    <div id="status-result-box" style="margin-top:16px;margin-bottom:20px;"></div>
   `);
 }
 

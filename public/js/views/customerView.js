@@ -26,7 +26,7 @@ export function viewCustomers() {
     </div>
     <div class="btn-row">
       <button class="btn btn-primary btn-sm" data-act="new-cust">${t('newCustomerBtn')}</button>
-      <button class="btn btn-ghost btn-sm" data-act="goto" data-view="job">+ ${t('navJob')}</button>
+      <button class="btn btn-ghost btn-sm hide-mobile" data-act="goto" data-view="job">+ ${t('navJob')}</button>
     </div>
   </div>
 

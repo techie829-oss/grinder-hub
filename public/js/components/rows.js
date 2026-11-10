@@ -53,7 +53,7 @@ export function queueRow(tokenRow, isServing) {
   const netTxt = netWeight > 0 ? ` · ${qtyFmt(netWeight)} ${unitOf(svc ? svc.unit : 'kg')}` : '';
 
   return `
-  <div class="row-item">
+  <div class="row-item queue-item">
     <span class="queue-no${isServing ? ' serving' : ''}">${tokenRow.no}</span>
     <span class="grow">
       <span class="row-title ellipsis">
@@ -66,13 +66,15 @@ export function queueRow(tokenRow, isServing) {
         ${lossTxt}${netTxt}
       </span>
     </span>
-    <button class="btn btn-sm btn-primary" data-act="token-to-job" data-id="${tokenRow.id}">${t('createBillShort')}</button>
-    ${isServing
-      ? `<button class="btn btn-sm btn-soft" data-act="token-done" data-id="${tokenRow.id}">${t('done')}</button>`
-      : `<button class="btn btn-sm btn-soft" data-act="token-start" data-id="${tokenRow.id}">${t('call')}</button>`}
-    <button type="button" class="icon-btn" data-act="token-notify-wa" data-id="${tokenRow.id}" title="WhatsApp 'Aata Ready' Notification">💬</button>
-    <button type="button" class="icon-btn" data-act="token-print-pos" data-id="${tokenRow.id}" title="Thermal POS Print">🖨️</button>
-    <button type="button" class="icon-btn" data-act="token-cancel" data-id="${tokenRow.id}" aria-label="Cancel">✕</button>
+    <div class="queue-actions">
+      <button class="btn btn-sm btn-primary" data-act="token-to-job" data-id="${tokenRow.id}">${t('createBillShort')}</button>
+      ${isServing
+        ? `<button class="btn btn-sm btn-soft" data-act="token-done" data-id="${tokenRow.id}">${t('done')}</button>`
+        : `<button class="btn btn-sm btn-soft" data-act="token-start" data-id="${tokenRow.id}">${t('call')}</button>`}
+      <button type="button" class="icon-btn" data-act="token-notify-wa" data-id="${tokenRow.id}" title="WhatsApp 'Aata Ready' Notification">💬</button>
+      <button type="button" class="icon-btn" data-act="token-print-pos" data-id="${tokenRow.id}" title="Thermal POS Print">🖨️</button>
+      <button type="button" class="icon-btn" data-act="token-cancel" data-id="${tokenRow.id}" aria-label="Cancel">✕</button>
+    </div>
   </div>`;
 }
 

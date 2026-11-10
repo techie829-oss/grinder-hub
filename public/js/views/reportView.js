@@ -47,6 +47,7 @@ export function viewReports() {
   <section class="card mt-14">
     <div class="section-head"><h2 class="section-title">${t('byServiceTitle')}</h2></div>
     ${stats.byService.length ? `
+      <div class="table-wrap">
       <table class="table">
         <thead>
           <tr>
@@ -73,7 +74,8 @@ export function viewReports() {
             </tr>`;
           }).join('')}
         </tbody>
-      </table>` : emptyBlock('No orders in this period', 'Select another range or create a new order.')}
+      </table>
+      </div>` : emptyBlock('No orders in this period', 'Select another range or create a new order.')}
   </section>
 
   <section class="card">
