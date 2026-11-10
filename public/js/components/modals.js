@@ -242,8 +242,8 @@ export function openStatusModal(initialTokenNo = '', initialPhone = '') {
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="font-size:24px;">🔍</span>
         <div>
-          <div class="sheet-title" style="font-size:18px;font-weight:800;color:#0f172a;">ऑर्डर व टोकन स्टेटस (Order Status)</div>
-          <div style="font-size:12px;color:#64748b;">QR कोड स्कैन करें या मोबाइल नंबर व टोकन नंबर से जाँचें</div>
+          <div class="sheet-title" style="font-size:18px;font-weight:800;color:#0f172a;">${t('orderAndTokenStatus')}</div>
+          <div style="font-size:12px;color:#64748b;">${t('statusScanReceiptPrompt')}</div>
         </div>
       </div>
       <button type="button" class="icon-btn" data-act="close-modal" aria-label="Close">✕</button>
@@ -252,14 +252,14 @@ export function openStatusModal(initialTokenNo = '', initialPhone = '') {
     <!-- Quick Camera QR Scan Button -->
     <div style="background:#f8fafc;border:1.5px dashed #cbd5e1;border-radius:14px;padding:14px;text-align:center;margin-bottom:18px;">
       <button type="button" class="btn btn-primary" data-act="status-scan-qr" style="width:100%;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px;font-weight:700;border-radius:10px;background:linear-gradient(135deg, #4338ca, #312e81);">
-        <span>📷</span> <span>रसीद / पर्ची का QR कोड स्कैन करें</span>
+        <span>📷</span> <span>${t('scanReceiptQrBtn')}</span>
       </button>
-      <div style="font-size:11.5px;color:#64748b;margin-top:6px;">कैमरा खोलकर पर्ची पर छपा QR कोड सामने लाएँ</div>
+      <div style="font-size:11.5px;color:#64748b;margin-top:6px;">${t('qrModalSub')}</div>
     </div>
 
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
       <div style="flex:1;height:1px;background:#e2e8f0;"></div>
-      <span style="font-size:12px;color:#94a3b8;font-weight:600;">या नंबर से खोजें</span>
+      <span style="font-size:12px;color:#94a3b8;font-weight:600;">${t('orSearchByNumber')}</span>
       <div style="flex:1;height:1px;background:#e2e8f0;"></div>
     </div>
 
@@ -267,20 +267,20 @@ export function openStatusModal(initialTokenNo = '', initialPhone = '') {
     <form id="status-check-form" data-act="status-check-submit" style="display:flex;flex-direction:column;gap:12px;">
       <div>
         <label for="status-phone" style="display:block;font-size:12px;font-weight:700;color:#334155;margin-bottom:4px;">
-          ग्राहक का 10-अंकों का मोबाइल नंबर ${isShopOwner ? '<span style="color:#64748b;font-weight:400;">(वैकल्पिक)</span>' : '<span style="color:#dc2626;">*</span>'}
+          ${t('customerPhoneFieldLabel')} ${isShopOwner ? '<span style="color:#64748b;font-weight:400;">(optional)</span>' : '<span style="color:#dc2626;">*</span>'}
         </label>
-        <input id="status-phone" type="tel" inputmode="numeric" maxlength="10" class="input" placeholder="जैसे: 9554880713" value="${esc(initialPhone)}" style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid #cbd5e1;font-size:14px;">
+        <input id="status-phone" type="tel" inputmode="numeric" maxlength="10" class="input" placeholder="9554880713" value="${esc(initialPhone)}" style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid #cbd5e1;font-size:14px;">
       </div>
 
       <div>
         <label for="status-token-no" style="display:block;font-size:12px;font-weight:700;color:#334155;margin-bottom:4px;">
-          टोकन नंबर <span style="color:#dc2626;">*</span>
+          ${t('tokenNoFieldLabel')} <span style="color:#dc2626;">*</span>
         </label>
-        <input id="status-token-no" type="number" inputmode="numeric" class="input" placeholder="जैसे: 14" value="${esc(initialTokenNo)}" required style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid #cbd5e1;font-size:14px;">
+        <input id="status-token-no" type="number" inputmode="numeric" class="input" placeholder="${t('tokenNoPlaceholder')}" value="${esc(initialTokenNo)}" required style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid #cbd5e1;font-size:14px;">
       </div>
 
       <button type="submit" class="btn btn-primary btn-block" style="padding:14px;border-radius:12px;font-weight:700;font-size:15px;margin-top:6px;min-height:50px;">
-        🔍 लाइव स्थिति देखें
+        ${t('checkLiveStatusBtn')}
       </button>
     </form>
 

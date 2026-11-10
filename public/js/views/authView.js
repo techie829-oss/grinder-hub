@@ -15,11 +15,11 @@ export function viewAuth() {
         ${logoMark(38)}
         <div>
           <div class="public-brand-title">${t('appName')}</div>
-          <div class="public-brand-sub">${isStatus ? 'टोकन व ऑर्डर ट्रैकर' : 'व्यापारी पोर्टल'}</div>
+          <div class="public-brand-sub">${isStatus ? t('tokenTrackerSub') : t('merchantPortalTitle')}</div>
         </div>
       </div>
       <div class="public-header-actions">
-        <a href="/tolmaal.apk" download="tolmaal.apk" class="btn btn-sm btn-apk-dl" title="TolMaal Android App (.apk) डाउनलोड करें">
+        <a href="/tolmaal.apk" download="tolmaal.apk" class="btn btn-sm btn-apk-dl" title="TolMaal Android App (.apk)">
           <span>📲</span> <span>App</span>
         </a>
         ${langSelector()}
@@ -36,34 +36,34 @@ function renderStatusView() {
   return `
   <div class="public-card">
     <div class="status-card-header">
-      <div class="status-pill">🌾 ग्राहक सेवा</div>
-      <h1 class="status-title">ऑर्डर व टोकन स्टेटस</h1>
-      <p class="status-subtitle">रसीद का QR स्कैन करें या टोकन व फोन नंबर दर्ज करें</p>
+      <div class="status-pill">${t('customerCarePill')}</div>
+      <h1 class="status-title">${t('orderAndTokenStatus')}</h1>
+      <p class="status-subtitle">${t('statusScanReceiptPrompt')}</p>
     </div>
 
     <button type="button" class="btn btn-block btn-qr-scan" data-act="status-scan-qr">
       <span class="qr-icon">📷</span>
-      <span class="qr-text">रसीद / पर्ची का QR कोड स्कैन करें</span>
+      <span class="qr-text">${t('scanReceiptQrBtn')}</span>
     </button>
 
     <div class="or-separator">
-      <span>या नंबर से खोजें</span>
+      <span>${t('orSearchByNumber')}</span>
     </div>
 
     <form id="status-check-form" data-act="status-check-submit" novalidate>
       <div class="field">
-        <label for="status-token-no">टोकन नंबर (Token No.)</label>
-        <input id="status-token-no" name="tokenNo" type="number" inputmode="numeric" placeholder="उदा. 1, 2, 14..." required autofocus>
+        <label for="status-token-no">${t('tokenNoFieldLabel')}</label>
+        <input id="status-token-no" name="tokenNo" type="number" inputmode="numeric" placeholder="${t('tokenNoPlaceholder')}" required autofocus>
       </div>
 
       <div class="field">
-        <label for="status-phone">ग्राहक का मोबाइल नंबर (10 अंक)</label>
-        <input id="status-phone" name="phone" type="tel" inputmode="numeric" maxlength="10" placeholder="10 अंकों का फोन नंबर" required>
-        <span class="hint">सुरक्षा व प्राइवेसी के लिए टोकन के साथ फोन नंबर ज़रूरी है</span>
+        <label for="status-phone">${t('customerPhoneFieldLabel')}</label>
+        <input id="status-phone" name="phone" type="tel" inputmode="numeric" maxlength="10" placeholder="${t('phonePlaceholder')}" required>
+        <span class="hint">${t('statusSecurityHint')}</span>
       </div>
 
       <button type="submit" class="btn btn-primary btn-block btn-lg" style="margin-top:10px;">
-        🔍 लाइव स्थिति देखें
+        ${t('checkLiveStatusBtn')}
       </button>
     </form>
 
@@ -72,11 +72,11 @@ function renderStatusView() {
 
   <div class="public-switch-card">
     <div class="switch-info">
-      <b>दुकानदार या व्यापारी हैं?</b>
-      <span>खाता, खरीद-बिक्री व टोकन बोर्ड खोलें</span>
+      <b>${t('areYouMerchant')}</b>
+      <span>${t('merchantPortalSub')}</span>
     </div>
     <button type="button" class="btn btn-login-switch" data-act="auth-mode" data-mode="login">
-      🔐 व्यापारी लॉगिन ➔
+      ${t('merchantLoginBtn')}
     </button>
   </div>`;
 }
@@ -86,12 +86,12 @@ function renderShopkeeperAuthView(isLogin) {
   <div class="public-card">
     <div style="margin-bottom:16px;text-align:center;">
       <button type="button" class="btn btn-sm btn-subtle" data-act="auth-mode" data-mode="status" style="display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:12.5px;padding:6px 14px;border-radius:10px;font-weight:700;border:1.5px solid #cbd5e1;cursor:pointer;background:#f8fafc;">
-        <span>←</span> <span>ग्राहक स्टेटस चेक पर वापस जाएँ</span>
+        <span>${t('backToCustomerStatus')}</span>
       </button>
     </div>
 
     <div class="status-card-header">
-      <div class="status-pill" style="background:#e0e7ff;color:#4338ca;">🏪 व्यापारी / संचालक पोर्टल</div>
+      <div class="status-pill" style="background:#e0e7ff;color:#4338ca;">${t('merchantPortalPill')}</div>
       <h1 class="status-title">${isLogin ? t('welcomeBack') : t('addShop')}</h1>
       <p class="status-subtitle">${isLogin ? t('loginSub') : t('signupSub')}</p>
     </div>

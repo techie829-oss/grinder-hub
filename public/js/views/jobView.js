@@ -20,13 +20,13 @@ export function viewJob() {
   <div class="pos-header">
     <div class="pos-tabs">
       <button type="button" class="pos-tab ${currentTab === 'grind' ? 'is-active is-grind' : ''}" data-act="switch-job-tab" data-tab="grind">
-        <span>⚙️ सुविधाएं / सेवा</span>
+        <span>${t('tabServices')}</span>
       </button>
       <button type="button" class="pos-tab ${currentTab === 'sale' ? 'is-active is-sale' : ''}" data-act="switch-job-tab" data-tab="sale">
-        <span>🛒 बिक्री</span>
+        <span>${t('tabSale')}</span>
       </button>
       <button type="button" class="pos-tab ${currentTab === 'purchase' ? 'is-active is-purchase' : ''}" data-act="switch-job-tab" data-tab="purchase">
-        <span>📥 खरीद</span>
+        <span>${t('tabPurchase')}</span>
       </button>
     </div>
   </div>
@@ -93,24 +93,24 @@ function renderGrindTab(data) {
 
     <!-- 1. Compact Service Grid -->
     <div class="pos-sec-head">
-      <span>⚙️ सुविधा व सेवा चुनें (Services)</span>
+      <span>${t('stepPickService')}</span>
     </div>
     <div class="service-grid pos-svc-grid">${serviceCards('job')}</div>
 
     <!-- 2. Customer Name & Village (2-in-1 Compact Row) -->
     <div class="pos-row-2">
       <div class="pos-field">
-        <label for="j-name">ग्राहक का नाम</label>
+        <label for="j-name">${t('customerNameLabel')}</label>
         <input id="j-name" name="name" list="cust-names" maxlength="60" value="${esc(job.name)}"
-          placeholder="ग्राहक का नाम" autocomplete="off">
+          placeholder="${t('namePlaceholder')}" autocomplete="off">
         <datalist id="cust-names">
           ${data.customers.map((c) => `<option value="${esc(c.name)}">${c.village ? esc(c.village) : ''}${c.phone ? ' · ' + c.phone : ''}</option>`).join('')}
         </datalist>
       </div>
       <div class="pos-field">
-        <label for="j-village">गाँव / स्थान</label>
+        <label for="j-village">${t('villageLocationLabel')}</label>
         <input id="j-village" name="village" list="cust-villages" maxlength="60" value="${esc(job.village || '')}"
-          placeholder="गाँव या स्थान" autocomplete="off">
+          placeholder="${t('villagePlaceholder')}" autocomplete="off">
         <datalist id="cust-villages">
           ${[...new Set(data.customers.map((c) => c.village).filter(Boolean))].map((v) => `<option value="${esc(v)}"></option>`).join('')}
         </datalist>
@@ -120,14 +120,14 @@ function renderGrindTab(data) {
     <!-- 3. Phone & Quick Hardware Scale Strip -->
     <div style="display:flex;gap:6px;align-items:flex-end;margin-bottom:8px;">
       <div class="pos-field" style="flex:1;margin-bottom:0;">
-        <label for="j-phone">मोबाइल नंबर</label>
+        <label for="j-phone">${t('phoneLabel')}</label>
         <input id="j-phone" name="phone" type="tel" inputmode="numeric" maxlength="10"
-          value="${esc(job.phone)}" placeholder="10 Digits">
+          value="${esc(job.phone)}" placeholder="${t('phonePlaceholderTen')}">
       </div>
       <div style="display:flex;gap:4px;flex-shrink:0;">
-        <button type="button" class="btn btn-sm btn-ghost" data-act="hw-scale-ocr" style="padding:6px 8px;font-size:12px;height:38px;border-radius:10px;" title="Camera Scale OCR">📷 OCR</button>
-        <button type="button" class="btn btn-sm btn-ghost" data-act="hw-scale-bt" style="padding:6px 8px;font-size:12px;height:38px;border-radius:10px;" title="Bluetooth Scale">⚖️ ${scaleConnected ? liveWt + 'k' : 'कांटा'}</button>
-        <button type="button" class="btn btn-sm btn-ghost" data-act="hw-qr-scan" style="padding:6px 8px;font-size:12px;height:38px;border-radius:10px;" title="QR Scan">🔲 QR</button>
+        <button type="button" class="btn btn-sm btn-ghost" data-act="hw-scale-ocr" style="padding:6px 8px;font-size:12px;height:38px;border-radius:10px;" title="Camera Scale OCR">${t('ocrBtnLabel')}</button>
+        <button type="button" class="btn btn-sm btn-ghost" data-act="hw-scale-bt" style="padding:6px 8px;font-size:12px;height:38px;border-radius:10px;" title="Electronic Scale">⚖️ ${scaleConnected ? liveWt + 'k' : t('scaleBtnLabel')}</button>
+        <button type="button" class="btn btn-sm btn-ghost" data-act="hw-qr-scan" style="padding:6px 8px;font-size:12px;height:38px;border-radius:10px;" title="QR / Barcode Scan">🔲 ${t('qrBtnLabel')}</button>
       </div>
     </div>
 
@@ -140,18 +140,18 @@ function renderGrindTab(data) {
     <div class="pos-billing-strip">
       <div class="pos-bill-input-group">
         <div class="pos-bill-field">
-          <label for="j-qty">आवक वजन (${unit}) * ${scaleConnected ? `<span style="color:#15803d;font-weight:700;">● ${liveWt}</span>` : ''}</label>
+          <label for="j-qty">${t('grossWeightInputLabel', { unit })} ${scaleConnected ? `<span style="color:#15803d;font-weight:700;">● ${liveWt}</span>` : ''}</label>
           <input id="j-qty" name="qty" type="number" step="any" min="0" inputmode="decimal"
             value="${job.qty}" placeholder="0.00" required>
         </div>
         <div class="pos-bill-field">
-          <label for="j-rate">दर (₹/${unit})</label>
+          <label for="j-rate">${t('rateInputLabel', { unit })}</label>
           <input id="j-rate" name="rate" type="number" step="any" min="0" inputmode="decimal"
             value="${job.rate}" placeholder="0.00" required>
         </div>
       </div>
       <div class="pos-bill-total is-grind" style="min-width:85px;">
-        <div class="pos-total-sub">हिसाब बना</div>
+        <div class="pos-total-sub">${t('billCalculated')}</div>
         <div class="pos-total-val" id="amount-preview">${inr(amountPaise)}</div>
       </div>
     </div>
@@ -159,7 +159,7 @@ function renderGrindTab(data) {
     <!-- 5. Inline Loss / Deduction Strip -->
     <div class="pos-loss-strip">
       <div class="pos-loss-left">
-        <span style="font-weight:750;color:#c2410c;">✂️ काट:</span>
+        <span style="font-weight:750;color:#c2410c;">✂️ ${t('lossRateCut')}</span>
         <input id="j-loss-rate" name="lossRateG" type="number" step="any" min="0" inputmode="numeric"
           value="${job.lossRateG !== undefined && job.lossRateG !== '' ? job.lossRateG : (svc ? svc.lossRateG || 0 : 0)}"
           class="pos-loss-input">
@@ -175,31 +175,31 @@ function renderGrindTab(data) {
       </div>
     </div>
 
-    <!-- 6. नोट / माल का विवरण (Note UP ABOVE, entered at drop-off time) -->
+    <!-- 6. नोट / माल का विवरण -->
     <div class="pos-field" style="margin:6px 0 10px;">
-      <label for="j-note" style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:3px;">📝 नोट / माल का विवरण (माल लेते समय लिखें):</label>
-      <input id="j-note" name="note" maxlength="120" value="${esc(job.note)}" placeholder="जैसे: 2 कट्टा, सूखा गेहूँ, बारीक">
+      <label for="j-note" style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:3px;">${t('noteOptionalLabel')}</label>
+      <input id="j-note" name="note" maxlength="120" value="${esc(job.note)}" placeholder="${t('noteOptionalPlaceholder')}">
     </div>
 
-    <!-- 7. Primary Action: टोकन पर्ची जारी करें (अगर ग्राहक माल छोड़ कर जा रहा है - No Payment Now) -->
+    <!-- 7. Primary Action: टोकन पर्ची जारी करें -->
     ${job.tokenNo ? '' : `
     <button type="button" class="btn btn-block btn-soft" data-act="issue-token-from-job" style="padding:12px;font-size:14px;font-weight:800;background:linear-gradient(135deg, #e0e7ff, #c7d2fe);color:#3730a3;border:1.5px solid #a5b4fc;border-radius:12px;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 2px 8px rgba(99,102,241,0.15);">
-      <span>🎫</span> <span>टोकन पर्ची जारी करें (माल जमा - भुगतान बाद में)</span>
+      <span>🎫</span> <span>${t('issueTokenWithSlipBtn')}</span>
     </button>
     `}
 
-    <!-- 8. Delivery & Payment Section (माल देते समय / Final Delivery Time) -->
+    <!-- 8. Delivery & Payment Section -->
     <div style="background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:14px;padding:12px;margin-bottom:6px;">
       <div style="font-size:12.5px;font-weight:800;color:#0f172a;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <span>💵 भुगतान व डिलीवरी (माल देते समय)</span>
-        <span style="font-size:11px;color:#64748b;">हिसाब: <strong id="j-calc-hint" style="color:#0f172a;">${inr(amountPaise)}</strong></span>
+        <span>${t('deliveryAndPaymentTitle')}</span>
+        <span style="font-size:11px;color:#64748b;">${t('deliveryAndPaymentSub')} <strong id="j-calc-hint" style="color:#0f172a;">${inr(amountPaise)}</strong></span>
       </div>
 
-      <!-- Adjustable Collected Amount Field (e.g. 32 huye to 30 le liye) -->
+      <!-- Adjustable Collected Amount Field -->
       <div style="display:flex;align-items:center;justify-content:space-between;background:#fff;border:1.5px solid #94a3b8;border-radius:10px;padding:8px 12px;margin-bottom:8px;">
         <div>
-          <div style="font-size:12px;font-weight:750;color:#334155;">वसूल की जाने वाली रकम (₹)</div>
-          <div style="font-size:10px;color:#64748b;">कम/ज्यादा होने पर यहाँ बदलें (e.g. ₹32 का ₹30)</div>
+          <div style="font-size:12px;font-weight:750;color:#334155;">${t('amountCollectedInput')}</div>
+          <div style="font-size:10px;color:#64748b;">${t('collectedAmountSub')}</div>
         </div>
         <div style="display:flex;align-items:center;gap:4px;">
           <span style="font-size:18px;font-weight:800;color:#0f172a;">₹</span>
@@ -211,7 +211,7 @@ function renderGrindTab(data) {
 
       <!-- Quick Round-off Helper Pills -->
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
-        <span style="font-size:11px;color:#64748b;font-weight:600;">राउंड-ऑफ:</span>
+        <span style="font-size:11px;color:#64748b;font-weight:600;">${t('roundOffLabel')}</span>
         <button type="button" class="btn btn-xs round-pill" data-val="${Math.floor(amountPaise/100)}" style="padding:2px 8px;font-size:11px;background:#fff;border:1px solid #cbd5e1;border-radius:6px;font-weight:700;">₹${Math.floor(amountPaise/100)}</button>
         <button type="button" class="btn btn-xs round-pill" data-val="${Math.round(amountPaise/100)}" style="padding:2px 8px;font-size:11px;background:#fff;border:1px solid #cbd5e1;border-radius:6px;font-weight:700;">₹${Math.round(amountPaise/100)}</button>
         <button type="button" class="btn btn-xs round-pill" data-val="${Math.ceil(amountPaise/100)}" style="padding:2px 8px;font-size:11px;background:#fff;border:1px solid #cbd5e1;border-radius:6px;font-weight:700;">₹${Math.ceil(amountPaise/100)}</button>
@@ -219,15 +219,15 @@ function renderGrindTab(data) {
 
       <!-- Payment Mode Toggle -->
       <div class="pos-pay-toggle" style="margin-bottom:8px;">
-        <label class="pos-pay-opt"><input type="radio" name="paid" value="yes"${job.paid ? ' checked' : ''}><span>🟢 नकद मिला (Cash)</span></label>
-        <label class="pos-pay-opt"><input type="radio" name="paid" value="no"${job.paid ? '' : ' checked'}><span>🟣 बाकी / उधार (Khata)</span></label>
+        <label class="pos-pay-opt"><input type="radio" name="paid" value="yes"${job.paid ? ' checked' : ''}><span>${t('cashPaidOption')}</span></label>
+        <label class="pos-pay-opt"><input type="radio" name="paid" value="no"${job.paid ? '' : ' checked'}><span>${t('creditDueOption')}</span></label>
       </div>
 
       <!-- Udhaar Photo Card -->
       <div id="udhaar-photo-card" style="display:${job.paid ? 'none' : 'block'};background:#fffbeb;border:1.5px solid #f59e0b;border-radius:12px;padding:10px;margin-bottom:8px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
-          <span style="font-weight:750;color:#b45309;font-size:12px;">📸 उधार खाता फोटो सत्यापन</span>
-          <span class="tiny-chip" style="background:#fef3c7;color:#92400e;font-size:10px;">सुरक्षित उधार</span>
+          <span style="font-weight:750;color:#b45309;font-size:12px;">${t('udhaarPhotoTitle')}</span>
+          <span class="tiny-chip" style="background:#fef3c7;color:#92400e;font-size:10px;">${t('udhaarPhotoSafe')}</span>
         </div>
         <div style="display:flex;align-items:center;gap:10px;">
           <div id="job-photo-preview-wrap" style="width:48px;height:48px;border-radius:50%;overflow:hidden;border:2px solid #f59e0b;background:#fff;display:grid;place-items:center;flex-shrink:0;cursor:pointer;" onclick="document.getElementById('job-photo-file').click();">
@@ -236,14 +236,14 @@ function renderGrindTab(data) {
           </div>
           <div style="flex:1;">
             <div id="job-photo-cust-name" style="font-size:12px;font-weight:750;color:#0f172a;">
-              ${matchedCustomer ? esc(matchedCustomer.name) + (matchedCustomer.village ? ` (${esc(matchedCustomer.village)})` : '') : 'ग्राहक का नाम ऊपर लिखें'}
+              ${matchedCustomer ? esc(matchedCustomer.name) + (matchedCustomer.village ? ` (${esc(matchedCustomer.village)})` : '') : t('namePlaceholder')}
             </div>
             <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
               <label class="btn btn-sm btn-primary" style="background:#d97706;padding:4px 9px;border-radius:6px;font-weight:700;cursor:pointer;font-size:11px;">
-                <span>📷</span> <span id="job-photo-btn-txt">${matchedCustomer && matchedCustomer.photo ? 'फोटो बदलें' : 'फोटो खींचें'}</span>
+                <span>📷</span> <span id="job-photo-btn-txt">${matchedCustomer && matchedCustomer.photo ? t('changePhotoBtn') : t('takePhotoBtn')}</span>
                 <input type="file" id="job-photo-file" accept="image/*" capture="user" style="display:none;">
               </label>
-              <button type="button" class="btn btn-sm btn-ghost" id="job-photo-clear" style="${matchedCustomer && matchedCustomer.photo ? 'display:inline-flex;' : 'display:none;'}color:#dc2626;font-size:11px;padding:3px 6px;">हटाएं</button>
+              <button type="button" class="btn btn-sm btn-ghost" id="job-photo-clear" style="${matchedCustomer && matchedCustomer.photo ? 'display:inline-flex;' : 'display:none;'}color:#dc2626;font-size:11px;padding:3px 6px;">${t('removePhotoBtn')}</button>
             </div>
           </div>
         </div>
@@ -251,7 +251,7 @@ function renderGrindTab(data) {
       </div>
 
       <button class="btn btn-primary btn-block pos-submit-btn" type="submit" style="padding:12px;font-weight:800;font-size:15px;border-radius:12px;">
-        ${job.tokenNo ? `✓ टोकन #${job.tokenNo} बिल पूरा करें व माल दें` : `✓ तुरंत बिल सुरक्षित करें (माल दें)`}
+        ${job.tokenNo ? t('saveTokenBillBtn', { no: job.tokenNo }) : t('saveBillAndEntryBtn')}
       </button>
     </div>
   </form>`;

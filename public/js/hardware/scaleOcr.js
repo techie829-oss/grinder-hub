@@ -33,21 +33,40 @@ export async function startScaleCamera(videoElement, canvasElement, resultElemen
     throw new Error('Camera is not supported on this device/browser');
   }
 
-  try {
-    mediaStream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: { ideal: 'environment' },
-        width: { ideal: 1280 },
-        height: { ideal: 720 },
-      },
-    });
-    videoElement.srcObject = mediaStream;
-    await videoElement.play();
+  videoElement.setAttribute('autoplay', '');
+  videoElement.setAttribute('muted', '');
+  videoElement.setAttribute('playsinline', '');
+  videoElement.muted = true;
+  videoElement.playsInline = true;
 
-    startProcessingFrames(videoElement, canvasElement, resultElement);
-  } catch (err) {
-    throw new Error('Camera access failed: ' + (err.message || 'Permission denied'));
+  const tryConstraints = [
+    { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } } },
+    { video: { facingMode: 'environment' } },
+    { video: true }
+  ];
+
+  let stream = null;
+  let lastErr = null;
+  for (const c of tryConstraints) {
+    try {
+      stream = await navigator.mediaDevices.getUserMedia(c);
+      if (stream) break;
+    } catch (e) {
+      lastErr = e;
+    }
   }
+
+  if (!stream) {
+    throw new Error('Camera access failed: ' + (lastErr?.message || 'Permission denied'));
+  }
+
+  mediaStream = stream;
+  videoElement.srcObject = mediaStream;
+  try {
+    await videoElement.play();
+  } catch (_) {}
+
+  startProcessingFrames(videoElement, canvasElement, resultElement);
 }
 
 export function stopScaleCamera() {

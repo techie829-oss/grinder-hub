@@ -18,6 +18,14 @@ export const inr = (paise, forceDecimals) => {
   return (isNeg ? '-₹' : '₹') + formatted;
 };
 
+const localeOf = () => {
+  const l = getLanguage();
+  if (l === 'en') return 'en-IN';
+  if (l === 'mr') return 'mr-IN';
+  if (l === 'gu') return 'gu-IN';
+  return 'hi-IN';
+};
+
 export const qtyFmt = (q) => decFmt.format(Number(q) || 0);
 export const unitOf = (unit) => UNIT_LABEL[unit] || 'kg';
 export const phoneFmt = (p) => (p && p.length === 10 ? `${p.slice(0, 5)} ${p.slice(5)}` : p || '');
@@ -25,15 +33,13 @@ export const phoneFmt = (p) => (p && p.length === 10 ? `${p.slice(0, 5)} ${p.sli
 export function dateTxt(ts) {
   const d = ts ? new Date(ts) : new Date();
   if (isNaN(d.getTime())) return '';
-  const lang = getLanguage() === 'en' ? 'en-IN' : 'hi-IN';
-  return d.toLocaleDateString(lang, { day: 'numeric', month: 'short' });
+  return d.toLocaleDateString(localeOf(), { day: 'numeric', month: 'short' });
 }
 
 export function timeTxt(ts) {
   const d = ts ? new Date(ts) : new Date();
   if (isNaN(d.getTime())) return '';
-  const lang = getLanguage() === 'en' ? 'en-IN' : 'hi-IN';
-  return d.toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit' });
+  return d.toLocaleTimeString(localeOf(), { hour: '2-digit', minute: '2-digit' });
 }
 
 export function relTxt(ts) {
@@ -61,8 +67,7 @@ export function rangeLabel(range) {
 }
 
 export function todayTxt() {
-  const lang = getLanguage() === 'en' ? 'en-IN' : 'hi-IN';
-  return new Date().toLocaleDateString(lang, { weekday: 'short', day: 'numeric', month: 'long' });
+  return new Date().toLocaleDateString(localeOf(), { weekday: 'short', day: 'numeric', month: 'long' });
 }
 
 export function logoMark(size) {

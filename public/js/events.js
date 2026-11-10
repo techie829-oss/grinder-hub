@@ -599,42 +599,22 @@ export function setupEventListeners() {
             if (qtyInput) qtyInput.value = state.job.qty;
             recalcJob();
           }
+          window.__appRender?.();
           toast(`Scale reading locked: ${lockedWeight} kg ✓`);
         });
         break;
       }
 
       case 'hw-scale-bt': {
-        const { connectScale, disconnectScale, isScaleConnected, subscribeWeight } = await import('./hardware/scaleBluetooth.js');
-        if (!isScaleConnected()) {
-          try {
-            const name = await connectScale();
-            toast(`Connected: ${name} ✓`);
-            if (!state.scale) state.scale = {};
-            state.scale.connected = true;
-
-            const meter = document.getElementById('scale-live-meter');
-            const valEl = document.getElementById('scale-live-val');
-            const lbl = document.getElementById('hw-bt-label');
-            if (meter) meter.style.display = 'flex';
-            if (lbl) lbl.textContent = 'Scale ON';
-
-            subscribeWeight((wt, stable) => {
-              if (state.scale) state.scale.weight = wt;
-              if (valEl) valEl.textContent = `${wt.toFixed(2)} kg`;
-            });
-          } catch (err) {
-            toast(`Scale error: ${err.message}`);
-          }
-        } else {
-          await disconnectScale();
-          if (state.scale) state.scale.connected = false;
-          const meter = document.getElementById('scale-live-meter');
-          const lbl = document.getElementById('hw-bt-label');
-          if (meter) meter.style.display = 'none';
-          if (lbl) lbl.textContent = 'Scale BT';
-          toast('Scale disconnected');
-        }
+        const { openScaleConnectModal } = await import('./hardware/hardwareModal.js');
+        openScaleConnectModal((lockedWeight) => {
+          state.job.qty = String(lockedWeight);
+          const qtyInput = document.getElementById('j-qty');
+          if (qtyInput) qtyInput.value = state.job.qty;
+          recalcJob();
+          window.__appRender?.();
+          toast(`Scale reading locked: ${lockedWeight} kg ✓`);
+        });
         break;
       }
 
@@ -674,21 +654,35 @@ export function setupEventListeners() {
         break;
       }
 
+      case 'hw-qr-scan':
       case 'hw-scan-qr': {
         const { openQrScannerModal } = await import('./hardware/hardwareModal.js');
-        openQrScannerModal((parsed) => {
-          if (parsed.type === 'token') {
-            const tok = state.data.tokens.serving?.no === parsed.tokenNo
+        openQrScannerModal((parsed, rawVal) => {
+          let tokenNo = parsed.tokenNo || null;
+          let phone = '';
+
+          const phoneMatch = String(rawVal).match(/(?:\+91|0)?([6-9]\d{9})/);
+          if (phoneMatch) phone = phoneMatch[1];
+          if (!tokenNo) {
+            const match = String(rawVal).match(/(?:token[:#\s]*|#\s*)(\d+)/i);
+            if (match) tokenNo = parseInt(match[1], 10);
+          }
+
+          if (parsed.type === 'token' || tokenNo) {
+            const tNo = tokenNo || parsed.tokenNo;
+            const tok = state.data?.tokens?.serving?.no === tNo
               ? state.data.tokens.serving
-              : state.data.tokens.waiting.find((t) => t.no === parsed.tokenNo);
+              : (state.data?.tokens?.waiting?.find((t) => t.no === tNo) ||
+                 (state.data?.tokens?.doneList || []).find((t) => t.no === tNo));
             if (tok) {
               state.job.tokenId = tok.id;
               state.job.tokenNo = tok.no;
               state.job.name = tok.name;
               state.job.village = tok.village || '';
+              if (tok.phone) state.job.phone = tok.phone;
               if (tok.serviceId) {
                 state.job.serviceId = tok.serviceId;
-                const svc = state.data.services.find((s) => s.id === tok.serviceId);
+                const svc = state.data?.services?.find((s) => s.id === tok.serviceId);
                 if (svc) {
                   state.job.rate = String(svc.ratePaise / 100);
                   state.job.lossRateG = String(svc.lossRateG || 0);
@@ -696,17 +690,28 @@ export function setupEventListeners() {
               }
               if (tok.grossWeight) state.job.qty = String(tok.grossWeight);
               goTo('job');
-              toast(`Loaded Token #${parsed.tokenNo} ✓`);
+              toast(`Loaded Token #${tNo} ✓`);
             } else {
-              toast(`Token #${parsed.tokenNo} not in active queue`);
+              if (tNo) state.job.tokenNo = tNo;
+              if (phone) state.job.phone = phone;
+              goTo('job');
+              toast(`Token #${tNo} scanned ✓`);
             }
-          } else if (parsed.type === 'customer') {
-            state.job.name = parsed.name;
-            state.job.village = parsed.village;
+          } else if (parsed.type === 'customer' || phone) {
+            if (phone) {
+              state.job.phone = phone;
+              const matched = state.data?.customers?.find((c) => c.phone === phone);
+              if (matched) {
+                state.job.name = matched.name;
+                state.job.village = matched.village || '';
+              }
+            }
+            if (parsed.name) state.job.name = parsed.name;
+            if (parsed.village) state.job.village = parsed.village;
             goTo('job');
-            toast(`Customer: ${parsed.name} (${parsed.village})`);
+            toast(`Customer: ${state.job.name || phone || 'Scanned'} ✓`);
           } else {
-            toast(`Scanned: ${parsed.value}`);
+            toast(`Scanned: ${rawVal}`);
           }
         });
         break;

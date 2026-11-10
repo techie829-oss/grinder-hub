@@ -1,5 +1,6 @@
 // Camera QR / Barcode Scanner for Token Slips and Customer Cards
 // Uses native BarcodeDetector API with lightweight Canvas fallback
+import '../vendor/jsqr.min.js';
 
 let mediaStream = null;
 let animationId = null;
@@ -40,21 +41,40 @@ export async function startQrScanner(videoElement, canvasElement, onScan) {
     throw new Error('Camera is not supported on this device/browser');
   }
 
-  try {
-    mediaStream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: { ideal: 'environment' },
-        width: { ideal: 1280 },
-        height: { ideal: 720 },
-      },
-    });
-    videoElement.srcObject = mediaStream;
-    await videoElement.play();
+  videoElement.setAttribute('autoplay', '');
+  videoElement.setAttribute('muted', '');
+  videoElement.setAttribute('playsinline', '');
+  videoElement.muted = true;
+  videoElement.playsInline = true;
 
-    startScanning(videoElement, canvasElement, onScan);
-  } catch (err) {
-    throw new Error('Camera permission denied or camera unavailable: ' + err.message);
+  const tryConstraints = [
+    { video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } } },
+    { video: { facingMode: 'environment' } },
+    { video: true }
+  ];
+
+  let stream = null;
+  let lastErr = null;
+  for (const c of tryConstraints) {
+    try {
+      stream = await navigator.mediaDevices.getUserMedia(c);
+      if (stream) break;
+    } catch (e) {
+      lastErr = e;
+    }
   }
+
+  if (!stream) {
+    throw new Error('Camera access failed: ' + (lastErr?.message || 'Permission denied'));
+  }
+
+  mediaStream = stream;
+  videoElement.srcObject = mediaStream;
+  try {
+    await videoElement.play();
+  } catch (_) {}
+
+  startScanning(videoElement, canvasElement, onScan);
 }
 
 export function stopQrScanner() {
@@ -95,14 +115,32 @@ function startScanning(video, canvas, onScan) {
                 return;
               }
             }
-          } else if (canvas && ctx) {
-            // Fallback: draw center box to canvas
-            canvas.width = 300;
-            canvas.height = 300;
-            const srcSize = Math.min(video.videoWidth, video.videoHeight) * 0.7;
-            const sx = (video.videoWidth - srcSize) / 2;
-            const sy = (video.videoHeight - srcSize) / 2;
-            ctx.drawImage(video, sx, sy, srcSize, srcSize, 0, 0, 300, 300);
+          }
+          
+          if (canvas && ctx) {
+            const scanW = 320;
+            const scanH = 320;
+            if (canvas.width !== scanW) {
+              canvas.width = scanW;
+              canvas.height = scanH;
+            }
+            const minDim = Math.min(video.videoWidth, video.videoHeight);
+            const sx = (video.videoWidth - minDim) / 2;
+            const sy = (video.videoHeight - minDim) / 2;
+            ctx.drawImage(video, sx, sy, minDim, minDim, 0, 0, scanW, scanH);
+
+            const qrDecoder = (typeof window !== 'undefined' && window.jsQR) || (typeof self !== 'undefined' && self.jsQR);
+            if (qrDecoder) {
+              const imgData = ctx.getImageData(0, 0, scanW, scanH);
+              const qrResult = qrDecoder(imgData.data, scanW, scanH, { inversionAttempts: 'attemptBoth' });
+              if (qrResult && qrResult.data) {
+                isScanning = false;
+                playBeep(1200, 0.15);
+                stopQrScanner();
+                onScan(qrResult.data);
+                return;
+              }
+            }
           }
         } catch (_) {}
       }

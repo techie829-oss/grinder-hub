@@ -22,31 +22,31 @@ export function viewCustomers() {
   <div class="page-head" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;">
     <div>
       <h1 class="page-title" style="display:flex;align-items:center;gap:8px;">
-        <span>📖</span> <span>ग्राहक फोन बुक (Contacts)</span>
+        <span>📖</span> <span>${t('customerPhonebookTitle')}</span>
       </h1>
-      <p class="page-sub">${d.customers.length} ग्राहक संपर्क दर्ज · कुल बाकी: <strong>${inr(d.stats.outstandingPaise)}</strong></p>
+      <p class="page-sub">${d.customers.length} · <strong>${inr(d.stats.outstandingPaise)}</strong></p>
     </div>
     <div class="btn-row">
       <button class="btn btn-primary btn-sm" data-act="new-cust" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;font-weight:700;">
-        <span>👤+</span> <span>नया ग्राहक जोड़ें</span>
+        <span>👤+</span> <span>${t('addNewCustomerBtn')}</span>
       </button>
       <button class="btn btn-ghost btn-sm hide-mobile" data-act="goto" data-view="job">+ ${t('navJob')}</button>
     </div>
   </div>
 
   <div class="card" style="padding:16px;">
-    <input id="cust-search" class="input" placeholder="🔍 नाम, गाँव या 10-अंकों के फोन से खोजें…" value="${esc(state.q)}"
+    <input id="cust-search" class="input" placeholder="${t('searchCustomerPlaceholder')}" value="${esc(state.q)}"
       autocomplete="off" aria-label="ग्राहक खोजें" style="padding:12px 14px;border-radius:12px;font-size:14px;border:1.5px solid #cbd5e1;">
     <div class="filter-chips">
       <button type="button" class="chip${cf === 'all' ? ' is-on' : ''}" data-act="cust-filter" data-val="all">${t('filterAll')} (${d.customers.length})</button>
-      <button type="button" class="chip${cf === 'due' ? ' is-on' : ''}" data-act="cust-filter" data-val="due">बाकी (उधार)</button>
-      <button type="button" class="chip${cf === 'adv' ? ' is-on' : ''}" data-act="cust-filter" data-val="adv">जमा (अग्रिम)</button>
-      <button type="button" class="chip${cf === 'zero' ? ' is-on' : ''}" data-act="cust-filter" data-val="zero">हिसाब बराबर</button>
+      <button type="button" class="chip${cf === 'due' ? ' is-on' : ''}" data-act="cust-filter" data-val="due">${t('dueKhataFilter')}</button>
+      <button type="button" class="chip${cf === 'adv' ? ' is-on' : ''}" data-act="cust-filter" data-val="adv">${t('advKhataFilter')}</button>
+      <button type="button" class="chip${cf === 'zero' ? ' is-on' : ''}" data-act="cust-filter" data-val="zero">${t('zeroKhataFilter')}</button>
     </div>
     <div id="cust-list" class="row-list mt-8">${customerRows(filteredCustomers())}</div>
   </div>
   <p class="tiny mt-8" style="color:#64748b;font-size:12px;display:flex;align-items:center;gap:6px;">
-    <span>💡</span> <span>गाँव में एक नाम के कई ग्राहक होते हैं - फोटो व गाँव देखकर खाता खोलें ताकि कोई गड़बड़ न हो।</span>
+    <span>💡</span> <span>${t('customerTipNote')}</span>
   </p>`;
 }
 
