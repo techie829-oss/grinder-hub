@@ -84,8 +84,8 @@ function renderStatusView() {
 function renderShopkeeperAuthView(isLogin) {
   return `
   <div class="public-card">
-    <div style="margin-bottom:14px;">
-      <button type="button" class="btn btn-sm btn-subtle" data-act="auth-mode" data-mode="status" style="display:inline-flex;align-items:center;gap:6px;font-size:12.5px;padding:6px 12px;border-radius:10px;font-weight:700;border:1.5px solid #cbd5e1;cursor:pointer;">
+    <div style="margin-bottom:16px;text-align:center;">
+      <button type="button" class="btn btn-sm btn-subtle" data-act="auth-mode" data-mode="status" style="display:inline-flex;align-items:center;justify-content:center;gap:6px;font-size:12.5px;padding:6px 14px;border-radius:10px;font-weight:700;border:1.5px solid #cbd5e1;cursor:pointer;background:#f8fafc;">
         <span>←</span> <span>ग्राहक स्टेटस चेक पर वापस जाएँ</span>
       </button>
     </div>
