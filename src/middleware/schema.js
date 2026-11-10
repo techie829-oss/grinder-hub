@@ -35,10 +35,16 @@ export async function ensureSchema(env) {
         default_rate_paise INTEGER NOT NULL DEFAULT 0,
         active             INTEGER NOT NULL DEFAULT 1,
         created_at         INTEGER NOT NULL
-      );
-      CREATE INDEX IF NOT EXISTS products_biz ON products(business_id);
+      )
     `);
-  } catch (e) {}
+  } catch (e) {
+    console.error('ensureSchema products table error:', e);
+  }
+  try {
+    await env.DB.exec('CREATE INDEX IF NOT EXISTS products_biz ON products(business_id)');
+  } catch (e) {
+    console.error('ensureSchema products_biz index error:', e);
+  }
 
   // Services: loss_rate_g (deduction per unit in grams)
   try {
