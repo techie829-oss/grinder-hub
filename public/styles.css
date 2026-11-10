@@ -906,41 +906,161 @@ button.row-item:hover { background: #fafaff; }
 @media (max-width: 900px) {
   .shell { grid-template-columns: minmax(0, 1fr); }
   .side { display: none; }
-  .topbar { padding: 13px 16px; }
-  .topbar .pill-date { display: none; }
-  .page { padding: 18px 16px 100px; }
+  .hide-mobile { display: none !important; }
+
+  .topbar {
+    padding: 10px 14px;
+    gap: 8px;
+    justify-content: space-between;
+  }
+  .topbar-info {
+    max-width: 140px;
+    overflow: hidden;
+  }
+  .topbar-title {
+    font-size: 15px;
+    font-weight: 800;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .topbar-sub {
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .topbar .lang-select {
+    padding: 4px 8px !important;
+    font-size: 11.5px !important;
+  }
+  .topbar .btn-topbar-status {
+    padding: 5px 9px !important;
+    font-size: 12px !important;
+  }
+
+  .page { padding: 16px 14px 105px !important; }
   .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .kpi-value { font-size: 21px; }
-  .token-no { font-size: 50px; }
-  .token-card { padding: 18px; }
+  .token-no { font-size: 46px; }
+  .token-card { padding: 16px; }
 
+  /* Premium Native Bottom Navigation Bar */
   .tabbar {
     position: fixed;
     left: 0; right: 0; bottom: 0;
-    z-index: 40;
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    padding: 5px 4px calc(5px + env(safe-area-inset-bottom));
-    background: rgba(255, 255, 255, .95);
-    backdrop-filter: blur(12px);
-    border-top: 1px solid var(--line);
+    z-index: 100;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    height: calc(62px + env(safe-area-inset-bottom, 0px));
+    padding: 4px 6px env(safe-area-inset-bottom, 0px);
+    background: #ffffff;
+    border-top: 1.5px solid #e2e8f0;
+    box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.08);
   }
-  .tabbar button {
-    border: 0;
+  .tabbar .tab-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    border: none;
     background: transparent;
-    display: grid;
-    justify-items: center;
-    gap: 3px;
-    padding: 7px 2px;
-    border-radius: 12px;
-    font-size: 10px;
-    font-weight: 650;
-    color: #767a8f;
+    color: #64748b;
+    padding: 4px 0;
     cursor: pointer;
+    position: relative;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
   }
-  .tabbar button.is-on { color: var(--brand); }
-  .tabbar svg { width: 21px; height: 21px; }
-  .toast { bottom: 96px; }
+  .tabbar .tab-btn .tab-icon-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .tabbar .tab-btn svg {
+    width: 22px;
+    height: 22px;
+    stroke: #64748b;
+    stroke-width: 2.1;
+    transition: transform 0.15s ease, stroke 0.15s ease;
+  }
+  .tabbar .tab-btn .tab-label {
+    font-size: 11px;
+    font-weight: 700;
+    margin-top: 2px;
+    line-height: 1.2;
+    white-space: nowrap;
+    color: #64748b;
+  }
+  .tabbar .tab-btn.is-on {
+    color: #4f46e5;
+  }
+  .tabbar .tab-btn.is-on svg {
+    stroke: #4f46e5;
+    transform: scale(1.08);
+  }
+  .tabbar .tab-btn.is-on .tab-label {
+    color: #4f46e5;
+  }
+
+  .tabbar .tab-badge {
+    position: absolute;
+    top: -4px;
+    right: -8px;
+    background: #ef4444;
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 800;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 999px;
+    padding: 0 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #ffffff;
+  }
+
+  /* Center Elevated Hero Action Button (+ नया काम) */
+  .tabbar .tab-hero {
+    position: relative;
+  }
+  .tabbar .tab-hero .hero-circle {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4f46e5, #3730a3);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 14px rgba(79, 70, 229, 0.4);
+    margin-top: -16px;
+    border: 3px solid #ffffff;
+    transition: transform 0.15s ease;
+  }
+  .tabbar .tab-hero:active .hero-circle {
+    transform: scale(0.92);
+  }
+  .tabbar .tab-hero .hero-circle svg {
+    width: 24px;
+    height: 24px;
+    stroke: #ffffff;
+    stroke-width: 2.4;
+  }
+  .tabbar .tab-hero .tab-label {
+    font-size: 10.5px;
+    font-weight: 800;
+    color: #4f46e5;
+    margin-top: 1px;
+  }
+
+  .toast { bottom: 85px; }
 }
 
 

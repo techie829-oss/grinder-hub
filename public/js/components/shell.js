@@ -11,13 +11,37 @@ export function langSelector() {
 }
 
 export function tabbar() {
-  const items = NAV.filter((n) => n.id !== 'settings');
+  const d = state.data;
+  const waiting = (d && d.tokens && d.tokens.waiting) ? d.tokens.waiting.length : 0;
+
+  const mobileNav = [
+    { id: 'dashboard', labelKey: 'navHome', icon: 'home' },
+    { id: 'token', labelKey: 'navToken', icon: 'ticket', badge: waiting },
+    { id: 'job', labelKey: 'navJob', icon: 'plus', isHero: true },
+    { id: 'customers', labelKey: 'navCustomers', icon: 'users' },
+    { id: 'settings', labelKey: 'navSettings', icon: 'sliders' },
+  ];
+
   return `
-  <nav class="tabbar">
-    ${items.map((n) => `
-      <button type="button" data-act="goto" data-view="${n.id}" class="${state.view === n.id ? 'is-on' : ''}">
-        ${ICONS[n.icon]}<span>${t(n.labelKey)}</span>
-      </button>`).join('')}
+  <nav class="tabbar" role="navigation" aria-label="मुख्य नेविगेशन">
+    ${mobileNav.map((n) => {
+      const isOn = state.view === n.id;
+      if (n.isHero) {
+        return `
+        <button type="button" data-act="goto" data-view="${n.id}" class="tab-btn tab-hero${isOn ? ' is-on' : ''}" aria-label="${t(n.labelKey)}">
+          <div class="hero-circle">${ICONS[n.icon]}</div>
+          <span class="tab-label">${t(n.labelKey)}</span>
+        </button>`;
+      }
+      return `
+      <button type="button" data-act="goto" data-view="${n.id}" class="tab-btn${isOn ? ' is-on' : ''}" aria-label="${t(n.labelKey)}">
+        <div class="tab-icon-wrap">
+          ${ICONS[n.icon]}
+          ${n.badge ? `<span class="tab-badge">${n.badge}</span>` : ''}
+        </div>
+        <span class="tab-label">${t(n.labelKey)}</span>
+      </button>`;
+    }).join('')}
   </nav>`;
 }
 
@@ -27,21 +51,21 @@ export function topbar() {
   return `
   <header class="topbar">
     <div class="mobile-brand">${logoMark(34)}</div>
-    <div>
+    <div class="topbar-info">
       <div class="topbar-title">${t(titleKey)}</div>
       <div class="topbar-sub">${esc(d.business.name)}</div>
     </div>
     <div class="topbar-spacer"></div>
-    <button type="button" id="sync-indicator" class="sync-badge" data-act="trigger-sync" title="Sync Status" style="margin-right:6px;border:none;background:none;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;gap:4px"></button>
-    <button type="button" class="btn btn-sm btn-subtle" data-act="open-status-modal" title="टोकन व पिसाई स्टेटस देखें" style="border:1.5px solid #cbd5e1;padding:6px 12px;border-radius:10px;font-weight:700;display:inline-flex;align-items:center;gap:4px;font-size:12px;margin-right:4px;">
-      <span>🔍</span> <span>स्टेटस</span>
+    <button type="button" id="sync-indicator" class="sync-badge" data-act="trigger-sync" title="Sync Status" style="margin-right:4px;border:none;background:none;cursor:pointer;font-size:12px;display:inline-flex;align-items:center;gap:4px"></button>
+    <button type="button" class="btn btn-sm btn-subtle btn-topbar-status" data-act="open-status-modal" title="टोकन व पिसाई स्टेटस देखें" style="border:1.5px solid #cbd5e1;padding:5px 10px;border-radius:10px;font-weight:700;display:inline-flex;align-items:center;gap:4px;font-size:12px;margin-right:4px;background:#fff;">
+      <span>🔍</span> <span class="hide-mobile">स्टेटस</span>
     </button>
-    <a href="/chakkibook.apk" download="chakkibook.apk" class="btn btn-sm btn-apk-dl" title="Android ऐप डाउनलोड करें" style="background:linear-gradient(135deg, #10b981, #059669);color:#fff;font-weight:700;display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:10px;text-decoration:none;box-shadow:0 2px 8px rgba(16,185,129,0.25);font-size:12px;white-space:nowrap;margin-right:6px;">
+    <a href="/chakkibook.apk" download="chakkibook.apk" class="btn btn-sm btn-apk-dl hide-mobile" title="Android ऐप डाउनलोड करें" style="background:linear-gradient(135deg, #10b981, #059669);color:#fff;font-weight:700;display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:10px;text-decoration:none;box-shadow:0 2px 8px rgba(16,185,129,0.25);font-size:12px;white-space:nowrap;margin-right:6px;">
       <span>📥</span> <span>APK डाउनलोड</span>
     </a>
-    <span class="pill-date">${todayTxt()}</span>
-    ${langSelector()}
-    <div class="topbar-cta">
+    <span class="pill-date hide-mobile">${todayTxt()}</span>
+    <div class="topbar-lang">${langSelector()}</div>
+    <div class="topbar-cta hide-mobile">
       <button class="btn btn-primary btn-sm" data-act="goto" data-view="job">+ ${t('navJob')}</button>
       <button class="icon-btn" data-act="goto" data-view="settings" aria-label="${t('navSettings')}">${ICONS.sliders}</button>
     </div>
