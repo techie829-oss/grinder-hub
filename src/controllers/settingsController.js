@@ -10,9 +10,11 @@ export async function saveSettings(request, env, business, range) {
   const upi = clean(body.upi, 60);
   const note = clean(body.note, 120);
   const tokenMode = body.tokenMode === 'loop100' ? 'loop100' : 'daily';
+  const hideLossOnSlip = body.hideLossOnSlip === false || body.hideLossOnSlip === '0' || body.hideLossOnSlip === 0 ? 0 : 1;
+  const chargeBasis = body.chargeBasis === 'gross' ? 'gross' : 'output';
 
-  await env.DB.prepare('UPDATE businesses SET name = ?, address = ?, upi = ?, note = ?, token_mode = ? WHERE id = ?')
-    .bind(name, address, upi, note, tokenMode, business.id)
+  await env.DB.prepare('UPDATE businesses SET name = ?, address = ?, upi = ?, note = ?, token_mode = ?, hide_loss_on_slip = ?, charge_basis = ? WHERE id = ?')
+    .bind(name, address, upi, note, tokenMode, hideLossOnSlip, chargeBasis, business.id)
     .run();
   return json({ ok: true, state: await buildState(env, business.id, range) });
 }

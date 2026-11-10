@@ -597,13 +597,15 @@ export function openProductModal(productId = null, defaultType = 'both') {
 
 export function openTokenReceiptModal(tok) {
   const biz = state.data?.business || { name: 'तौल-माल' };
+  const hideLoss = (tok.hideLoss != null) ? Boolean(tok.hideLoss) : Boolean(biz.hideLossOnSlip != null ? biz.hideLossOnSlip : 1);
   const svc = tok.serviceId ? state.data?.services?.find((s) => s.id === tok.serviceId) : null;
   const svcName = svc ? svc.name : (tok.serviceName || 'सुविधा / सेवा');
   const unit = svc ? unitOf(svc.unit) : 'kg';
   const gross = tok.grossWeight || 0;
   const lossG = tok.lossG || 0;
   const net = tok.netWeight || gross;
-  const estAmountPaise = (gross && svc) ? Math.round(gross * svc.ratePaise) : 0;
+  const billWeight = (biz.chargeBasis === 'gross') ? gross : net;
+  const estAmountPaise = (billWeight && svc) ? Math.round(billWeight * svc.ratePaise) : 0;
 
   showModal(`
     <div class="sheet-head" style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e2e8f0;padding-bottom:12px;margin-bottom:16px;">
@@ -634,6 +636,19 @@ export function openTokenReceiptModal(tok) {
         <span style="font-weight:750;color:#0f172a;">${esc(svcName)}</span>
       </div>
 
+      ${hideLoss ? `
+      <div style="display:flex;justify-content:space-between;align-items:center;background:#fff;border:1.5px solid #cbd5e1;border-radius:10px;padding:10px 14px;">
+        <div>
+          <div style="font-size:11px;color:#64748b;font-weight:700;">वजन / मात्रा</div>
+          <div style="font-size:18px;font-weight:900;color:#0f172a;margin-top:2px;">${gross ? qtyFmt(gross) + ' ' + unit : '—'}</div>
+        </div>
+        ${estAmountPaise > 0 ? `
+        <div style="text-align:right;">
+          <div style="font-size:11px;color:#64748b;font-weight:700;">अनुमानित पिसाई शुल्क</div>
+          <div style="font-size:18px;font-weight:900;color:#15803d;margin-top:2px;">${inr(estAmountPaise)}</div>
+        </div>` : ''}
+      </div>
+      ` : `
       <div style="display:grid;grid-template-columns:1fr 1fr 1.2fr;gap:8px;text-align:center;">
         <div style="background:#fff;border:1px solid #cbd5e1;border-radius:8px;padding:8px 4px;">
           <div style="font-size:11px;color:#64748b;font-weight:700;">आवक वजन</div>
@@ -648,6 +663,8 @@ export function openTokenReceiptModal(tok) {
           <div style="font-size:16px;font-weight:900;color:#15803d;margin-top:2px;">${net ? qtyFmt(net) + ' ' + unit : '—'}</div>
         </div>
       </div>
+      `}
+    </div>
 
       ${estAmountPaise > 0 ? `
         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:8px;border-top:1px dashed #cbd5e1;font-size:13px;">

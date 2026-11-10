@@ -51,7 +51,10 @@ function renderGrindTab(data) {
 
   const totalLossG = svc && svc.unit === 'kg' ? Math.round(grossWeight * lossRatePerKg) : 0;
   const netWeight = svc && svc.unit === 'kg' ? Math.max(0, grossWeight - (totalLossG / 1000)) : grossWeight;
-  const amountPaise = Math.round(grossWeight * ratePerUnit * 100);
+
+  const chargeBasis = job.chargeBasis || data.business.chargeBasis || 'output';
+  const billWeight = chargeBasis === 'gross' ? grossWeight : netWeight;
+  const amountPaise = Math.round(billWeight * ratePerUnit * 100);
 
   const matchedCustomer = data.customers.find((c) => {
     if (!job.name) return false;
@@ -178,6 +181,24 @@ function renderGrindTab(data) {
         → <strong id="net-qty-preview" style="color:#16a34a;">${netWeight ? netWeight.toFixed(3) + ' ' + unit : '0 ' + unit}</strong>
       </div>
     </div>
+
+    <!-- 5b. Service Billing Calculation Basis & Privacy Strip -->
+    <div style="background:#f1f5f9;border:1.5px solid #cbd5e1;border-radius:12px;padding:8px 10px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+      <div style="font-size:12px;font-weight:750;color:#334155;">
+        ${chargeBasis === 'gross' ? 'आवक कुल वजन पर' : 'तैयार माल (Output) पर'}:
+        <strong style="color:#0f172a;font-size:13px;">${qtyFmt(billWeight)} ${unit} × ₹${ratePerUnit} = ${inr(amountPaise)}</strong>
+      </div>
+      <div style="display:flex;align-items:center;gap:4px;">
+        <button type="button" class="btn btn-xs ${chargeBasis === 'output' ? 'btn-primary' : 'btn-subtle'}" data-act="set-charge-basis" data-basis="output" style="padding:3px 9px;font-size:11px;font-weight:750;border-radius:7px;">
+          तैयार माल पर ✓
+        </button>
+        <button type="button" class="btn btn-xs ${chargeBasis === 'gross' ? 'btn-primary' : 'btn-subtle'}" data-act="set-charge-basis" data-basis="gross" style="padding:3px 9px;font-size:11px;font-weight:750;border-radius:7px;">
+          कुल वजन पर
+        </button>
+      </div>
+    </div>
+    <input type="hidden" name="chargeBasis" value="${chargeBasis}">
+    <input type="hidden" name="hideLoss" value="${data.business.hideLossOnSlip !== false ? '1' : '0'}">
 
     <!-- 6. नोट / माल का विवरण -->
     <div class="pos-field" style="margin:6px 0 10px;">

@@ -18,18 +18,6 @@ export async function createJob(request, env, business, range) {
   if (!Number.isFinite(grossWeight) || grossWeight <= 0) return bad('वज़न या मात्रा भरें');
   if (grossWeight > 100000) return bad('मात्रा बहुत ज़्यादा है');
 
-  let ratePaise = Math.round(Number(body.rate) * 100);
-  if (!Number.isFinite(ratePaise) || ratePaise < 0) ratePaise = svc.rate_paise;
-  let amountPaise = 0;
-  if (body.amount != null && Number(body.amount) > 0) {
-    amountPaise = Math.round(Number(body.amount) * 100);
-  } else if (body.amountPaise != null && Number(body.amountPaise) > 0) {
-    amountPaise = Math.round(Number(body.amountPaise));
-  } else {
-    amountPaise = Math.round(grossWeight * ratePaise);
-  }
-  if (!(amountPaise > 0)) return bad('रकम सही नहीं है');
-
   // Loss / wastage deduction calculation
   const lossRateG = body.lossRateG !== undefined ? Number(body.lossRateG) : Number(svc.loss_rate_g || 0);
   const totalLossG = body.totalLossG !== undefined
@@ -38,6 +26,23 @@ export async function createJob(request, env, business, range) {
   const netWeight = body.netWeight !== undefined
     ? Number(body.netWeight)
     : (svc.unit === 'kg' ? Math.max(0, grossWeight - (totalLossG / 1000)) : grossWeight);
+
+  let ratePaise = Math.round(Number(body.rate) * 100);
+  if (!Number.isFinite(ratePaise) || ratePaise < 0) ratePaise = svc.rate_paise;
+
+  // Charge basis: 'output' (netWeight / तैयार माल) vs 'gross' (grossWeight / कुल आवक)
+  const chargeBasis = body.chargeBasis || business.charge_basis || 'output';
+  const billWeight = chargeBasis === 'gross' ? grossWeight : netWeight;
+
+  let amountPaise = 0;
+  if (body.amount != null && Number(body.amount) > 0) {
+    amountPaise = Math.round(Number(body.amount) * 100);
+  } else if (body.amountPaise != null && Number(body.amountPaise) > 0) {
+    amountPaise = Math.round(Number(body.amountPaise));
+  } else {
+    amountPaise = Math.round(billWeight * ratePaise);
+  }
+  if (!(amountPaise > 0)) return bad('रकम सही नहीं है');
 
   const paid = body.paid ? 1 : 0;
   const name = clean(body.name, 60);

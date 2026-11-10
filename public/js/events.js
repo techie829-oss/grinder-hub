@@ -387,6 +387,11 @@ export function setupEventListeners() {
         window.__appRender?.();
         break;
 
+      case 'set-charge-basis':
+        state.job.chargeBasis = el.dataset.basis;
+        window.__appRender?.();
+        break;
+
       case 'issue-token-from-job': {
         const qtyVal = parseFloat(document.getElementById('j-qty')?.value) || parseFloat(state.job.qty) || 0;
         if (!(qtyVal > 0)) {
@@ -402,6 +407,8 @@ export function setupEventListeners() {
         const totalLossG = Math.round(qtyVal * lossRateG);
         const netWeight = Math.max(0, qtyVal - (totalLossG / 1000));
         const note = String(document.getElementById('j-note')?.value || state.job.note || '').trim();
+        const hideLoss = Boolean(state.data?.business?.hideLossOnSlip !== false);
+        const chargeBasis = state.job.chargeBasis || state.data?.business?.chargeBasis || 'output';
 
         const payload = {
           serviceId: state.job.serviceId,
@@ -412,6 +419,8 @@ export function setupEventListeners() {
           lossRateG,
           totalLossG,
           netWeight,
+          chargeBasis,
+          hideLoss,
           note,
         };
 
@@ -428,6 +437,15 @@ export function setupEventListeners() {
               name: name || 'Customer',
               village: village || '',
               phone: phone || '',
+              serviceId: payload.serviceId,
+              grossWeight: qtyVal,
+              lossG: totalLossG,
+              netWeight: netWeight,
+              hideLoss,
+              note,
+              status: 'waiting',
+              at: Date.now(),
+            };
               serviceId: payload.serviceId,
               grossWeight: qtyVal,
               lossG: totalLossG,
@@ -1650,10 +1668,13 @@ export function setupEventListeners() {
       const lossRateG = Number(fd.get('lossRateG') || 0);
       const totalLossG = Math.round(grossWeight * lossRateG);
       const netWeight = Math.max(0, grossWeight - (totalLossG / 1000));
-      const calcPaise = Math.round(grossWeight * rate * 100);
+      const chargeBasis = fd.get('chargeBasis') || state.job.chargeBasis || state.data?.business?.chargeBasis || 'output';
+      const billWeight = chargeBasis === 'gross' ? grossWeight : netWeight;
+      const calcPaise = Math.round(billWeight * rate * 100);
       const rawAmt = fd.get('amount');
       const customAmt = rawAmt !== null && rawAmt !== '' ? Number(rawAmt) : NaN;
       const amountPaise = !isNaN(customAmt) && customAmt >= 0 ? Math.round(customAmt * 100) : calcPaise;
+      const hideLoss = fd.get('hideLoss') === '1' || Boolean(state.data?.business?.hideLossOnSlip !== false);
 
       const jobPayload = {
         serviceId: state.job.serviceId,
@@ -1662,6 +1683,8 @@ export function setupEventListeners() {
         lossRateG,
         totalLossG,
         netWeight,
+        chargeBasis,
+        hideLoss,
         amount: !isNaN(customAmt) ? customAmt : undefined,
         amountPaise,
         paid: state.job.paid,
@@ -1695,6 +1718,7 @@ export function setupEventListeners() {
           grossWeight,
           lossG: totalLossG,
           netWeight,
+          hideLoss: jobPayload.hideLoss,
           ratePaise: Math.round(rate * 100),
           amountPaise,
           paid: jobPayload.paid,
@@ -1968,12 +1992,16 @@ export function setupEventListeners() {
     if (kind === 'settings') {
       await withBusy(form.querySelector('[type="submit"]'), async () => {
         const tokenMode = form.querySelector('input[name="tokenMode"]:checked')?.value || 'daily';
+        const chargeBasis = form.querySelector('input[name="chargeBasis"]:checked')?.value || 'output';
+        const hideLossOnSlip = Boolean(form.querySelector('input[name="hideLossOnSlip"]')?.checked);
         const data = await api('/api/settings', {
           name: fd.get('name'),
           address: fd.get('address'),
           upi: fd.get('upi'),
           note: fd.get('note'),
           tokenMode,
+          chargeBasis,
+          hideLossOnSlip,
         });
         if (data) {
           applyState(data.state);

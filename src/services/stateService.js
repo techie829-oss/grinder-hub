@@ -85,7 +85,7 @@ export async function buildState(env, businessId, range) {
     // 6: day counter
     env.DB.prepare('SELECT last_no FROM day_counters WHERE business_id = ? AND day = ?').bind(businessId, day),
     // 7: business info
-    env.DB.prepare('SELECT id, name, phone, address, upi, note, COALESCE(token_mode, \'daily\') AS token_mode, COALESCE(status, \'active\') AS status, COALESCE(plan, \'free\') AS plan, COALESCE(is_super_admin, 0) AS is_super_admin, created_at FROM businesses WHERE id = ?').bind(businessId),
+    env.DB.prepare('SELECT id, name, phone, address, upi, note, COALESCE(token_mode, \'daily\') AS token_mode, COALESCE(hide_loss_on_slip, 1) AS hide_loss_on_slip, COALESCE(charge_basis, \'output\') AS charge_basis, COALESCE(status, \'active\') AS status, COALESCE(plan, \'free\') AS plan, COALESCE(is_super_admin, 0) AS is_super_admin, created_at FROM businesses WHERE id = ?').bind(businessId),
     // 8: dynamic products
     env.DB.prepare('SELECT id, name, type, unit, default_rate_paise, active FROM products WHERE business_id = ? AND active = 1 ORDER BY name ASC').bind(businessId),
   ]);
@@ -188,6 +188,8 @@ export async function buildState(env, businessId, range) {
       upi: biz.upi || '',
       note: biz.note || '',
       tokenMode: biz.token_mode || 'daily',
+      hideLossOnSlip: Number(biz.hide_loss_on_slip != null ? biz.hide_loss_on_slip : 1) === 1,
+      chargeBasis: biz.charge_basis || 'output',
       status: biz.status || 'active',
       plan: biz.plan || 'free',
       isSuperAdmin: Number(biz.is_super_admin) === 1,

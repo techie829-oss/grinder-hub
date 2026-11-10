@@ -170,6 +170,7 @@ async function sendRawData(uint8Array) {
 // Print 58mm Thermal Token Slip
 export async function printThermalToken(tokenRow) {
   const biz = state.data.business || { name: 'Chakki' };
+  const hideLoss = (tokenRow.hideLoss != null) ? Boolean(tokenRow.hideLoss) : Boolean(biz.hideLossOnSlip != null ? biz.hideLossOnSlip : 1);
   const svc = tokenRow.serviceId ? state.data.services.find((s) => s.id === tokenRow.serviceId) : null;
   const svcName = svc ? svc.name : 'Flour Mill';
   const unit = svc ? unitOf(svc.unit) : 'kg';
@@ -203,12 +204,12 @@ export async function printThermalToken(tokenRow) {
     .row('Product:', svcName);
 
   if (gross > 0) {
-    builder.row('Gross Weight:', `${qtyFmt(gross)} ${unit}`);
+    builder.row(hideLoss ? 'Weight:' : 'Gross Weight:', `${qtyFmt(gross)} ${unit}`);
   }
-  if (lossG > 0) {
+  if (!hideLoss && lossG > 0) {
     builder.row('Loss Deduction:', `-${lossG} g`);
   }
-  if (net > 0) {
+  if (!hideLoss && net > 0) {
     builder.bold(true).row('Net Flour Return:', `${qtyFmt(net)} ${unit}`).bold(false);
   }
 
@@ -228,6 +229,7 @@ export async function printThermalToken(tokenRow) {
 // Print Full Thermal Bill Receipt
 export async function printThermalBill(entry) {
   const biz = state.data.business || { name: 'Chakki' };
+  const hideLoss = (entry.hideLoss != null) ? Boolean(entry.hideLoss) : Boolean(biz.hideLossOnSlip != null ? biz.hideLossOnSlip : 1);
   const customer = entry.customerId ? state.data.customers.find((c) => c.id === entry.customerId) : null;
   const nameShow = customer ? customer.name : (entry.name || 'Customer');
   const villageShow = customer ? (customer.village || '') : (entry.village || '');
@@ -268,12 +270,12 @@ export async function printThermalBill(entry) {
   } else {
     builder
       .row('Product:', entry.serviceName || 'Order')
-      .row('Gross Wt:', `${qtyFmt(entry.qty)} ${unitOf(entry.unit)}`);
+      .row(hideLoss ? 'Weight:' : 'Gross Wt:', `${qtyFmt(entry.qty)} ${unitOf(entry.unit)}`);
 
-    if (lossG > 0) {
+    if (!hideLoss && lossG > 0) {
       builder.row('Loss Deduction:', `-${lossG} g`);
     }
-    if (netWeight != null) {
+    if (!hideLoss && netWeight != null) {
       builder.bold(true).row('Net Flour:', `${qtyFmt(netWeight)} ${unitOf(entry.unit)}`).bold(false);
     }
 

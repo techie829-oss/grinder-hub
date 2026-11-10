@@ -5,32 +5,38 @@ import { inr, unitOf, qtyFmt } from '../public/js/utils/formatters.js';
 describe('Chakki Book Calculations & Formatters Suite', () => {
 
   describe('Flour Grinding Loss & Net Weight Calculations', () => {
-    function computeJob(grossWeight, rate, lossRateG) {
+    function computeJob(grossWeight, rate, lossRateG, chargeBasis = 'output') {
       const gross = Math.max(0, Number(grossWeight) || 0);
       const r = Math.max(0, Number(rate) || 0);
       const lossGPerKg = Math.max(0, Number(lossRateG) || 0);
 
       const totalLossG = Math.round(gross * lossGPerKg);
       const netWeight = Math.max(0, Math.round((gross - (totalLossG / 1000)) * 1000) / 1000);
-      const amount = Math.round(gross * r);
+      const billWeight = chargeBasis === 'gross' ? gross : netWeight;
+      const amount = Math.round(billWeight * r);
 
       return { grossWeight: gross, totalLossG, netWeight, amount };
     }
 
-    it('should accurately calculate standard 30kg wheat with 10g/kg loss at ₹3/kg', () => {
-      const result = computeJob(30, 3, 10);
+    it('should accurately calculate standard 30kg wheat with 10g/kg loss at ₹3/kg on output weight', () => {
+      const result = computeJob(30, 3, 10, 'output');
       assert.equal(result.grossWeight, 30);
       assert.equal(result.totalLossG, 300); // 30 * 10g = 300g
       assert.equal(result.netWeight, 29.7);  // 30 - 0.3kg = 29.7kg
+      assert.equal(result.amount, 89);       // 29.7 * ₹3 = ₹89.1 (round off to ₹89)
+    });
+
+    it('should accurately calculate on gross weight when gross charge basis selected', () => {
+      const result = computeJob(30, 3, 10, 'gross');
       assert.equal(result.amount, 90);       // 30 * ₹3 = ₹90
     });
 
-    it('should handle high loss rate like maize (20g/kg) on 50kg bag', () => {
-      const result = computeJob(50, 3.5, 20);
+    it('should handle high loss rate like maize (20g/kg) on 50kg bag on output basis', () => {
+      const result = computeJob(50, 3.5, 20, 'output');
       assert.equal(result.grossWeight, 50);
       assert.equal(result.totalLossG, 1000); // 50 * 20g = 1000g (1kg)
       assert.equal(result.netWeight, 49.0);  // 50 - 1kg = 49kg
-      assert.equal(result.amount, 175);      // 50 * 3.5 = ₹175
+      assert.equal(result.amount, 172);      // 49 * 3.5 = ₹171.5 (round off to ₹172)
     });
 
     it('should handle zero loss rate (e.g. whole spices or unlossy items)', () => {

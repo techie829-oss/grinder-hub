@@ -322,7 +322,20 @@ export const TRANSLATIONS = {
     tokenModeDailySub: 'हर दिन टोकन #1 से चालू होगा (1, 2, 3...)',
     tokenModeLoop100: '100 के बाद 1 से पुनः शुरू (Restart from 1 after 100)',
     tokenModeLoop100Sub: '1 से 100 तक सिक्के/बैज होने पर; #100 के बाद वापस #1 बनेगा',
-    resetTokenCounterBtn: '🔄 टोकन नंबर #1 पर रीसेट करें'
+    resetTokenCounterBtn: '🔄 टोकन नंबर #1 पर रीसेट करें',
+
+    // Billing Basis & Slip Privacy
+    chargeBasisTitle: 'सर्विस चार्ज गणना आधार (Service Charge Basis)',
+    chargeBasisOutput: 'तैयार माल / वापसी वजन (Net Output) पर',
+    chargeBasisOutputSub: 'शुल्क तैयार माल (काट/जलन घटाकर) के हिसाब से तय होगा। जैसे: 50kg में 1kg काट पर 49kg का बिल बनेगा।',
+    chargeBasisGross: 'कुल आवक वजन (Gross Weight) पर',
+    chargeBasisGrossSub: 'शुल्क पूरे लाए गए वजन (50kg) पर तय होगा।',
+    receiptPrivacyTitle: 'पर्ची व रसीद गोपनीयता (Receipt & Slip Privacy)',
+    hideLossOnSlipLabel: 'ग्राहक पर्ची पर घटौती (काट/जलन) व वापसी वजन छुपाएं',
+    hideLossOnSlipSub: 'गाँव में काट/घटौती को लेकर ग्राहकों के साथ होने वाले विवाद से बचाव हेतु। पर्ची पर केवल वजन और कुल बिल दिखेगा, अंदरूनी काट नहीं दिखेगी।',
+    recommendedLabel: 'सुझावित',
+    chargeBasisOutputTag: 'तैयार माल पर',
+    chargeBasisGrossTag: 'कुल वजन पर'
   },
   
   en: {
@@ -636,7 +649,20 @@ export const TRANSLATIONS = {
     tokenModeDailySub: 'Token resets to #1 every morning (1, 2, 3...)',
     tokenModeLoop100: 'Restart from 1 after 100',
     tokenModeLoop100Sub: 'For 1-100 coin/badge tokens; wraps to #1 after #100',
-    resetTokenCounterBtn: '🔄 Reset Token to #1'
+    resetTokenCounterBtn: '🔄 Reset Token to #1',
+
+    // Billing Basis & Slip Privacy
+    chargeBasisTitle: 'Service Charge Basis',
+    chargeBasisOutput: 'On Net Output Weight (Recommended)',
+    chargeBasisOutputSub: 'Charges calculated on actual finished weight (after moisture/loss deduction). E.g. 50kg grain - 1kg loss = billed on 49kg.',
+    chargeBasisGross: 'On Total Gross Weight',
+    chargeBasisGrossSub: 'Charges calculated on full incoming weight (50kg).',
+    receiptPrivacyTitle: 'Receipt & Slip Privacy',
+    hideLossOnSlipLabel: 'Hide loss & net return weight on slips/receipts',
+    hideLossOnSlipSub: 'Avoid customer disputes regarding loss/jalan deduction. The printed slip will only show incoming weight and total bill.',
+    recommendedLabel: 'Recommended',
+    chargeBasisOutputTag: 'On Output',
+    chargeBasisGrossTag: 'On Gross'
   },
   
   mr: {
@@ -950,7 +976,20 @@ export const TRANSLATIONS = {
     tokenModeDailySub: 'हर दिन टोकन #1 से चालू होगा (1, 2, 3...)',
     tokenModeLoop100: '100 के बाद 1 से पुनः शुरू (Restart from 1 after 100)',
     tokenModeLoop100Sub: '1 से 100 तक सिक्के/बैज होने पर; #100 के बाद वापस #1 बनेगा',
-    resetTokenCounterBtn: '🔄 टोकन नंबर #1 पर रीसेट करें'
+    resetTokenCounterBtn: '🔄 टोकन नंबर #1 पर रीसेट करें',
+
+    // Billing Basis & Slip Privacy
+    chargeBasisTitle: 'सर्विस चार्ज गणना आधार (Service Charge Basis)',
+    chargeBasisOutput: 'तैयार माल / वापसी वजन (Net Output) पर',
+    chargeBasisOutputSub: 'शुल्क तैयार माल (काट/जलन घटाकर) के हिसाब से तय होगा। जैसे: 50kg में 1kg काट पर 49kg का बिल बनेगा।',
+    chargeBasisGross: 'कुल आवक वजन (Gross Weight) पर',
+    chargeBasisGrossSub: 'शुल्क पूरे लाए गए वजन (50kg) पर तय होगा।',
+    receiptPrivacyTitle: 'पर्ची व रसीद गोपनीयता (Receipt & Slip Privacy)',
+    hideLossOnSlipLabel: 'ग्राहक पर्ची पर घटौती (काट/जलन) व वापसी वजन छुपाएं',
+    hideLossOnSlipSub: 'गाँव में काट/घटौती को लेकर ग्राहकों के साथ होने वाले विवाद से बचाव हेतु। पर्ची पर केवल वजन और कुल बिल दिखेगा, अंदरूनी काट नहीं दिखेगी।',
+    recommendedLabel: 'सुझावित',
+    chargeBasisOutputTag: 'तैयार माल पर',
+    chargeBasisGrossTag: 'कुल वजन पर'
   },
   
   gu: {

@@ -18,6 +18,7 @@ export function createQrSvg(text, cellSize = 3.2, margin = 0) {
 export function printReceipt(entry) {
   if (!entry) return;
   const biz = state.data?.business || { name: 'तौल-माल' };
+  const hideLoss = (entry.hideLoss != null) ? Boolean(entry.hideLoss) : Boolean(biz.hideLossOnSlip != null ? biz.hideLossOnSlip : 1);
   const customer = entry.customerId ? state.data.customers.find((c) => c.id === entry.customerId) : null;
   const balance = customer ? customer.balancePaise : null;
   const isPayment = entry.kind === 'payment';
@@ -42,8 +43,8 @@ export function printReceipt(entry) {
       ${isPayment
         ? `<div class="r-row"><span>Payment Received</span><span>${inr(entry.amountPaise)}</span></div>`
         : `<div class="r-row"><span>Product / Service</span><span>${esc(entry.serviceName)}</span></div>
-           <div class="r-row"><span>Gross Weight</span><span>${qtyFmt(entry.qty)} ${unitOf(entry.unit)}</span></div>
-           ${hasLoss ? `
+           <div class="r-row"><span>${hideLoss ? 'Weight / Qty' : 'Gross Weight'}</span><span>${qtyFmt(entry.qty)} ${unitOf(entry.unit)}</span></div>
+           ${!hideLoss && hasLoss ? `
            <div class="r-row"><span>Loss / Wastage</span><span>-${lossG} g</span></div>
            <div class="r-row"><span>Net Output Flour</span><span><strong>${qtyFmt(netWeight)} ${unitOf(entry.unit)}</strong></span></div>
            ` : ''}
@@ -69,6 +70,7 @@ export function printReceipt(entry) {
 export function printTokenReceipt(tokenRow) {
   if (!tokenRow) return;
   const biz = state.data?.business || { name: 'तौल-माल (TolMaal)' };
+  const hideLoss = (tokenRow.hideLoss != null) ? Boolean(tokenRow.hideLoss) : Boolean(biz.hideLossOnSlip != null ? biz.hideLossOnSlip : 1);
   const svc = tokenRow.serviceId ? state.data.services.find((s) => s.id === tokenRow.serviceId) : null;
   const svcName = svc ? svc.name : (tokenRow.serviceName || 'सुविधा / सेवा');
   const unit = svc ? unitOf(svc.unit) : 'kg';
@@ -89,10 +91,9 @@ export function printTokenReceipt(tokenRow) {
       <div class="r-row"><span>ग्राहक</span><span>${esc(tokenRow.name)}${tokenRow.village ? ' (' + esc(tokenRow.village) + ')' : ''}</span></div>
       ${tokenRow.phone ? `<div class="r-row"><span>मोबाइल</span><span>${esc(tokenRow.phone)}</span></div>` : ''}
       <div class="r-row"><span>सामग्री / सेवा</span><span>${esc(svcName)}</span></div>
-      <div class="r-line"></div>
-      ${gross > 0 ? `<div class="r-row"><span>कुल आवक वजन</span><span>${qtyFmt(gross)} ${unit}</span></div>` : ''}
-      ${lossG > 0 ? `<div class="r-row"><span>काट / घटौती</span><span>-${lossG} g</span></div>` : ''}
-      ${net > 0 ? `<div class="r-row" style="font-size:13.5px;font-weight:800;"><span>शुद्ध वापसी माल</span><span>${qtyFmt(net)} ${unit}</span></div>` : ''}
+      ${gross > 0 ? `<div class="r-row"><span>${hideLoss ? 'वजन / मात्रा' : 'कुल आवक वजन'}</span><span>${qtyFmt(gross)} ${unit}</span></div>` : ''}
+      ${!hideLoss && lossG > 0 ? `<div class="r-row"><span>काट / घटौती</span><span>-${lossG} g</span></div>` : ''}
+      ${!hideLoss && net > 0 ? `<div class="r-row" style="font-size:13.5px;font-weight:800;"><span>शुद्ध वापसी माल</span><span>${qtyFmt(net)} ${unit}</span></div>` : ''}
       <div class="r-line"></div>
 
       <!-- Scannable Token QR Code -->

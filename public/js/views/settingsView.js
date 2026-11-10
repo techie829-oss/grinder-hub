@@ -78,6 +78,39 @@ export function viewSettings() {
       </div>
     </div>
 
+    <!-- Service Charge Billing Basis (Output vs Gross) -->
+    <div class="field" style="margin-top:14px;padding:12px;background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:12px;">
+      <label style="font-weight:800;color:#0f172a;margin-bottom:8px;display:block;">${t('chargeBasisTitle')}</label>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <label style="display:flex;align-items:flex-start;gap:8px;font-size:13px;cursor:pointer;">
+          <input type="radio" name="chargeBasis" value="output" ${biz.chargeBasis !== 'gross' ? 'checked' : ''} style="margin-top:2px;">
+          <div>
+            <div><strong>${t('chargeBasisOutput')}</strong> <span class="tiny-chip" style="background:#dcfce7;color:#15803d;font-weight:700;">${t('recommendedLabel')}</span></div>
+            <div style="color:#64748b;font-size:11.5px;">${t('chargeBasisOutputSub')}</div>
+          </div>
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:8px;font-size:13px;cursor:pointer;">
+          <input type="radio" name="chargeBasis" value="gross" ${biz.chargeBasis === 'gross' ? 'checked' : ''} style="margin-top:2px;">
+          <div>
+            <div><strong>${t('chargeBasisGross')}</strong></div>
+            <div style="color:#64748b;font-size:11.5px;">${t('chargeBasisGrossSub')}</div>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <!-- Receipt / Slip Privacy & Village Dispute Protection -->
+    <div class="field" style="margin-top:14px;padding:12px;background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:12px;">
+      <label style="font-weight:800;color:#0f172a;margin-bottom:8px;display:block;">${t('receiptPrivacyTitle')}</label>
+      <label style="display:flex;align-items:flex-start;gap:10px;font-size:13px;cursor:pointer;">
+        <input type="checkbox" name="hideLossOnSlip" value="1" ${biz.hideLossOnSlip !== false ? 'checked' : ''} style="margin-top:2px;width:18px;height:18px;">
+        <div>
+          <div style="font-weight:750;color:#0f172a;">${t('hideLossOnSlipLabel')}</div>
+          <div style="color:#64748b;font-size:11.5px;margin-top:3px;line-height:1.35;">${t('hideLossOnSlipSub')}</div>
+        </div>
+      </label>
+    </div>
+
     <button class="btn btn-primary" type="submit" style="margin-top:10px;">${t('saveSettingsBtn')}</button>
   </form>
 

@@ -47,17 +47,6 @@ async function processJob(env, business, data) {
   const grossWeight = Number(data.grossWeight != null ? data.grossWeight : data.qty) || 0;
   if (grossWeight <= 0) return;
 
-  let ratePaise = Math.round(Number(data.rate) * 100);
-  if (!Number.isFinite(ratePaise) || ratePaise < 0) ratePaise = svc.rate_paise;
-  let amountPaise = 0;
-  if (data.amount != null && Number(data.amount) > 0) {
-    amountPaise = Math.round(Number(data.amount) * 100);
-  } else if (data.amountPaise != null && Number(data.amountPaise) > 0) {
-    amountPaise = Math.round(Number(data.amountPaise));
-  } else {
-    amountPaise = Math.round(grossWeight * ratePaise);
-  }
-
   const lossRateG = data.lossRateG !== undefined ? Number(data.lossRateG) : Number(svc.loss_rate_g || 0);
   const totalLossG = data.totalLossG !== undefined
     ? Number(data.totalLossG)
@@ -65,6 +54,21 @@ async function processJob(env, business, data) {
   const netWeight = data.netWeight !== undefined
     ? Number(data.netWeight)
     : (svc.unit === 'kg' ? Math.max(0, grossWeight - (totalLossG / 1000)) : grossWeight);
+
+  let ratePaise = Math.round(Number(data.rate) * 100);
+  if (!Number.isFinite(ratePaise) || ratePaise < 0) ratePaise = svc.rate_paise;
+
+  const chargeBasis = data.chargeBasis || 'output';
+  const billWeight = chargeBasis === 'gross' ? grossWeight : netWeight;
+
+  let amountPaise = 0;
+  if (data.amount != null && Number(data.amount) > 0) {
+    amountPaise = Math.round(Number(data.amount) * 100);
+  } else if (data.amountPaise != null && Number(data.amountPaise) > 0) {
+    amountPaise = Math.round(Number(data.amountPaise));
+  } else {
+    amountPaise = Math.round(billWeight * ratePaise);
+  }
 
   const paid = data.paid ? 1 : 0;
   const name = clean(data.name, 60);

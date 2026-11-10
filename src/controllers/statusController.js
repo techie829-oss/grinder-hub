@@ -52,7 +52,8 @@ export async function checkStatus(request, env, url) {
         t.id, t.business_id, t.no, t.day, t.name, t.village, t.phone,
         t.gross_weight, t.loss_g, t.net_weight, t.status, t.created_at,
         s.name AS service_name, s.unit,
-        b.name AS shop_name, b.phone AS shop_phone, b.address AS shop_address
+        b.name AS shop_name, b.phone AS shop_phone, b.address AS shop_address,
+        COALESCE(b.hide_loss_on_slip, 1) AS hide_loss_on_slip
       FROM tokens t
       JOIN businesses b ON b.id = t.business_id
       LEFT JOIN services s ON s.id = t.service_id
@@ -67,7 +68,8 @@ export async function checkStatus(request, env, url) {
         t.id, t.business_id, t.no, t.day, t.name, t.village, t.phone,
         t.gross_weight, t.loss_g, t.net_weight, t.status, t.created_at,
         s.name AS service_name, s.unit,
-        b.name AS shop_name, b.phone AS shop_phone, b.address AS shop_address
+        b.name AS shop_name, b.phone AS shop_phone, b.address AS shop_address,
+        COALESCE(b.hide_loss_on_slip, 1) AS hide_loss_on_slip
       FROM tokens t
       JOIN businesses b ON b.id = t.business_id
       LEFT JOIN services s ON s.id = t.service_id
@@ -163,6 +165,8 @@ export async function checkStatus(request, env, url) {
     }
   }
 
+  const hideLoss = Number(record.hide_loss_on_slip != null ? record.hide_loss_on_slip : 1) === 1;
+
   return json({
     ok: true,
     found: true,
@@ -175,8 +179,9 @@ export async function checkStatus(request, env, url) {
       village: record.village || '',
       serviceName: record.service_name || 'सुविधा / सेवा कार्य',
       grossWeight: Number(record.gross_weight) || 0,
-      lossG: Number(record.loss_g) || 0,
-      netWeight: Number(record.net_weight) || 0,
+      lossG: hideLoss ? 0 : (Number(record.loss_g) || 0),
+      netWeight: hideLoss ? (Number(record.gross_weight) || 0) : (Number(record.net_weight) || 0),
+      hideLoss,
       unit: record.unit || 'kg',
       amountPaise,
       paid,

@@ -114,6 +114,18 @@ export async function ensureSchema(env) {
   try {
     await env.DB.exec("ALTER TABLE businesses ADD COLUMN token_mode TEXT NOT NULL DEFAULT 'daily';");
   } catch (e) {}
+  try {
+    await env.DB.exec("ALTER TABLE businesses ADD COLUMN hide_loss_on_slip INTEGER NOT NULL DEFAULT 1;");
+  } catch (e) {}
+  try {
+    await env.DB.exec("ALTER TABLE businesses ADD COLUMN charge_basis TEXT NOT NULL DEFAULT 'output';");
+  } catch (e) {}
+  try {
+    await env.DB.exec("ALTER TABLE entries ADD COLUMN hide_loss INTEGER NOT NULL DEFAULT 0;");
+  } catch (e) {}
+  try {
+    await env.DB.exec("ALTER TABLE tokens ADD COLUMN hide_loss INTEGER NOT NULL DEFAULT 0;");
+  } catch (e) {}
 
   schemaInitialized = true;
 }
