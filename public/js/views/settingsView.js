@@ -53,59 +53,62 @@ export function viewSettings() {
     </div>
 
     <!-- Token Numbering Mode (Restart from 1 after 100 vs Daily start from 1) -->
-    <div class="field" style="margin-top:14px;padding:12px;background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:12px;">
-      <label style="font-weight:800;color:#0f172a;margin-bottom:8px;display:block;">${t('tokenModeTitle')}</label>
+    <div class="field" style="margin-top:14px;padding:14px;background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:14px;">
+      <label style="font-size:13.5px;font-weight:800;color:#0f172a;margin-bottom:10px;display:block;">${t('tokenModeTitle')}</label>
       <div style="display:flex;flex-direction:column;gap:8px;">
-        <label style="display:flex;align-items:flex-start;gap:8px;font-size:13px;cursor:pointer;">
-          <input type="radio" name="tokenMode" value="daily" ${biz.tokenMode !== 'loop100' ? 'checked' : ''} style="margin-top:2px;">
-          <div>
-            <div><strong>${t('tokenModeDaily')}</strong></div>
-            <div style="color:#64748b;font-size:11.5px;">${t('tokenModeDailySub')}</div>
+        <label style="display:flex;align-items:flex-start;gap:12px;padding:10px 12px;background:#fff;border:1.5px solid ${biz.tokenMode !== 'loop100' ? '#6366f1' : '#e2e8f0'};border-radius:10px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+          <input type="radio" name="tokenMode" value="daily" ${biz.tokenMode !== 'loop100' ? 'checked' : ''} style="width:18px;height:18px;min-width:18px;flex:0 0 18px;margin-top:2px;accent-color:#4f46e5;">
+          <div style="flex:1 1 auto;min-width:0;">
+            <div style="font-size:13.5px;font-weight:750;color:#0f172a;">${t('tokenModeDaily')}</div>
+            <div style="color:#64748b;font-size:11.5px;margin-top:2px;line-height:1.35;">${t('tokenModeDailySub')}</div>
           </div>
         </label>
-        <label style="display:flex;align-items:flex-start;gap:8px;font-size:13px;cursor:pointer;">
-          <input type="radio" name="tokenMode" value="loop100" ${biz.tokenMode === 'loop100' ? 'checked' : ''} style="margin-top:2px;">
-          <div>
-            <div><strong>${t('tokenModeLoop100')}</strong></div>
-            <div style="color:#64748b;font-size:11.5px;">${t('tokenModeLoop100Sub')}</div>
+        <label style="display:flex;align-items:flex-start;gap:12px;padding:10px 12px;background:#fff;border:1.5px solid ${biz.tokenMode === 'loop100' ? '#6366f1' : '#e2e8f0'};border-radius:10px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+          <input type="radio" name="tokenMode" value="loop100" ${biz.tokenMode === 'loop100' ? 'checked' : ''} style="width:18px;height:18px;min-width:18px;flex:0 0 18px;margin-top:2px;accent-color:#4f46e5;">
+          <div style="flex:1 1 auto;min-width:0;">
+            <div style="font-size:13.5px;font-weight:750;color:#0f172a;">${t('tokenModeLoop100')}</div>
+            <div style="color:#64748b;font-size:11.5px;margin-top:2px;line-height:1.35;">${t('tokenModeLoop100Sub')}</div>
           </div>
         </label>
       </div>
       <div style="margin-top:10px;">
-        <button type="button" class="btn btn-xs btn-subtle" data-act="reset-token-counter" style="border:1px solid #cbd5e1;padding:6px 12px;border-radius:8px;font-weight:700;background:#fff;">
+        <button type="button" class="btn btn-xs btn-subtle" data-act="reset-token-counter" style="border:1.5px solid #cbd5e1;padding:6px 14px;border-radius:8px;font-weight:750;background:#fff;color:#334155;">
           ${t('resetTokenCounterBtn')}
         </button>
       </div>
     </div>
 
     <!-- Service Charge Billing Basis (Output vs Gross) -->
-    <div class="field" style="margin-top:14px;padding:12px;background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:12px;">
-      <label style="font-weight:800;color:#0f172a;margin-bottom:8px;display:block;">${t('chargeBasisTitle')}</label>
+    <div class="field" style="margin-top:14px;padding:14px;background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:14px;">
+      <label style="font-size:13.5px;font-weight:800;color:#0f172a;margin-bottom:10px;display:block;">${t('chargeBasisTitle')}</label>
       <div style="display:flex;flex-direction:column;gap:8px;">
-        <label style="display:flex;align-items:flex-start;gap:8px;font-size:13px;cursor:pointer;">
-          <input type="radio" name="chargeBasis" value="output" ${biz.chargeBasis !== 'gross' ? 'checked' : ''} style="margin-top:2px;">
-          <div>
-            <div><strong>${t('chargeBasisOutput')}</strong> <span class="tiny-chip" style="background:#dcfce7;color:#15803d;font-weight:700;">${t('recommendedLabel')}</span></div>
-            <div style="color:#64748b;font-size:11.5px;">${t('chargeBasisOutputSub')}</div>
+        <label style="display:flex;align-items:flex-start;gap:12px;padding:10px 12px;background:#fff;border:1.5px solid ${biz.chargeBasis !== 'gross' ? '#6366f1' : '#e2e8f0'};border-radius:10px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+          <input type="radio" name="chargeBasis" value="output" ${biz.chargeBasis !== 'gross' ? 'checked' : ''} style="width:18px;height:18px;min-width:18px;flex:0 0 18px;margin-top:2px;accent-color:#4f46e5;">
+          <div style="flex:1 1 auto;min-width:0;">
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+              <span style="font-size:13.5px;font-weight:750;color:#0f172a;">${t('chargeBasisOutput')}</span>
+              <span class="tiny-chip" style="background:#dcfce7;color:#15803d;font-weight:750;padding:2px 7px;border-radius:6px;font-size:11px;">${t('recommendedLabel')}</span>
+            </div>
+            <div style="color:#64748b;font-size:11.5px;margin-top:3px;line-height:1.35;">${t('chargeBasisOutputSub')}</div>
           </div>
         </label>
-        <label style="display:flex;align-items:flex-start;gap:8px;font-size:13px;cursor:pointer;">
-          <input type="radio" name="chargeBasis" value="gross" ${biz.chargeBasis === 'gross' ? 'checked' : ''} style="margin-top:2px;">
-          <div>
-            <div><strong>${t('chargeBasisGross')}</strong></div>
-            <div style="color:#64748b;font-size:11.5px;">${t('chargeBasisGrossSub')}</div>
+        <label style="display:flex;align-items:flex-start;gap:12px;padding:10px 12px;background:#fff;border:1.5px solid ${biz.chargeBasis === 'gross' ? '#6366f1' : '#e2e8f0'};border-radius:10px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+          <input type="radio" name="chargeBasis" value="gross" ${biz.chargeBasis === 'gross' ? 'checked' : ''} style="width:18px;height:18px;min-width:18px;flex:0 0 18px;margin-top:2px;accent-color:#4f46e5;">
+          <div style="flex:1 1 auto;min-width:0;">
+            <div style="font-size:13.5px;font-weight:750;color:#0f172a;">${t('chargeBasisGross')}</div>
+            <div style="color:#64748b;font-size:11.5px;margin-top:3px;line-height:1.35;">${t('chargeBasisGrossSub')}</div>
           </div>
         </label>
       </div>
     </div>
 
     <!-- Receipt / Slip Privacy & Village Dispute Protection -->
-    <div class="field" style="margin-top:14px;padding:12px;background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:12px;">
-      <label style="font-weight:800;color:#0f172a;margin-bottom:8px;display:block;">${t('receiptPrivacyTitle')}</label>
-      <label style="display:flex;align-items:flex-start;gap:10px;font-size:13px;cursor:pointer;">
-        <input type="checkbox" name="hideLossOnSlip" value="1" ${biz.hideLossOnSlip !== false ? 'checked' : ''} style="margin-top:2px;width:18px;height:18px;">
-        <div>
-          <div style="font-weight:750;color:#0f172a;">${t('hideLossOnSlipLabel')}</div>
+    <div class="field" style="margin-top:14px;padding:14px;background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:14px;">
+      <label style="font-size:13.5px;font-weight:800;color:#0f172a;margin-bottom:10px;display:block;">${t('receiptPrivacyTitle')}</label>
+      <label style="display:flex;align-items:flex-start;gap:12px;padding:12px;background:#fff;border:1.5px solid ${biz.hideLossOnSlip !== false ? '#6366f1' : '#e2e8f0'};border-radius:10px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+        <input type="checkbox" name="hideLossOnSlip" value="1" ${biz.hideLossOnSlip !== false ? 'checked' : ''} style="width:18px;height:18px;min-width:18px;flex:0 0 18px;margin-top:2px;accent-color:#4f46e5;">
+        <div style="flex:1 1 auto;min-width:0;">
+          <div style="font-size:13.5px;font-weight:750;color:#0f172a;">${t('hideLossOnSlipLabel')}</div>
           <div style="color:#64748b;font-size:11.5px;margin-top:3px;line-height:1.35;">${t('hideLossOnSlipSub')}</div>
         </div>
       </label>
