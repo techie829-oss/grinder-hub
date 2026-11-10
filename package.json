@@ -11,7 +11,9 @@
     "check": "node --check src/worker.js && node --check public/app.js",
     "android:add": "npx cap add android",
     "android:sync": "npx cap sync android",
-    "android:build": "cd android && ./gradlew assembleDebug"
+    "android:build": "cd android && ./gradlew assembleDebug",
+    "android:build:release": "cd android && ./gradlew assembleRelease",
+    "android:bundle:release": "cd android && ./gradlew bundleRelease"
   },
   "devDependencies": {
     "wrangler": "^4"
