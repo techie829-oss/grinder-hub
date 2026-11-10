@@ -446,14 +446,6 @@ export function setupEventListeners() {
               status: 'waiting',
               at: Date.now(),
             };
-              serviceId: payload.serviceId,
-              grossWeight: qtyVal,
-              lossG: totalLossG,
-              netWeight: netWeight,
-              note,
-              status: 'waiting',
-              at: Date.now(),
-            };
             state.data.tokens.waiting.push(offTok);
             saveOfflineSnapshot(state.data);
 
