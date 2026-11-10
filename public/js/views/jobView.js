@@ -132,12 +132,12 @@ function renderGrindTab(data) {
           <span>${t('grossWeight')} (${unit})</span>
           ${scaleConnected ? `<span class="tiny-chip" style="background:#dcfce7;color:#15803d">● Live ${liveWt} kg</span>` : ''}
         </label>
-        <input id="j-qty" name="qty" type="number" step="0.01" min="0" inputmode="decimal"
+        <input id="j-qty" name="qty" type="number" step="any" min="0" inputmode="decimal"
           value="${job.qty}" placeholder="0.00" required>
       </div>
       <div class="field">
         <label for="j-rate">${t('ratePerUnit', { unit })}</label>
-        <input id="j-rate" name="rate" type="number" step="0.25" min="0" inputmode="decimal"
+        <input id="j-rate" name="rate" type="number" step="any" min="0" inputmode="decimal"
           value="${job.rate}" placeholder="0.00" required>
       </div>
     </div>
@@ -321,12 +321,12 @@ function renderSaleTab(data) {
     <div class="two-col">
       <div class="field">
         <label for="tr-qty">मात्रा / वजन (Quantity) *</label>
-        <input id="tr-qty" name="qty" type="number" step="0.01" min="0" inputmode="decimal"
+        <input id="tr-qty" name="qty" type="number" step="any" min="0" inputmode="decimal"
           value="${trade.qty}" placeholder="0.00" required>
       </div>
       <div class="field">
         <label for="tr-rate">भाव / रेट (₹ प्रति इकाई)</label>
-        <input id="tr-rate" name="rate" type="number" step="0.25" min="0" inputmode="decimal"
+        <input id="tr-rate" name="rate" type="number" step="any" min="0" inputmode="decimal"
           value="${trade.rate}" placeholder="0.00">
       </div>
     </div>
@@ -510,12 +510,12 @@ function renderPurchaseTab(data) {
           <span>तौल / वजन (Quantity) *</span>
           ${scaleConnected ? `<span class="tiny-chip" style="background:#dcfce7;color:#15803d">● Live ${liveWt} kg</span>` : ''}
         </label>
-        <input id="tr-qty" name="qty" type="number" step="0.01" min="0" inputmode="decimal"
+        <input id="tr-qty" name="qty" type="number" step="any" min="0" inputmode="decimal"
           value="${trade.qty}" placeholder="0.00" required>
       </div>
       <div class="field">
         <label for="tr-rate">खरीद भाव / रेट (₹ प्रति इकाई)</label>
-        <input id="tr-rate" name="rate" type="number" step="0.25" min="0" inputmode="decimal"
+        <input id="tr-rate" name="rate" type="number" step="any" min="0" inputmode="decimal"
           value="${trade.rate}" placeholder="0.00">
       </div>
     </div>

@@ -74,13 +74,13 @@ export function viewSettings() {
             ${UNITS.map((u) => `<option value="${u.id}"${s.unit === u.id ? ' selected' : ''}>${u.label}</option>`).join('')}
           </select>
           <div style="flex:0 0 auto;display:flex;flex-direction:column;gap:2px">
-            <input class="input" name="rate" type="number" step="0.5" min="0" inputmode="decimal"
+            <input class="input" name="rate" type="number" step="any" min="0" inputmode="decimal"
               value="${(s.ratePaise / 100).toFixed(s.ratePaise % 100 ? 2 : 0)}" title="Rate ₹ per unit" placeholder="Rate ₹"
               style="width:78px;padding:9px 8px">
             <span class="tiny muted" style="font-size:10px">Rate ₹</span>
           </div>
           <div style="flex:0 0 auto;display:flex;flex-direction:column;gap:2px">
-            <input class="input" name="lossRateG" type="number" step="1" min="0" inputmode="numeric"
+            <input class="input" name="lossRateG" type="number" step="any" min="0" inputmode="numeric"
               value="${lossRateG}" title="Loss Deduction g per unit" placeholder="Loss g"
               style="width:78px;padding:9px 8px">
             <span class="tiny muted" style="font-size:10px">Loss g</span>
@@ -102,11 +102,11 @@ export function viewSettings() {
         </div>
         <div class="field">
           <label for="ns-rate">${t('ratePerUnit')}</label>
-          <input id="ns-rate" name="rate" type="number" step="0.5" min="0" inputmode="decimal" placeholder="e.g. 3.0" required>
+          <input id="ns-rate" name="rate" type="number" step="any" min="0" inputmode="decimal" placeholder="e.g. 3.0" required>
         </div>
         <div class="field">
           <label for="ns-loss-rate">${t('lossRatePerUnit')}</label>
-          <input id="ns-loss-rate" name="lossRateG" type="number" step="1" min="0" inputmode="numeric" placeholder="e.g. 15 (15g/kg)" value="0">
+          <input id="ns-loss-rate" name="lossRateG" type="number" step="any" min="0" inputmode="numeric" placeholder="e.g. 15 (15g/kg)" value="0">
         </div>
       </div>
       <div class="field">

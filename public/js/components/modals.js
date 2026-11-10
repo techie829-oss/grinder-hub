@@ -69,7 +69,7 @@ export function renderCustomerModal() {
       <div class="two-col">
         <div class="field">
           <label for="p-amount">${t('amountRs')}</label>
-          <input id="p-amount" name="amount" type="number" step="0.5" min="0" inputmode="decimal"
+          <input id="p-amount" name="amount" type="number" step="any" min="0" inputmode="decimal"
             value="${balance > 0 ? (balance / 100) : ''}" placeholder="0.00">
         </div>
         <div class="field">
@@ -423,7 +423,7 @@ export function openProductModal(productId = null, defaultType = 'both') {
 
       <div class="field">
         <label for="prod-rate">डिफ़ॉल्ट भाव / रेट (₹ प्रति इकाई - वैकल्पिक)</label>
-        <input id="prod-rate" name="rate" type="number" step="0.25" min="0" inputmode="decimal"
+        <input id="prod-rate" name="rate" type="number" step="any" min="0" inputmode="decimal"
           value="${rate}" placeholder="0.00">
         <span class="tiny muted">बिल बनाते समय यह भाव अपने आप भर जाएगा (जिसे आप कभी भी बदल सकते हैं)</span>
       </div>
