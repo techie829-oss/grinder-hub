@@ -68,7 +68,7 @@ export async function saveCustomer(request, env, business, range) {
     )
       .bind(business.id, key, vKey, id)
       .first();
-    if (conflict) return bad('इस नाम और गाँव का ग्राहक पहले से मौजूद है');
+    if (conflict) return bad(`इस गाँव में '${name}' नाम के ग्राहक पहले से मौजूद हैं। अलग खाता रखने के लिए नाम में पिता का नाम या उपनाम जोड़ें (उदा. ${name} (मास्टर जी))`);
 
     const finalPhoto = photo || (existing.photo || '');
     await env.DB.prepare(
@@ -82,7 +82,7 @@ export async function saveCustomer(request, env, business, range) {
     )
       .bind(business.id, key, vKey)
       .first();
-    if (exists) return bad('इस नाम और गाँव का ग्राहक पहले से मौजूद है');
+    if (exists) return bad(`इस गाँव में '${name}' नाम के ग्राहक पहले से मौजूद हैं। अलग खाता रखने के लिए नाम में पिता का नाम या उपनाम जोड़ें (उदा. ${name} (मास्टर जी) या ${name} (रामबली))`);
 
     await env.DB.prepare(
       'INSERT INTO customers (id, business_id, name, name_key, village, village_key, phone, photo, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'

@@ -52,51 +52,90 @@ export async function createJob(request, env, business, range) {
   const note = clean(body.note, 120);
   if (!paid && !name) return bad('उधार के लिए ग्राहक का नाम ज़रूरी है');
 
-  let customerId = null;
+  let customerId = clean(body.customerId, 40);
+  const isExplicitNew = customerId === 'new' || body.isNewCustomer === true || body.isNewCustomer === '1';
   const photo = typeof body.photo === 'string' ? body.photo.slice(0, 200000) : '';
 
-  if (name) {
-    const key = normName(name);
-    const vKey = normVillage(village);
-    let found = await env.DB.prepare(
-      'SELECT id, phone, village, photo, name FROM customers WHERE business_id = ? AND name_key = ? AND village_key = ?'
-    )
-      .bind(business.id, key, vKey)
-      .first();
-
-    // Bilingual phonetic match fallback (e.g. customer stored in Hindi and searched in English, or vice-versa)
-    if (!found) {
-      const candidates = await env.DB.prepare('SELECT id, name, village, phone, photo FROM customers WHERE business_id = ?').bind(business.id).all();
-      found = (candidates.results || []).find((c) => isPhoneticMatch(c.name, name) && (!village || isPhoneticMatch(c.village, village))) || null;
-    }
-    if (found) {
-      customerId = found.id;
-      if (!found.phone && phone) {
-        await env.DB.prepare('UPDATE customers SET phone = ? WHERE id = ? AND business_id = ?')
-          .bind(phone, found.id, business.id)
-          .run();
+  if (customerId && customerId !== 'new') {
+    const directCust = await env.DB.prepare('SELECT id, phone, photo FROM customers WHERE id = ? AND business_id = ?').bind(customerId, business.id).first();
+    if (directCust) {
+      customerId = directCust.id;
+      if (!directCust.phone && phone) {
+        await env.DB.prepare('UPDATE customers SET phone = ? WHERE id = ? AND business_id = ?').bind(phone, directCust.id, business.id).run();
       }
-      if (photo && !found.photo) {
-        await env.DB.prepare('UPDATE customers SET photo = ? WHERE id = ? AND business_id = ?')
-          .bind(photo, found.id, business.id)
-          .run();
+      if (photo && !directCust.photo) {
+        await env.DB.prepare('UPDATE customers SET photo = ? WHERE id = ? AND business_id = ?').bind(photo, directCust.id, business.id).run();
       }
     } else {
+      customerId = null;
+    }
+  }
+
+  if (!customerId && name) {
+    if (isExplicitNew) {
+      // Merchant explicitly marked this as a distinct customer!
       customerId = crypto.randomUUID();
+      const key = normName(name);
+      const vKey = normVillage(village);
       try {
-        await env.DB.prepare(
-          'INSERT INTO customers (id, business_id, name, name_key, village, village_key, phone, photo, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
-        )
-          .bind(customerId, business.id, name, key, village, vKey, phone, photo, Date.now())
-          .run();
+        await env.DB.prepare('INSERT INTO customers (id, business_id, name, name_key, village, village_key, phone, photo, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+          .bind(customerId, business.id, name, key, village, vKey, phone, photo, Date.now()).run();
       } catch (err) {
-        const again = await env.DB.prepare(
-          'SELECT id FROM customers WHERE business_id = ? AND name_key = ? AND village_key = ?'
-        )
-          .bind(business.id, key, vKey)
-          .first();
-        if (!again) throw err;
-        customerId = again.id;
+        const disambigKey = phone ? `${key}_${phone.slice(-4)}` : `${key}_${Date.now().toString().slice(-4)}`;
+        await env.DB.prepare('INSERT INTO customers (id, business_id, name, name_key, village, village_key, phone, photo, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+          .bind(customerId, business.id, name, disambigKey, village, vKey, phone, photo, Date.now()).run();
+      }
+    } else {
+      // Automatic Safe Resolution:
+      let found = null;
+
+      // 1. If 10-digit phone is provided, match by phone
+      if (phone && phone.length === 10) {
+        found = await env.DB.prepare('SELECT id, phone, photo, name, village FROM customers WHERE business_id = ? AND phone = ?').bind(business.id, phone).first();
+      }
+
+      // 2. If no phone match, find candidates by name and village
+      if (!found) {
+        const key = normName(name);
+        const vKey = normVillage(village);
+        const candidates = await env.DB.prepare('SELECT id, phone, village, photo, name, name_key, village_key FROM customers WHERE business_id = ?').bind(business.id).all();
+        const matches = (candidates.results || []).filter((c) => {
+          const nMatch = c.name_key === key || isPhoneticMatch(c.name, name);
+          if (!nMatch) return false;
+          if (village) return c.village_key === vKey || isPhoneticMatch(c.village, village);
+          return true;
+        });
+
+        // SAFETY: Only auto-merge if there is EXACTLY 1 candidate AND phone numbers do not conflict!
+        if (matches.length === 1) {
+          const cand = matches[0];
+          if (!cand.phone || !phone || cand.phone === phone) {
+            found = cand;
+          }
+        }
+      }
+
+      if (found) {
+        customerId = found.id;
+        if (!found.phone && phone) {
+          await env.DB.prepare('UPDATE customers SET phone = ? WHERE id = ? AND business_id = ?').bind(phone, found.id, business.id).run();
+        }
+        if (photo && !found.photo) {
+          await env.DB.prepare('UPDATE customers SET photo = ? WHERE id = ? AND business_id = ?').bind(photo, found.id, business.id).run();
+        }
+      } else {
+        // Create new distinct customer
+        customerId = crypto.randomUUID();
+        const key = normName(name);
+        const vKey = normVillage(village);
+        try {
+          await env.DB.prepare('INSERT INTO customers (id, business_id, name, name_key, village, village_key, phone, photo, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+            .bind(customerId, business.id, name, key, village, vKey, phone, photo, Date.now()).run();
+        } catch (err) {
+          const disambigKey = phone ? `${key}_${phone.slice(-4)}` : `${key}_${Date.now().toString().slice(-4)}`;
+          await env.DB.prepare('INSERT INTO customers (id, business_id, name, name_key, village, village_key, phone, photo, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)')
+            .bind(customerId, business.id, name, disambigKey, village, vKey, phone, photo, Date.now()).run();
+        }
       }
     }
   }

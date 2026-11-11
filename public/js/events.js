@@ -1,7 +1,7 @@
 // Centralized DOM Event Listeners & Dispatcher with Offline-First Fallback
 import { state } from './state.js';
 import { api, withBusy, loadState, applyState, toast, loadAdminData, getApiUrl, getAuthHeaders } from './api.js';
-import { inr, unitOf } from './utils/formatters.js';
+import { inr, unitOf, esc } from './utils/formatters.js';
 import { printReceipt } from './utils/print.js';
 import { entryWaText, openWhatsApp } from './utils/whatsapp.js';
 import { closeModal, openCustomer, openCustomerEditModal, showJobDone, findEntry, openStatusModal, renderStatusResult, renderUniversalSearchResults } from './components/modals.js';
@@ -177,6 +177,178 @@ export function goTo(view) {
     return;
   }
   window.__appRender?.();
+}
+
+export function updateCustomerDisambiguation(prefix = 'j') {
+  const isJob = prefix === 'j';
+  const nameEl = document.getElementById(isJob ? 'j-name' : 'tr-name');
+  const villageEl = document.getElementById(isJob ? 'j-village' : 'tr-village');
+  const phoneEl = document.getElementById(isJob ? 'j-phone' : 'tr-phone');
+  const hiddenIdEl = document.getElementById(isJob ? 'j-customer-id' : 'tr-customer-id');
+  const hiddenNewEl = document.getElementById(isJob ? 'j-is-new-customer' : 'tr-is-new-customer');
+  const disambigWrap = document.getElementById(isJob ? 'cust-disambig-wrap' : 'tr-cust-disambig-wrap');
+  const banner = document.getElementById(isJob ? 'cust-balance-banner' : 'tr-cust-balance-banner');
+
+  const photoCustName = document.getElementById(isJob ? 'job-photo-cust-name' : 'tr-photo-cust-name');
+  const photoImg = document.getElementById(isJob ? 'job-photo-img' : 'tr-photo-img');
+  const photoPh = document.getElementById(isJob ? 'job-photo-ph' : 'tr-photo-ph');
+  const photoHidden = document.getElementById(isJob ? 'j-photo' : 'tr-photo');
+  const photoBtnTxt = document.getElementById(isJob ? 'job-photo-btn-txt' : 'tr-photo-btn-txt');
+  const photoClear = document.getElementById(isJob ? 'job-photo-clear' : 'tr-photo-clear');
+
+  const rawName = (nameEl?.value || '').trim();
+  const rawVillage = (villageEl?.value || '').trim();
+  const rawPhone = (phoneEl?.value || '').replace(/\D/g, '');
+
+  if (photoCustName) {
+    photoCustName.textContent = rawName ? `${rawName}${rawVillage ? ' (' + rawVillage + ')' : ''}` : 'ग्राहक का नाम ऊपर लिखें';
+  }
+
+  if (!state.data || !disambigWrap || !banner) return;
+
+  // 1. If operator previously chose to force create a new customer
+  if (hiddenNewEl && hiddenNewEl.value === '1') {
+    disambigWrap.style.display = 'block';
+    disambigWrap.innerHTML = `
+      <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+        <div style="font-size:12px;color:#166534;line-height:1.3;">
+          <strong>✨ नया अलग खाता बनेगा:</strong> ${esc(rawName || 'नया ग्राहक')}${rawVillage ? ' (' + esc(rawVillage) + ')' : ''}<br>
+          <span style="font-size:11px;color:#15803d;">पहचान अलग रखने के लिए नाम में पिता का नाम या उपनाम जोड़ें (उदा: ${esc(rawName || 'दिनेश')} (मास्टर जी))</span>
+        </div>
+        <button type="button" class="btn btn-xs btn-ghost" data-act="reset-cust-match" data-prefix="${prefix}" style="font-size:11px;color:#4f46e5;font-weight:750;padding:2px 6px;white-space:nowrap;flex-shrink:0;">
+          🔄 दोबारा खोजें
+        </button>
+      </div>`;
+    banner.style.display = 'none';
+    if (hiddenIdEl) hiddenIdEl.value = 'new';
+    return;
+  }
+
+  // 2. If no sufficient input
+  if (rawName.length < 2 && rawPhone.length < 4) {
+    disambigWrap.style.display = 'none';
+    banner.style.display = 'none';
+    if (hiddenIdEl) hiddenIdEl.value = '';
+    if (photoImg) { photoImg.src = ''; photoImg.style.display = 'none'; }
+    if (photoPh) photoPh.style.display = 'block';
+    if (photoHidden) photoHidden.value = '';
+    if (photoBtnTxt) photoBtnTxt.textContent = 'ग्राहक का फोटो खींचें';
+    if (photoClear) photoClear.style.display = 'none';
+    return;
+  }
+
+  // 3. Search candidate matches
+  const matches = (state.data.customers || []).filter((c) => {
+    // If phone has 10 digits and customer has 10 digit phone, must match exactly
+    if (rawPhone.length === 10 && c.phone) {
+      const cPhone = c.phone.replace(/\D/g, '');
+      if (cPhone.length === 10 && cPhone !== rawPhone) {
+        return false; // Different phone = strictly different person!
+      }
+    }
+
+    if (!rawName || rawName === 'Walk-in') {
+      return c.phone && c.phone.replace(/\D/g, '').includes(rawPhone);
+    }
+
+    const nMatch = isPhoneticMatch(c.name, rawName);
+    if (!nMatch) return false;
+
+    if (rawVillage) {
+      return isPhoneticMatch(c.village, rawVillage);
+    }
+    return true;
+  });
+
+  if (matches.length === 0) {
+    disambigWrap.style.display = 'none';
+    banner.style.display = 'none';
+    if (hiddenIdEl) hiddenIdEl.value = '';
+    return;
+  }
+
+  if (matches.length === 1) {
+    const c = matches[0];
+    if (rawPhone.length === 10 && c.phone && c.phone.replace(/\D/g, '') !== rawPhone) {
+      disambigWrap.style.display = 'none';
+      banner.style.display = 'none';
+      if (hiddenIdEl) hiddenIdEl.value = '';
+      return;
+    }
+
+    disambigWrap.style.display = 'none';
+    if (hiddenIdEl) hiddenIdEl.value = c.id;
+    if (hiddenNewEl) hiddenNewEl.value = '0';
+
+    const cls = c.balancePaise > 0 ? 'due' : (c.balancePaise < 0 ? 'adv' : 'zero');
+    const balTxt = c.balancePaise > 0
+      ? inr(c.balancePaise) + ' ' + t('dueTag')
+      : (c.balancePaise < 0 ? inr(-c.balancePaise) + ' ' + t('advTag') : t('settledTag'));
+
+    banner.className = `cust-banner ${cls}`;
+    banner.style.display = 'flex';
+    banner.style.alignItems = 'center';
+    banner.style.justifyContent = 'space-between';
+    banner.style.gap = '8px';
+    banner.innerHTML = `
+      <div style="display:flex;align-items:center;gap:6px;min-width:0;" class="ellipsis">
+        ${c.photo ? `<img src="${c.photo}" style="width:24px;height:24px;border-radius:50%;object-fit:cover;border:1px solid #a5b4fc;flex-shrink:0;">` : ''}
+        <span class="ellipsis"><strong>${esc(c.name)}${c.village ? ' (' + esc(c.village) + ')' : ''}</strong> खाता:</span>
+        <strong style="white-space:nowrap;">${balTxt}</strong>
+        ${c.phone ? `<span style="font-size:11px;color:#64748b;">(📞 ${esc(c.phone)})</span>` : ''}
+      </div>
+      <button type="button" class="btn btn-xs btn-ghost" data-act="force-new-cust" data-prefix="${prefix}" title="अगर यह व्यक्ति अलग हैं तो नया खाता बनाएं" style="color:#dc2626;font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid #fecaca;background:#fff;white-space:nowrap;flex-shrink:0;">
+        ✕ यह वो नहीं हैं
+      </button>
+    `;
+
+    if (c.photo) {
+      if (photoImg) { photoImg.src = c.photo; photoImg.style.display = 'block'; }
+      if (photoPh) photoPh.style.display = 'none';
+      if (photoHidden) photoHidden.value = c.photo;
+      if (photoBtnTxt) photoBtnTxt.textContent = 'नया फोटो लें';
+      if (photoClear) photoClear.style.display = 'inline-flex';
+    }
+    return;
+  }
+
+  // Multiple candidates (matches.length > 1) - Prompt operator to choose!
+  if (hiddenIdEl) hiddenIdEl.value = '';
+  banner.style.display = 'none';
+  disambigWrap.style.display = 'block';
+  disambigWrap.innerHTML = `
+    <div style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:10px;padding:8px 10px;margin-bottom:8px;">
+      <div style="font-size:12px;font-weight:800;color:#92400e;display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+        <span>⚠️</span> <span>एक ही नाम के ${matches.length} ग्राहक मिले — सही ग्राहक चुनें:</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px;max-height:160px;overflow-y:auto;padding-right:2px;">
+        ${matches.map((c) => {
+          const bal = c.balancePaise > 0
+            ? inr(c.balancePaise) + ' बाकी'
+            : (c.balancePaise < 0 ? inr(-c.balancePaise) + ' जमा' : 'बराबर');
+          return `
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fff;padding:6px 8px;border-radius:8px;border:1px solid #e2e8f0;">
+            <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+              ${c.photo ? `<img src="${c.photo}" style="width:30px;height:30px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1px solid #cbd5e1;">` : `<span class="avatar small" style="width:30px;height:30px;font-size:12px;flex-shrink:0;">${esc(c.name.charAt(0))}</span>`}
+              <div style="min-width:0;line-height:1.2;">
+                <div style="font-size:12px;font-weight:750;color:#0f172a;" class="ellipsis">${esc(c.name)}${c.village ? ` <span style="font-size:10.5px;color:#64748b;font-weight:normal;">(${esc(c.village)})</span>` : ''}</div>
+                <div style="font-size:11px;color:#64748b;">${c.phone ? '📞 ' + esc(c.phone) : 'फोन नहीं'} · <strong style="color:${c.balancePaise > 0 ? '#b45309' : '#15803d'}">${bal}</strong></div>
+              </div>
+            </div>
+            <button type="button" class="btn btn-xs btn-primary" data-act="pick-disambig-cust" data-prefix="${prefix}" data-id="${c.id}" style="padding:4px 10px;font-size:11.5px;font-weight:750;border-radius:6px;white-space:nowrap;flex-shrink:0;">
+              चुनें ✓
+            </button>
+          </div>`;
+        }).join('')}
+      </div>
+      <div style="margin-top:6px;padding-top:6px;border-top:1px dashed #fde68a;display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:11px;color:#78350f;">यह इनमें से कोई नहीं हैं?</span>
+        <button type="button" class="btn btn-xs btn-subtle" data-act="force-new-cust" data-prefix="${prefix}" style="border:1px solid #cbd5e1;background:#fff;font-size:11px;padding:3px 8px;border-radius:6px;font-weight:700;color:#1e293b;">
+          ➕ नया अलग खाता बनाएं
+        </button>
+      </div>
+    </div>
+  `;
 }
 
 export function setupEventListeners() {
@@ -983,6 +1155,64 @@ export function setupEventListeners() {
         break;
       }
 
+      case 'pick-disambig-cust': {
+        const prefix = el.dataset.prefix || 'j';
+        const custId = el.dataset.id;
+        const cust = (state.data?.customers || []).find((c) => c.id === custId);
+        if (!cust) return;
+
+        const nameEl = document.getElementById(prefix === 'j' ? 'j-name' : 'tr-name');
+        const villageEl = document.getElementById(prefix === 'j' ? 'j-village' : 'tr-village');
+        const phoneEl = document.getElementById(prefix === 'j' ? 'j-phone' : 'tr-phone');
+        const hiddenIdEl = document.getElementById(prefix === 'j' ? 'j-customer-id' : 'tr-customer-id');
+        const hiddenNewEl = document.getElementById(prefix === 'j' ? 'j-is-new-customer' : 'tr-is-new-customer');
+        const disambigWrap = document.getElementById(prefix === 'j' ? 'cust-disambig-wrap' : 'tr-cust-disambig-wrap');
+
+        if (nameEl) nameEl.value = cust.name;
+        if (villageEl && cust.village) villageEl.value = cust.village;
+        if (phoneEl && cust.phone && !phoneEl.value) phoneEl.value = cust.phone;
+        if (hiddenIdEl) hiddenIdEl.value = cust.id;
+        if (hiddenNewEl) hiddenNewEl.value = '0';
+        if (disambigWrap) disambigWrap.style.display = 'none';
+
+        toast(`ग्राहक चुना गया: ${cust.name}`);
+        updateCustomerDisambiguation(prefix);
+        break;
+      }
+
+      case 'force-new-cust': {
+        const prefix = el.dataset.prefix || 'j';
+        const hiddenIdEl = document.getElementById(prefix === 'j' ? 'j-customer-id' : 'tr-customer-id');
+        const hiddenNewEl = document.getElementById(prefix === 'j' ? 'j-is-new-customer' : 'tr-is-new-customer');
+        const photoImg = document.getElementById(prefix === 'j' ? 'job-photo-img' : 'tr-photo-img');
+        const photoPh = document.getElementById(prefix === 'j' ? 'job-photo-ph' : 'tr-photo-ph');
+        const photoHidden = document.getElementById(prefix === 'j' ? 'j-photo' : 'tr-photo');
+        const photoBtnTxt = document.getElementById(prefix === 'j' ? 'job-photo-btn-txt' : 'tr-photo-btn-txt');
+        const photoClear = document.getElementById(prefix === 'j' ? 'job-photo-clear' : 'tr-photo-clear');
+
+        if (hiddenIdEl) hiddenIdEl.value = 'new';
+        if (hiddenNewEl) hiddenNewEl.value = '1';
+        if (photoImg) { photoImg.src = ''; photoImg.style.display = 'none'; }
+        if (photoPh) photoPh.style.display = 'block';
+        if (photoHidden) photoHidden.value = '';
+        if (photoBtnTxt) photoBtnTxt.textContent = 'ग्राहक का फोटो खींचें';
+        if (photoClear) photoClear.style.display = 'none';
+
+        toast('अलग नया खाता चुना गया — नाम में पिता का नाम या उपनाम जोड़ें');
+        updateCustomerDisambiguation(prefix);
+        break;
+      }
+
+      case 'reset-cust-match': {
+        const prefix = el.dataset.prefix || 'j';
+        const hiddenIdEl = document.getElementById(prefix === 'j' ? 'j-customer-id' : 'tr-customer-id');
+        const hiddenNewEl = document.getElementById(prefix === 'j' ? 'j-is-new-customer' : 'tr-is-new-customer');
+        if (hiddenIdEl) hiddenIdEl.value = '';
+        if (hiddenNewEl) hiddenNewEl.value = '0';
+        updateCustomerDisambiguation(prefix);
+        break;
+      }
+
       case 'open-cust':
         await openCustomer(el.dataset.id);
         break;
@@ -1348,29 +1578,8 @@ export function setupEventListeners() {
       return;
     }
 
-    if (tEl.id === 'j-phone') {
-      const phoneDigits = (tEl.value || '').replace(/\D/g, '');
-      const banner = document.getElementById('cust-balance-banner');
-      if (phoneDigits.length >= 4 && state.data) {
-        const match = state.data.customers.find((c) => c.phone && c.phone.replace(/\D/g, '').includes(phoneDigits));
-        if (match) {
-          const nameInput = document.getElementById('j-name');
-          const villageInput = document.getElementById('j-village');
-          if (nameInput && (!nameInput.value || nameInput.value === 'Walk-in')) nameInput.value = match.name;
-          if (villageInput && !villageInput.value) villageInput.value = match.village || '';
-          if (banner) {
-            const cls = match.balancePaise > 0 ? 'due' : (match.balancePaise < 0 ? 'adv' : 'zero');
-            const text = match.balancePaise > 0
-              ? inr(match.balancePaise) + ' ' + t('dueTag')
-              : (match.balancePaise < 0 ? inr(-match.balancePaise) + ' ' + t('advTag') : t('settledTag'));
-            banner.className = `cust-banner ${cls}`;
-            banner.innerHTML = `
-              <span><strong>${match.name}${match.village ? ' (' + match.village + ')' : ''}</strong> ledger:</span>
-              <strong>${text}</strong>`;
-            banner.style.display = '';
-          }
-        }
-      }
+    if (tEl.id === 'j-phone' || tEl.id === 'j-name' || tEl.id === 'j-village') {
+      updateCustomerDisambiguation('j');
       return;
     }
 
@@ -1390,85 +1599,6 @@ export function setupEventListeners() {
       return;
     }
 
-    // 2-entity lookup banner and udhaar photo in Job Form
-    if (tEl.id === 'j-name' || tEl.id === 'j-village') {
-      const rawName = (document.getElementById('j-name')?.value || '').trim();
-      const rawVillage = (document.getElementById('j-village')?.value || '').trim();
-      const nameVal = rawName.toLowerCase();
-      const villageVal = rawVillage.toLowerCase();
-      const banner = document.getElementById('cust-balance-banner');
-      const jobPhotoCustName = document.getElementById('job-photo-cust-name');
-      const jobPhotoImg = document.getElementById('job-photo-img');
-      const jobPhotoPh = document.getElementById('job-photo-ph');
-      const jobPhotoHidden = document.getElementById('j-photo');
-      const jobPhotoBtnTxt = document.getElementById('job-photo-btn-txt');
-      const jobPhotoClear = document.getElementById('job-photo-clear');
-
-      if (jobPhotoCustName) {
-        jobPhotoCustName.textContent = rawName ? `${rawName}${rawVillage ? ' (' + rawVillage + ')' : ''}` : 'ग्राहक का नाम ऊपर लिखें';
-      }
-
-      if (!banner || !state.data) return;
-
-      if (!nameVal) {
-        banner.style.display = 'none';
-        if (jobPhotoImg) { jobPhotoImg.src = ''; jobPhotoImg.style.display = 'none'; }
-        if (jobPhotoPh) jobPhotoPh.style.display = 'block';
-        if (jobPhotoHidden) jobPhotoHidden.value = '';
-        if (jobPhotoBtnTxt) jobPhotoBtnTxt.textContent = 'ग्राहक का फोटो खींचें';
-        if (jobPhotoClear) jobPhotoClear.style.display = 'none';
-        return;
-      }
-
-      const match = state.data.customers.find((c) => {
-        const nameMatch = isPhoneticMatch(c.name, rawName);
-        if (!nameMatch) return false;
-        if (villageVal) {
-          return isPhoneticMatch(c.village, rawVillage);
-        }
-        return true;
-      });
-
-      if (match) {
-        const cls = match.balancePaise > 0 ? 'due' : (match.balancePaise < 0 ? 'adv' : 'zero');
-        const text = match.balancePaise > 0
-          ? inr(match.balancePaise) + ' ' + t('dueTag')
-          : (match.balancePaise < 0 ? inr(-match.balancePaise) + ' ' + t('advTag') : t('settledTag'));
-        banner.className = `cust-banner ${cls}`;
-        banner.innerHTML = `
-          <span><strong>${match.name}${match.village ? ' (' + match.village + ')' : ''}</strong> ledger:</span>
-          <strong>${text}</strong>`;
-        banner.style.display = '';
-
-        const phoneInput = document.getElementById('j-phone');
-        if (phoneInput && !phoneInput.value && match.phone) {
-          phoneInput.value = match.phone;
-        }
-
-        // Live photo sync for Udhaar verification
-        if (match.photo) {
-          if (jobPhotoImg) { jobPhotoImg.src = match.photo; jobPhotoImg.style.display = 'block'; }
-          if (jobPhotoPh) jobPhotoPh.style.display = 'none';
-          if (jobPhotoHidden) jobPhotoHidden.value = match.photo;
-          if (jobPhotoBtnTxt) jobPhotoBtnTxt.textContent = 'नया फोटो लें';
-          if (jobPhotoClear) jobPhotoClear.style.display = 'inline-flex';
-        } else {
-          if (jobPhotoImg) { jobPhotoImg.src = ''; jobPhotoImg.style.display = 'none'; }
-          if (jobPhotoPh) jobPhotoPh.style.display = 'block';
-          if (jobPhotoHidden) jobPhotoHidden.value = '';
-          if (jobPhotoBtnTxt) jobPhotoBtnTxt.textContent = 'ग्राहक का फोटो खींचें';
-          if (jobPhotoClear) jobPhotoClear.style.display = 'none';
-        }
-      } else {
-        banner.style.display = 'none';
-        if (jobPhotoImg) { jobPhotoImg.src = ''; jobPhotoImg.style.display = 'none'; }
-        if (jobPhotoPh) jobPhotoPh.style.display = 'block';
-        if (jobPhotoHidden) jobPhotoHidden.value = '';
-        if (jobPhotoBtnTxt) jobPhotoBtnTxt.textContent = 'ग्राहक का फोटो खींचें';
-        if (jobPhotoClear) jobPhotoClear.style.display = 'none';
-      }
-    }
-
     // Live calculation for Trade (Sale / Purchase)
     if (tEl.id === 'tr-qty' || tEl.id === 'tr-rate') {
       const qty = Number(document.getElementById('tr-qty')?.value) || 0;
@@ -1480,69 +1610,9 @@ export function setupEventListeners() {
     }
 
     // Live Customer Lookup and Photo for Trade
-    if (tEl.id === 'tr-name' || tEl.id === 'tr-village') {
-      const rawName = (document.getElementById('tr-name')?.value || '').trim();
-      const rawVillage = (document.getElementById('tr-village')?.value || '').trim();
-      const nameVal = rawName.toLowerCase();
-      const villageVal = rawVillage.toLowerCase();
-      const banner = document.getElementById('tr-cust-balance-banner');
-      const custNameEl = document.getElementById('tr-photo-cust-name');
-      const photoImg = document.getElementById('tr-photo-img');
-      const photoPh = document.getElementById('tr-photo-ph');
-      const photoHidden = document.getElementById('tr-photo');
-      const photoClear = document.getElementById('tr-photo-clear');
-      const photoBtnTxt = document.getElementById('tr-photo-btn-txt');
-
-      if (custNameEl) {
-        custNameEl.textContent = rawName ? `${rawName}${rawVillage ? ' (' + rawVillage + ')' : ''}` : 'ग्राहक का नाम ऊपर लिखें';
-      }
-
-      if (banner && state.data) {
-        if (!nameVal) {
-          banner.style.display = 'none';
-          if (photoImg) { photoImg.src = ''; photoImg.style.display = 'none'; }
-          if (photoPh) photoPh.style.display = 'block';
-          if (photoHidden) photoHidden.value = '';
-          if (photoBtnTxt) photoBtnTxt.textContent = 'ग्राहक का फोटो खींचें';
-          if (photoClear) photoClear.style.display = 'none';
-        } else {
-          const match = state.data.customers.find((c) => {
-            const mName = isPhoneticMatch(c.name, rawName);
-            if (!mName) return false;
-            if (villageVal) return isPhoneticMatch(c.village, rawVillage);
-            return true;
-          });
-          if (match) {
-            const cls = match.balancePaise > 0 ? 'due' : (match.balancePaise < 0 ? 'adv' : 'zero');
-            const text = match.balancePaise > 0
-              ? inr(match.balancePaise) + ' ' + t('dueTag')
-              : (match.balancePaise < 0 ? inr(-match.balancePaise) + ' ' + t('advTag') : t('settledTag'));
-            banner.className = 'cust-banner ' + cls;
-            banner.innerHTML = `<span><strong>${esc(match.name)}${match.village ? ' (' + esc(match.village) + ')' : ''}</strong> खाता:</span> <strong>${text}</strong>`;
-            banner.style.display = 'flex';
-
-            const phoneInput = document.getElementById('tr-phone');
-            if (phoneInput && !phoneInput.value && match.phone) {
-              phoneInput.value = match.phone;
-            }
-
-            if (match.photo) {
-              if (photoImg) { photoImg.src = match.photo; photoImg.style.display = 'block'; }
-              if (photoPh) photoPh.style.display = 'none';
-              if (photoHidden) photoHidden.value = match.photo;
-              if (photoBtnTxt) photoBtnTxt.textContent = 'नया फोटो लें';
-              if (photoClear) photoClear.style.display = 'inline-flex';
-            }
-          } else {
-            banner.style.display = 'none';
-            if (photoImg) { photoImg.src = ''; photoImg.style.display = 'none'; }
-            if (photoPh) photoPh.style.display = 'block';
-            if (photoHidden) photoHidden.value = '';
-            if (photoBtnTxt) photoBtnTxt.textContent = 'ग्राहक का फोटो खींचें';
-            if (photoClear) photoClear.style.display = 'none';
-          }
-        }
-      }
+    if (tEl.id === 'tr-name' || tEl.id === 'tr-village' || tEl.id === 'tr-phone') {
+      updateCustomerDisambiguation('tr');
+      return;
     }
 
     // Live calculation & customer lookup for Token Form
@@ -1744,6 +1814,8 @@ export function setupEventListeners() {
         withToken: state.job.withToken,
         tokenId: state.job.tokenId,
         tokenNo: state.job.tokenNo,
+        customerId: String(fd.get('customerId') || '').trim() || undefined,
+        isNewCustomer: fd.get('isNewCustomer') === '1',
       };
 
       const data = await api('/api/jobs', jobPayload);
@@ -2139,6 +2211,8 @@ export function setupEventListeners() {
         photo,
         note,
         saveProduct,
+        customerId: String(fd.get('customerId') || '').trim() || undefined,
+        isNewCustomer: fd.get('isNewCustomer') === '1',
       };
 
       await withBusy(subBtn, async () => {

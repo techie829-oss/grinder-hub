@@ -168,7 +168,8 @@ export function openCustomerEditModal(id) {
 
       <div class="field">
         <label for="ec-name">${t('customerName')} <span class="req">*</span></label>
-        <input id="ec-name" name="name" maxlength="60" value="${esc(cust ? cust.name : '')}" placeholder="Customer name" required autocomplete="off">
+        <input id="ec-name" name="name" maxlength="60" value="${esc(cust ? cust.name : '')}" placeholder="उदा. दिनेश कुमार (मास्टर जी)" required autocomplete="off">
+        <div style="font-size:11px;color:#64748b;margin-top:3px;">💡 एक ही नाम के कई लोग हों तो पिता का नाम या उपनाम जोड़ें (उदा. दिनेश (रामबली))</div>
       </div>
       <div class="field">
         <label for="ec-village">${t('villageLabel')}</label>

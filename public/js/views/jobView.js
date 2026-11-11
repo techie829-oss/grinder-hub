@@ -57,8 +57,11 @@ function renderGrindTab(data) {
   const billWeight = chargeBasis === 'gross' ? grossWeight : netWeight;
   const amountPaise = Math.round(billWeight * ratePerUnit * 100);
 
-  const matchedCustomer = data.customers.find((c) => {
+  const candidateMatches = data.customers.filter((c) => {
     if (!job.name) return false;
+    if (job.phone && c.phone && job.phone.length === 10 && c.phone.replace(/\D/g, '').length === 10) {
+      if (c.phone.replace(/\D/g, '') !== job.phone) return false;
+    }
     const nameMatch = isPhoneticMatch(c.name, job.name);
     if (!nameMatch) return false;
     if (job.village) {
@@ -66,6 +69,7 @@ function renderGrindTab(data) {
     }
     return true;
   });
+  const matchedCustomer = candidateMatches.length === 1 ? candidateMatches[0] : null;
 
   const tObj = data.tokens || { waiting: [], serving: null, nextNo: 1 };
   const activeTokens = [tObj.serving, ...(tObj.waiting || [])].filter(Boolean);
@@ -139,9 +143,16 @@ function renderGrindTab(data) {
       </div>
     </div>
 
-    <div id="cust-balance-banner" class="cust-banner ${matchedCustomer ? (matchedCustomer.balancePaise > 0 ? 'due' : (matchedCustomer.balancePaise < 0 ? 'adv' : 'zero')) : ''}" style="${matchedCustomer ? '' : 'display:none'};margin-bottom:8px;">
-      <span>${matchedCustomer ? (matchedCustomer.village ? `<strong>${esc(matchedCustomer.name)} (${esc(matchedCustomer.village)})</strong>` : `<strong>${esc(matchedCustomer.name)}</strong>`) + ' ledger:' : ''}</span>
-      <strong>${matchedCustomer ? (matchedCustomer.balancePaise > 0 ? inr(matchedCustomer.balancePaise) + ' ' + t('dueTag') : (matchedCustomer.balancePaise < 0 ? inr(-matchedCustomer.balancePaise) + ' ' + t('advTag') : t('settledTag'))) : ''}</strong>
+    <input type="hidden" id="j-customer-id" name="customerId" value="${matchedCustomer ? matchedCustomer.id : ''}">
+    <input type="hidden" id="j-is-new-customer" name="isNewCustomer" value="0">
+    <div id="cust-disambig-wrap" style="display:none;margin-bottom:8px;"></div>
+
+    <div id="cust-balance-banner" class="cust-banner ${matchedCustomer ? (matchedCustomer.balancePaise > 0 ? 'due' : (matchedCustomer.balancePaise < 0 ? 'adv' : 'zero')) : ''}" style="${matchedCustomer ? 'display:flex;align-items:center;justify-content:space-between;gap:8px;' : 'display:none;'};margin-bottom:8px;">
+      <div style="display:flex;align-items:center;gap:6px;min-width:0;" class="ellipsis">
+        <span>${matchedCustomer ? (matchedCustomer.village ? `<strong>${esc(matchedCustomer.name)} (${esc(matchedCustomer.village)})</strong>` : `<strong>${esc(matchedCustomer.name)}</strong>`) + ' ledger:' : ''}</span>
+        <strong>${matchedCustomer ? (matchedCustomer.balancePaise > 0 ? inr(matchedCustomer.balancePaise) + ' ' + t('dueTag') : (matchedCustomer.balancePaise < 0 ? inr(-matchedCustomer.balancePaise) + ' ' + t('advTag') : t('settledTag'))) : ''}</strong>
+      </div>
+      ${matchedCustomer ? `<button type="button" class="btn btn-xs btn-ghost" data-act="force-new-cust" style="color:#dc2626;font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid #fecaca;background:#fff;flex-shrink:0;">✕ यह वो नहीं हैं</button>` : ''}
     </div>
 
     <!-- 4. POS Core Billing Dashboard Box (Weight + Rate = Total) -->
@@ -298,8 +309,11 @@ function renderSaleTab(data) {
     icon: '📦',
   }));
 
-  const matchedCustomer = data.customers.find((c) => {
+  const candidateMatches = data.customers.filter((c) => {
     if (!trade.name) return false;
+    if (trade.phone && c.phone && trade.phone.length === 10 && c.phone.replace(/\D/g, '').length === 10) {
+      if (c.phone.replace(/\D/g, '') !== trade.phone) return false;
+    }
     const nameMatch = isPhoneticMatch(c.name, trade.name);
     if (!nameMatch) return false;
     if (trade.village) {
@@ -307,6 +321,7 @@ function renderSaleTab(data) {
     }
     return true;
   });
+  const matchedCustomer = candidateMatches.length === 1 ? candidateMatches[0] : null;
 
   return `
   <form class="card pos-card" data-form="trade">
@@ -396,9 +411,16 @@ function renderSaleTab(data) {
         value="${esc(trade.phone)}" placeholder="10 Digits">
     </div>
 
-    <div id="tr-cust-balance-banner" class="cust-banner ${matchedCustomer ? (matchedCustomer.balancePaise > 0 ? 'due' : (matchedCustomer.balancePaise < 0 ? 'adv' : 'zero')) : ''}" style="${matchedCustomer ? '' : 'display:none'};margin-bottom:8px;">
-      <span>${matchedCustomer ? (matchedCustomer.village ? `<strong>${esc(matchedCustomer.name)} (${esc(matchedCustomer.village)})</strong>` : `<strong>${esc(matchedCustomer.name)}</strong>`) + ' खाता:' : ''}</span>
-      <strong>${matchedCustomer ? (matchedCustomer.balancePaise > 0 ? inr(matchedCustomer.balancePaise) + ' ' + t('dueTag') : (matchedCustomer.balancePaise < 0 ? inr(-matchedCustomer.balancePaise) + ' ' + t('advTag') : t('settledTag'))) : ''}</strong>
+    <input type="hidden" id="tr-customer-id" name="customerId" value="${matchedCustomer ? matchedCustomer.id : ''}">
+    <input type="hidden" id="tr-is-new-customer" name="isNewCustomer" value="0">
+    <div id="tr-cust-disambig-wrap" style="display:none;margin-bottom:8px;"></div>
+
+    <div id="tr-cust-balance-banner" class="cust-banner ${matchedCustomer ? (matchedCustomer.balancePaise > 0 ? 'due' : (matchedCustomer.balancePaise < 0 ? 'adv' : 'zero')) : ''}" style="${matchedCustomer ? 'display:flex;align-items:center;justify-content:space-between;gap:8px;' : 'display:none;'};margin-bottom:8px;">
+      <div style="display:flex;align-items:center;gap:6px;min-width:0;" class="ellipsis">
+        <span>${matchedCustomer ? (matchedCustomer.village ? `<strong>${esc(matchedCustomer.name)} (${esc(matchedCustomer.village)})</strong>` : `<strong>${esc(matchedCustomer.name)}</strong>`) + ' खाता:' : ''}</span>
+        <strong>${matchedCustomer ? (matchedCustomer.balancePaise > 0 ? inr(matchedCustomer.balancePaise) + ' ' + t('dueTag') : (matchedCustomer.balancePaise < 0 ? inr(-matchedCustomer.balancePaise) + ' ' + t('advTag') : t('settledTag'))) : ''}</strong>
+      </div>
+      ${matchedCustomer ? `<button type="button" class="btn btn-xs btn-ghost" data-act="force-new-cust" style="color:#dc2626;font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid #fecaca;background:#fff;flex-shrink:0;">✕ यह वो नहीं हैं</button>` : ''}
     </div>
 
     <!-- 5. Payment Mode Toggle -->
@@ -467,8 +489,11 @@ function renderPurchaseTab(data) {
     icon: '🌾',
   }));
 
-  const matchedCustomer = data.customers.find((c) => {
+  const candidateMatches = data.customers.filter((c) => {
     if (!trade.name) return false;
+    if (trade.phone && c.phone && trade.phone.length === 10 && c.phone.replace(/\D/g, '').length === 10) {
+      if (c.phone.replace(/\D/g, '') !== trade.phone) return false;
+    }
     const nameMatch = isPhoneticMatch(c.name, trade.name);
     if (!nameMatch) return false;
     if (trade.village) {
@@ -476,6 +501,7 @@ function renderPurchaseTab(data) {
     }
     return true;
   });
+  const matchedCustomer = candidateMatches.length === 1 ? candidateMatches[0] : null;
 
   return `
   <form class="card pos-card" data-form="trade">
@@ -569,9 +595,16 @@ function renderPurchaseTab(data) {
         value="${esc(trade.phone)}" placeholder="10 Digits">
     </div>
 
-    <div id="tr-cust-balance-banner" class="cust-banner ${matchedCustomer ? (matchedCustomer.balancePaise > 0 ? 'due' : (matchedCustomer.balancePaise < 0 ? 'adv' : 'zero')) : ''}" style="${matchedCustomer ? '' : 'display:none'};margin-bottom:8px;">
-      <span>${matchedCustomer ? (matchedCustomer.village ? `<strong>${esc(matchedCustomer.name)} (${esc(matchedCustomer.village)})</strong>` : `<strong>${esc(matchedCustomer.name)}</strong>`) + ' खाता:' : ''}</span>
-      <strong>${matchedCustomer ? (matchedCustomer.balancePaise > 0 ? inr(matchedCustomer.balancePaise) + ' ' + t('dueTag') : (matchedCustomer.balancePaise < 0 ? inr(-matchedCustomer.balancePaise) + ' ' + t('advTag') : t('settledTag'))) : ''}</strong>
+    <input type="hidden" id="tr-customer-id" name="customerId" value="${matchedCustomer ? matchedCustomer.id : ''}">
+    <input type="hidden" id="tr-is-new-customer" name="isNewCustomer" value="0">
+    <div id="tr-cust-disambig-wrap" style="display:none;margin-bottom:8px;"></div>
+
+    <div id="tr-cust-balance-banner" class="cust-banner ${matchedCustomer ? (matchedCustomer.balancePaise > 0 ? 'due' : (matchedCustomer.balancePaise < 0 ? 'adv' : 'zero')) : ''}" style="${matchedCustomer ? 'display:flex;align-items:center;justify-content:space-between;gap:8px;' : 'display:none;'};margin-bottom:8px;">
+      <div style="display:flex;align-items:center;gap:6px;min-width:0;" class="ellipsis">
+        <span>${matchedCustomer ? (matchedCustomer.village ? `<strong>${esc(matchedCustomer.name)} (${esc(matchedCustomer.village)})</strong>` : `<strong>${esc(matchedCustomer.name)}</strong>`) + ' खाता:' : ''}</span>
+        <strong>${matchedCustomer ? (matchedCustomer.balancePaise > 0 ? inr(matchedCustomer.balancePaise) + ' ' + t('dueTag') : (matchedCustomer.balancePaise < 0 ? inr(-matchedCustomer.balancePaise) + ' ' + t('advTag') : t('settledTag'))) : ''}</strong>
+      </div>
+      ${matchedCustomer ? `<button type="button" class="btn btn-xs btn-ghost" data-act="force-new-cust" style="color:#dc2626;font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid #fecaca;background:#fff;flex-shrink:0;">✕ यह वो नहीं हैं</button>` : ''}
     </div>
 
     <!-- 5. Payment Mode Toggle -->
