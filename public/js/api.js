@@ -49,6 +49,7 @@ export async function api(path, body) {
   let res;
   const targetUrl = getApiUrl(path);
   try {
+    const signal = typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(15000) : undefined;
     res = await fetch(targetUrl, {
       method: body === undefined ? 'GET' : 'POST',
       headers: {
@@ -57,9 +58,10 @@ export async function api(path, body) {
       },
       body: body === undefined ? undefined : JSON.stringify(body),
       credentials: 'include',
+      signal,
     });
   } catch (err) {
-    // Network unreachable
+    // Network unreachable or timeout
     return { ok: false, offline: true, error: 'Network offline' };
   }
 

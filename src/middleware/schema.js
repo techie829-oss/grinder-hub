@@ -127,5 +127,28 @@ export async function ensureSchema(env) {
     await env.DB.exec("ALTER TABLE tokens ADD COLUMN hide_loss INTEGER NOT NULL DEFAULT 0;");
   } catch (e) {}
 
+  // Indexes for high-throughput scaling & sub-10ms query execution
+  try {
+    await env.DB.exec('CREATE INDEX IF NOT EXISTS idx_entries_cust_bal ON entries(business_id, customer_id, kind, paid, amount_paise, created_at);');
+  } catch (e) {}
+  try {
+    await env.DB.exec('CREATE INDEX IF NOT EXISTS idx_entries_biz_time ON entries(business_id, created_at DESC);');
+  } catch (e) {}
+  try {
+    await env.DB.exec('CREATE INDEX IF NOT EXISTS idx_entries_biz_kind_paid ON entries(business_id, kind, paid, created_at);');
+  } catch (e) {}
+  try {
+    await env.DB.exec('CREATE INDEX IF NOT EXISTS idx_tokens_biz_day_status ON tokens(business_id, day, status, no);');
+  } catch (e) {}
+  try {
+    await env.DB.exec('CREATE INDEX IF NOT EXISTS idx_customers_biz_name_village ON customers(business_id, name_key, village_key);');
+  } catch (e) {}
+  try {
+    await env.DB.exec('CREATE INDEX IF NOT EXISTS idx_services_biz_active ON services(business_id, active, sort);');
+  } catch (e) {}
+  try {
+    await env.DB.exec('CREATE INDEX IF NOT EXISTS idx_products_biz_active ON products(business_id, active);');
+  } catch (e) {}
+
   schemaInitialized = true;
 }

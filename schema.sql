@@ -84,8 +84,10 @@ CREATE TABLE IF NOT EXISTS entries (
   day          TEXT NOT NULL,
   created_at   INTEGER NOT NULL
 );
-CREATE INDEX IF NOT EXISTS entries_biz_time ON entries(business_id, created_at);
+CREATE INDEX IF NOT EXISTS entries_biz_time ON entries(business_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS entries_biz_cust ON entries(business_id, customer_id);
+CREATE INDEX IF NOT EXISTS idx_entries_cust_bal ON entries(business_id, customer_id, kind, paid, amount_paise, created_at);
+CREATE INDEX IF NOT EXISTS idx_entries_biz_kind_paid ON entries(business_id, kind, paid, created_at);
 
 CREATE TABLE IF NOT EXISTS tokens (
   id           TEXT PRIMARY KEY,

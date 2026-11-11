@@ -76,5 +76,5 @@ export function logoMark(size) {
 }
 
 export function emptyBlock(title, sub) {
-  return `<div class="empty"><div class="empty-mark">◌</div><div class="strong">${esc(title)}</div><div>${esc(sub)}</div></div>`;
+  return `<div class="empty"><div class="empty-mark" style="font-size:24px;margin-bottom:6px;opacity:0.75;">📋</div><div class="strong">${esc(title)}</div><div>${esc(sub)}</div></div>`;
 }

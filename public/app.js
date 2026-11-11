@@ -33,14 +33,25 @@ export function render() {
   }
 
   if (!state.data) {
-    // If merchant is logged in but data is fetching, keep clean branded boot loader (do not flash customer status page)
+    // If merchant is logged in but data is fetching, keep clean branded boot loader with auto-retry
     if (hasAuthToken || (typeof localStorage !== 'undefined' && localStorage.getItem('cb_token'))) {
       root.innerHTML = `
-        <div class="boot" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:70vh;text-align:center;">
+        <div class="boot" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:70vh;text-align:center;padding:20px;">
           <img src="/icon.svg" width="68" height="68" class="boot-mark" alt="तौल-माल लोगो" style="border:none;box-shadow:0 8px 24px rgba(245,158,11,0.35);border-radius:18px;">
           <p style="font-weight:750;margin-top:14px;color:#0f172a;font-size:15px;">तौल-माल हिसाब लोड हो रहा है…</p>
+          <div id="boot-help-links" style="display:none;margin-top:18px;gap:8px;flex-direction:column;align-items:center;">
+            <p style="font-size:12px;color:#64748b;margin:0;">धीमा नेटवर्क? लोड होने में समय लग रहा है।</p>
+            <div style="display:flex;gap:8px;">
+              <button type="button" class="btn btn-sm btn-subtle" onclick="location.reload()" style="font-size:12px;border:1px solid #cbd5e1;padding:6px 14px;border-radius:8px;background:#fff;">🔄 रिफ्रेश करें</button>
+              <button type="button" class="btn btn-sm btn-ghost" onclick="localStorage.removeItem('cb_token');location.reload();" style="font-size:12px;color:#dc2626;">लॉगिन पेज</button>
+            </div>
+          </div>
         </div>
       `;
+      setTimeout(() => {
+        const el = document.getElementById('boot-help-links');
+        if (el) el.style.display = 'flex';
+      }, 3500);
       return;
     }
     root.innerHTML = viewAuth();

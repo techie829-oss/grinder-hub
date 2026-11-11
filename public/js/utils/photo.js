@@ -1,6 +1,6 @@
 // Client-side instant image compressor & square cropper
-// Converts camera snaps and gallery uploads into optimized ~10KB JPEG thumbnails
-export function processImageFile(file, maxSize = 240, quality = 0.75) {
+// Converts camera snaps and gallery uploads into optimized ~2-3KB JPEG avatars
+export function processImageFile(file, maxSize = 120, quality = 0.65) {
   return new Promise((resolve, reject) => {
     if (!file || !file.type.startsWith('image/')) {
       return reject(new Error('कृपया सही फोटो चुनें'));

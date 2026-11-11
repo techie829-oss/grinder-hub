@@ -11,12 +11,41 @@ export function isOnline() {
   return navigator.onLine !== false;
 }
 
+function createSlimSnapshot(snapshot, maxEntries = 40, includePhotos = false) {
+  if (!snapshot) return null;
+  const slim = { ...snapshot };
+  if (Array.isArray(snapshot.customers)) {
+    slim.customers = snapshot.customers.map((c) => ({
+      id: c.id,
+      name: c.name,
+      village: c.village || '',
+      phone: c.phone || '',
+      balancePaise: c.balancePaise || 0,
+      lastAt: c.lastAt || null,
+      photo: includePhotos && c.photo && c.photo.length < 3500 ? c.photo : '',
+    }));
+  }
+  if (Array.isArray(snapshot.entries)) {
+    slim.entries = snapshot.entries.slice(0, maxEntries);
+  }
+  return slim;
+}
+
 export function saveOfflineSnapshot(snapshot) {
   if (!snapshot) return;
   try {
-    localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(snapshot));
-  } catch (err) {
-    console.warn('Failed to save offline snapshot to localStorage', err);
+    // 1. Try saving optimized snapshot (lightweight photos, top entries)
+    const slim = createSlimSnapshot(snapshot, 60, true);
+    localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(slim));
+  } catch (err1) {
+    try {
+      // 2. Fallback on quota exceed: strip all photos & keep top 25 entries
+      console.warn('Storage quota warning, saving ultra-slim snapshot', err1);
+      const ultraSlim = createSlimSnapshot(snapshot, 25, false);
+      localStorage.setItem(SNAPSHOT_KEY, JSON.stringify(ultraSlim));
+    } catch (err2) {
+      console.warn('Failed to save offline snapshot to localStorage', err2);
+    }
   }
 }
 

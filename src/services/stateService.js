@@ -18,9 +18,12 @@ export async function buildState(env, businessId, range) {
       `SELECT id, name, unit, rate_paise, COALESCE(loss_rate_g, 0) AS loss_rate_g, sort
          FROM services WHERE business_id = ? AND active = 1 ORDER BY sort, name`
     ).bind(businessId),
-    // 1: customers
+    // 1: customers (optimized with size guard so huge legacy photos don't slow down state payload)
     env.DB.prepare(
-      `SELECT c.id, c.name, COALESCE(c.village, '') AS village, c.phone, COALESCE(c.photo, '') AS photo, c.created_at,
+      `SELECT c.id, c.name, COALESCE(c.village, '') AS village, c.phone,
+              CASE WHEN LENGTH(COALESCE(c.photo, '')) > 8000 THEN '' ELSE COALESCE(c.photo, '') END AS photo,
+              CASE WHEN LENGTH(COALESCE(c.photo, '')) > 0 THEN 1 ELSE 0 END AS has_photo,
+              c.created_at,
               COALESCE(SUM(CASE WHEN e.kind IN ('job', 'sale') AND e.paid = 0 THEN e.amount_paise
                                 WHEN e.kind = 'purchase' AND e.paid = 0 THEN -e.amount_paise
                                 WHEN e.kind = 'payment' THEN -e.amount_paise ELSE 0 END), 0) AS balance_paise,
@@ -31,7 +34,7 @@ export async function buildState(env, businessId, range) {
         GROUP BY c.id
         ORDER BY balance_paise DESC, last_at DESC`
     ).bind(businessId),
-    // 2: recent entries for range
+    // 2: recent entries for range (capped to 100 for sub-100ms instant payload)
     env.DB.prepare(
       `SELECT e.id, e.kind, e.customer_id, e.name, COALESCE(e.village, '') AS village,
               COALESCE(e.item_name, '') AS item_name,
@@ -43,7 +46,7 @@ export async function buildState(env, businessId, range) {
          LEFT JOIN services s ON s.id = e.service_id AND s.business_id = e.business_id
         WHERE e.business_id = ? AND ${entriesTimeCondition}
         ORDER BY e.created_at DESC
-        LIMIT 400`
+        LIMIT 100`
     ).bind(...entriesTimeBinds),
     // 3: tokens today
     env.DB.prepare(
@@ -104,6 +107,7 @@ export async function buildState(env, businessId, range) {
     village: c.village || '',
     phone: c.phone || '',
     photo: c.photo || '',
+    hasPhoto: Number(c.has_photo) === 1,
     balancePaise: c.balance_paise || 0,
     lastAt: c.last_at || null,
   }));
