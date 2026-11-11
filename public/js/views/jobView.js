@@ -2,6 +2,7 @@
 import { state } from '../state.js';
 import { inr, unitOf, esc, qtyFmt } from '../utils/formatters.js';
 import { serviceCards } from '../components/rows.js';
+import { isPhoneticMatch } from '../utils/phonetic.js';
 import { t } from '../i18n.js';
 
 export function currentService() {
@@ -58,10 +59,10 @@ function renderGrindTab(data) {
 
   const matchedCustomer = data.customers.find((c) => {
     if (!job.name) return false;
-    const nameMatch = c.name.toLowerCase() === job.name.trim().toLowerCase();
+    const nameMatch = isPhoneticMatch(c.name, job.name);
     if (!nameMatch) return false;
     if (job.village) {
-      return (c.village || '').toLowerCase() === job.village.trim().toLowerCase();
+      return isPhoneticMatch(c.village, job.village);
     }
     return true;
   });
@@ -299,10 +300,10 @@ function renderSaleTab(data) {
 
   const matchedCustomer = data.customers.find((c) => {
     if (!trade.name) return false;
-    const nameMatch = c.name.toLowerCase() === trade.name.trim().toLowerCase();
+    const nameMatch = isPhoneticMatch(c.name, trade.name);
     if (!nameMatch) return false;
     if (trade.village) {
-      return (c.village || '').toLowerCase() === trade.village.trim().toLowerCase();
+      return isPhoneticMatch(c.village, trade.village);
     }
     return true;
   });
@@ -468,10 +469,10 @@ function renderPurchaseTab(data) {
 
   const matchedCustomer = data.customers.find((c) => {
     if (!trade.name) return false;
-    const nameMatch = c.name.toLowerCase() === trade.name.trim().toLowerCase();
+    const nameMatch = isPhoneticMatch(c.name, trade.name);
     if (!nameMatch) return false;
     if (trade.village) {
-      return (c.village || '').toLowerCase() === trade.village.trim().toLowerCase();
+      return isPhoneticMatch(c.village, trade.village);
     }
     return true;
   });

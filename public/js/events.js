@@ -9,6 +9,7 @@ import { customerRows } from './components/rows.js';
 import { filteredCustomers } from './views/customerView.js';
 import { currentService } from './views/jobView.js';
 import { showAuthError } from './views/authView.js';
+import { isPhoneticMatch, latinToDeva } from './utils/phonetic.js';
 import { setLanguage, t } from './i18n.js';
 import { enqueueOfflineAction, syncOfflineQueue, saveOfflineSnapshot } from './sync.js';
 
@@ -1265,9 +1266,64 @@ export function setupEventListeners() {
     }
   });
 
+  function showTranslitHelper(inputEl) {
+    if (!inputEl) return;
+    const val = (inputEl.value || '').trim();
+    let helper = document.getElementById('typing-translit-helper');
+    if (!val || /[\u0900-\u097F]/.test(val) || val.length < 2) {
+      if (helper) helper.remove();
+      return;
+    }
+    const deva = latinToDeva(val);
+    if (!deva || deva === val || !/[\u0900-\u097F]/.test(deva)) {
+      if (helper) helper.remove();
+      return;
+    }
+
+    if (!helper) {
+      helper = document.createElement('div');
+      helper.id = 'typing-translit-helper';
+      helper.style.cssText = 'margin-top:4px;display:flex;align-items:center;gap:6px;font-size:11.5px;color:#4f46e5;';
+    }
+
+    helper.innerHTML = `
+      <span style="color:#64748b;">English टाइपिंग:</span>
+      <button type="button" class="btn btn-xs btn-subtle" style="background:#eef2ff;color:#4f46e5;font-weight:750;border:1px solid #c7d2fe;padding:2px 8px;border-radius:6px;cursor:pointer;">
+        ✨ ${deva} (हिंदी में करें)
+      </button>
+    `;
+
+    const btn = helper.querySelector('button');
+    if (btn) {
+      btn.onmousedown = (e) => {
+        e.preventDefault();
+        inputEl.value = deva;
+        inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+        helper.remove();
+      };
+    }
+
+    if (inputEl.parentNode) {
+      inputEl.parentNode.insertBefore(helper, inputEl.nextSibling);
+    }
+  }
+
+  // Global blur listener to clean up helper
+  document.addEventListener('focusout', (ev) => {
+    setTimeout(() => {
+      const helper = document.getElementById('typing-translit-helper');
+      if (helper && document.activeElement !== ev.target) helper.remove();
+    }, 200);
+  });
+
   // Global input listener
   document.addEventListener('input', (ev) => {
     const tEl = ev.target;
+
+    // Live Hindi transliteration helper on name & village inputs
+    if (tEl.id === 'j-name' || tEl.id === 'j-village' || tEl.id === 'tr-name' || tEl.id === 'tr-village' || tEl.id === 'ec-name' || tEl.id === 'ec-village') {
+      showTranslitHelper(tEl);
+    }
 
     if (tEl.dataset.act === 'admin-search' || tEl.id === 'admin-search-input') {
       state.admin.q = tEl.value;
@@ -1365,10 +1421,10 @@ export function setupEventListeners() {
       }
 
       const match = state.data.customers.find((c) => {
-        const nameMatch = c.name.toLowerCase() === nameVal;
+        const nameMatch = isPhoneticMatch(c.name, rawName);
         if (!nameMatch) return false;
         if (villageVal) {
-          return (c.village || '').toLowerCase() === villageVal;
+          return isPhoneticMatch(c.village, rawVillage);
         }
         return true;
       });
@@ -1451,9 +1507,9 @@ export function setupEventListeners() {
           if (photoClear) photoClear.style.display = 'none';
         } else {
           const match = state.data.customers.find((c) => {
-            const mName = c.name.toLowerCase() === nameVal;
+            const mName = isPhoneticMatch(c.name, rawName);
             if (!mName) return false;
-            if (villageVal) return (c.village || '').toLowerCase() === villageVal;
+            if (villageVal) return isPhoneticMatch(c.village, rawVillage);
             return true;
           });
           if (match) {

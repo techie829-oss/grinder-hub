@@ -207,8 +207,8 @@ export const TRANSLATIONS = {
     tabPurchase: '📥 खरीद',
     stepPickService: '1. सुविधाएं / सेवा चुनें:',
     stepCustomerDetails: '2. ग्राहक का विवरण:',
-    namePlaceholder: 'ग्राहक का नाम',
-    villagePlaceholder: 'गाँव या स्थान',
+    namePlaceholder: 'नाम (English या हिंदी में)',
+    villagePlaceholder: 'गाँव (English या हिंदी में)',
     phonePlaceholderTen: '10 Digits',
     ocrBtnLabel: '📷 OCR',
     scaleBtnLabel: 'कांटा',
@@ -300,11 +300,11 @@ export const TRANSLATIONS = {
     // Customer Contacts View
     customerPhonebookTitle: 'ग्राहक फोन बुक (Contacts)',
     addNewCustomerBtn: 'नया ग्राहक जोड़ें',
-    searchCustomerPlaceholder: '🔍 नाम, गाँव या 10-अंकों के फोन से खोजें…',
+    searchCustomerPlaceholder: '🔍 नाम (English/हिंदी), गाँव या फोन से खोजें…',
     dueKhataFilter: 'बाकी (उधार)',
     advKhataFilter: 'जमा (अग्रिम)',
     zeroKhataFilter: 'हिसाब बराबर',
-    customerTipNote: 'गाँव में एक नाम के कई ग्राहक होते हैं - फोटो व गाँव देखकर खाता खोलें ताकि कोई त्रुटि न हो।',
+    customerTipNote: 'सुझाव: आप नाम English (जैसे ramesh) या हिंदी दोनों में लिख सकते हैं — सिस्टम दोनों को अपने-आप पहचान लेता है।',
 
     // Universal Search & Voice Search
     universalSearchTitle: '🔍 ग्राहक, टोकन व रसीद खोजें',
@@ -954,11 +954,11 @@ export const TRANSLATIONS = {
     // Customer Contacts View
     customerPhonebookTitle: 'ग्राहक फोन बुक (Contacts)',
     addNewCustomerBtn: 'नया ग्राहक जोड़ें',
-    searchCustomerPlaceholder: '🔍 नाम, गाँव या 10-अंकों के फोन से खोजें…',
+    searchCustomerPlaceholder: '🔍 नाम (English/हिंदी), गाँव या फोन से खोजें…',
     dueKhataFilter: 'बाकी (उधार)',
     advKhataFilter: 'जमा (अग्रिम)',
     zeroKhataFilter: 'हिसाब बराबर',
-    customerTipNote: 'गाँव में एक नाम के कई ग्राहक होते हैं - फोटो व गाँव देखकर खाता खोलें ताकि कोई त्रुटि न हो।',
+    customerTipNote: 'सुझाव: आप नाम English (जैसे ramesh) या हिंदी दोनों में लिख सकते हैं — सिस्टम दोनों को अपने-आप पहचान लेता है।',
 
     // Universal Search & Voice Search
     universalSearchTitle: '🔍 ग्राहक, टोकन व रसीद खोजें',

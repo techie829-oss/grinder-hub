@@ -1,6 +1,7 @@
 // Job & Billing Controller
 import { readJson, json, bad } from '../utils/response.js';
 import { clean, normalizePhone, normName, normVillage, dayKey } from '../utils/helpers.js';
+import { isPhoneticMatch } from '../utils/phonetic.js';
 import { issueToken } from '../services/tokenService.js';
 import { buildState } from '../services/stateService.js';
 
@@ -57,11 +58,17 @@ export async function createJob(request, env, business, range) {
   if (name) {
     const key = normName(name);
     const vKey = normVillage(village);
-    const found = await env.DB.prepare(
-      'SELECT id, phone, village, photo FROM customers WHERE business_id = ? AND name_key = ? AND village_key = ?'
+    let found = await env.DB.prepare(
+      'SELECT id, phone, village, photo, name FROM customers WHERE business_id = ? AND name_key = ? AND village_key = ?'
     )
       .bind(business.id, key, vKey)
       .first();
+
+    // Bilingual phonetic match fallback (e.g. customer stored in Hindi and searched in English, or vice-versa)
+    if (!found) {
+      const candidates = await env.DB.prepare('SELECT id, name, village, phone, photo FROM customers WHERE business_id = ?').bind(business.id).all();
+      found = (candidates.results || []).find((c) => isPhoneticMatch(c.name, name) && (!village || isPhoneticMatch(c.village, village))) || null;
+    }
     if (found) {
       customerId = found.id;
       if (!found.phone && phone) {

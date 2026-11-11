@@ -2,6 +2,7 @@
 import { state, modalRoot } from '../state.js';
 import { esc, inr, qtyFmt, unitOf, dateTxt, timeTxt, emptyBlock, phoneFmt } from '../utils/formatters.js';
 import { api } from '../api.js';
+import { isPhoneticMatch } from '../utils/phonetic.js';
 import { t } from '../i18n.js';
 
 export function showModal(html) {
@@ -338,15 +339,15 @@ export function renderUniversalSearchResults(query) {
   const cleanDigits = q.replace(/\D/g, '');
   const isNumericOnly = /^\d+$/.test(q);
 
-  // 1. Match Customers by name OR phone OR village
+  // 1. Match Customers by name OR phone OR village (bilingual phonetic search)
   const matchedCustomers = (state.data.customers || []).filter((c) => {
-    const nameMatch = (c.name || '').toLowerCase().includes(q);
-    const villageMatch = (c.village || '').toLowerCase().includes(q);
+    const nameMatch = isPhoneticMatch(c.name, q);
+    const villageMatch = c.village && isPhoneticMatch(c.village, q);
     const phoneMatch = cleanDigits && cleanDigits.length >= 3 && (c.phone || '').includes(cleanDigits);
     return nameMatch || villageMatch || phoneMatch;
   }).slice(0, 6);
 
-  // 2. Match Tokens by token # OR customer name OR phone
+  // 2. Match Tokens by token # OR customer name OR village OR phone
   const allTokens = [
     ...(state.data.tokens?.serving ? [state.data.tokens.serving] : []),
     ...(state.data.tokens?.waiting || []),
@@ -354,9 +355,10 @@ export function renderUniversalSearchResults(query) {
   ];
   const matchedTokens = allTokens.filter((tok) => {
     const numMatch = isNumericOnly && tok.no === parseInt(cleanDigits, 10);
-    const nameMatch = (tok.name || '').toLowerCase().includes(q);
+    const nameMatch = isPhoneticMatch(tok.name, q);
+    const villageMatch = tok.village && isPhoneticMatch(tok.village, q);
     const phoneMatch = cleanDigits && cleanDigits.length >= 3 && (tok.phone || '').includes(cleanDigits);
-    return numMatch || nameMatch || phoneMatch;
+    return numMatch || nameMatch || villageMatch || phoneMatch;
   }).slice(0, 6);
 
   if (matchedCustomers.length === 0 && matchedTokens.length === 0) {

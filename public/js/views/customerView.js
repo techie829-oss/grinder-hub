@@ -1,17 +1,20 @@
 import { state } from '../state.js';
 import { inr, esc } from '../utils/formatters.js';
 import { customerRows } from '../components/rows.js';
+import { isPhoneticMatch } from '../utils/phonetic.js';
 import { t } from '../i18n.js';
 
 export function filteredCustomers() {
-  const q = state.q.trim().toLowerCase();
+  const q = state.q.trim();
   const filter = state.custFilter || 'all';
   return state.data.customers.filter((c) => {
     if (filter === 'due' && c.balancePaise <= 0) return false;
     if (filter === 'adv' && c.balancePaise >= 0) return false;
     if (filter === 'zero' && c.balancePaise !== 0) return false;
     if (!q) return true;
-    return c.name.toLowerCase().includes(q) || (c.village && c.village.toLowerCase().includes(q)) || String(c.phone || '').includes(q);
+    return isPhoneticMatch(c.name, q) ||
+           (c.village && isPhoneticMatch(c.village, q)) ||
+           String(c.phone || '').includes(q);
   });
 }
 

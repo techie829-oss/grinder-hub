@@ -1,5 +1,6 @@
 // Token Sequence and Allocation Service
 import { dayKey, normName, normVillage, normalizePhone } from '../utils/helpers.js';
+import { isPhoneticMatch } from '../utils/phonetic.js';
 
 export async function nextTokenNo(env, businessId, day, tokenMode = 'daily') {
   if (tokenMode === 'loop100') {
@@ -111,11 +112,16 @@ export async function issueToken(env, businessId, name, village, serviceId, gros
       const key = normName(name);
       const vKey = normVillage(village || '');
       const cleanPhone = normalizePhone(phone);
-      const found = await env.DB.prepare(
-        'SELECT id, phone, village FROM customers WHERE business_id = ? AND name_key = ? AND village_key = ?'
+      let found = await env.DB.prepare(
+        'SELECT id, phone, village, name FROM customers WHERE business_id = ? AND name_key = ? AND village_key = ?'
       )
         .bind(businessId, key, vKey)
         .first();
+
+      if (!found) {
+        const candidates = await env.DB.prepare('SELECT id, name, village, phone FROM customers WHERE business_id = ?').bind(businessId).all();
+        found = (candidates.results || []).find((c) => isPhoneticMatch(c.name, name) && (!village || isPhoneticMatch(c.village, village))) || null;
+      }
 
       if (found) {
         if (!found.phone && cleanPhone) {

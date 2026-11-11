@@ -1,7 +1,8 @@
-// Voice Hands-Free Order & Token Command Engine (Hindi, Marathi, Gujarati, English)
+// Voice Hands-Free Order & Token Command Engine (Hindi, Marathi, Gujarati, English, Hinglish)
 // Uses Web Speech API for mill operator hands-free data entry
 
 import { state } from '../state.js';
+import { isPhoneticMatch, devaToLatin } from '../utils/phonetic.js';
 
 let recognition = null;
 let isListening = false;
@@ -22,12 +23,21 @@ export function speakText(text, lang = 'hi-IN') {
 }
 
 const HINDI_NUMBER_WORDS = {
+  // Devanagari
   'एक': 1, 'दो': 2, 'तीन': 3, 'चार': 4, 'पांच': 5, 'पाँच': 5,
   'छह': 6, 'सात': 7, 'आठ': 8, 'नौ': 9, 'दस': 10,
   'ग्यारह': 11, 'बारह': 12, 'तेरह': 13, 'चौदह': 14, 'पंद्रह': 15,
   'सोलह': 16, 'सत्रह': 17, 'अठारह': 18, 'उन्नीस': 19, 'बीस': 20,
   'पच्चीस': 25, 'तीस': 30, 'पैंतीस': 35, 'चालीस': 40, 'पचास': 50,
-  'सौ': 100, 'आधा': 0.5, 'डेढ़': 1.5, 'ढाई': 2.5,
+  'सौ': 100, 'आधा': 0.5, 'डेढ़': 1.5, 'ढाई': 2.5, 'सवा': 1.25, 'पौने': 0.75,
+
+  // Hinglish / Romanized
+  'ek': 1, 'do': 2, 'teen': 3, 'tin': 3, 'char': 4, 'panch': 5, 'paanch': 5,
+  'chhah': 6, 'che': 6, 'saat': 7, 'sat': 7, 'aath': 8, 'ath': 8, 'nau': 9, 'no': 9, 'das': 10,
+  'gyarah': 11, 'barah': 12, 'terah': 13, 'chaudah': 14, 'pandrah': 15,
+  'solah': 16, 'satrah': 17, 'atharah': 18, 'unnis': 19, 'bees': 20, 'bis': 20,
+  'pachchis': 25, 'pachis': 25, 'tees': 30, 'tis': 30, 'paintis': 35,
+  'chalis': 40, 'pachas': 50, 'sau': 100, 'so': 100, 'dedh': 1.5, 'dhai': 2.5, 'adha': 0.5
 };
 
 export function startVoiceRecognition(options = {}) {
@@ -136,15 +146,13 @@ export function parseMillVoiceCommand(rawTranscript) {
     }
   }
 
-  // Detect Customer Name & Village (2-Entity match)
+  // Detect Customer Name & Village (Bilingual 2-Entity match)
   let matchedCustomer = null;
   const customers = (state.data && state.data.customers) || [];
 
   for (const c of customers) {
-    const cName = c.name.toLowerCase();
-    const cVillage = (c.village || '').toLowerCase();
-    if (text.includes(cName)) {
-      if (cVillage && text.includes(cVillage)) {
+    if (isPhoneticMatch(text, c.name)) {
+      if (c.village && isPhoneticMatch(text, c.village)) {
         matchedCustomer = c;
         break;
       }
@@ -155,14 +163,20 @@ export function parseMillVoiceCommand(rawTranscript) {
   let name = matchedCustomer ? matchedCustomer.name : '';
   let village = matchedCustomer ? (matchedCustomer.village || '') : '';
 
-  // If no known customer matched, extract words before quantity or grain
+  // If no known customer matched, extract spoken words (stripping fillers like ka, ki, ke, parchi, udhaar, etc.)
   if (!name) {
-    const tokens = rawTranscript.split(/\s+/).filter(Boolean);
-    // Typical pattern: "सुरेश रामपुर 20 किलो गेहूं" -> [0]: Suresh, [1]: Rampur
-    if (tokens.length >= 2 && !/^\d/.test(tokens[0])) {
-      name = tokens[0];
-      if (tokens.length >= 3 && !/^\d|kilo|kg|किलो/i.test(tokens[1])) {
-        village = tokens[1];
+    const cleanTokens = rawTranscript
+      .replace(/(\d+(?:\.\d+)?)\s*(?:kilo|kg|किलो|ग्राम|gram|लीटर|litre)?/gi, '')
+      .replace(/\b(गेहूं|गेहू|gehu|wheat|मक्का|makka|चना|chana|बाजरा|bajra|सरसों|sarson|मसाला|masala|तेल|oil|atta|आटा)\b/gi, '')
+      .replace(/\b(का|की|के|के लिए|खाता|पर्ची|बनाओ|लगाओ|डालो|नया|टोकन|उधार|नकद|ka|ki|ke|parchi|banao|dalo|entry|token)\b/gi, '')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+
+    if (cleanTokens.length >= 1 && !/^\d/.test(cleanTokens[0])) {
+      name = cleanTokens[0];
+      if (cleanTokens.length >= 2 && !/^\d/.test(cleanTokens[1])) {
+        village = cleanTokens[1];
       }
     }
   }
