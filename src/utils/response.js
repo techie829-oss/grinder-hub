@@ -57,12 +57,14 @@ export function getCookie(request, name) {
 
 export function sessionCookie(token, url, maxAge) {
   const secure = url.protocol === 'https:' ? '; Secure; SameSite=None' : '; SameSite=Lax';
-  return `${COOKIE}=${encodeURIComponent(token)}; Path=/; HttpOnly${secure}; Max-Age=${maxAge}`;
+  const expires = maxAge === 0 ? '; Expires=Thu, 01 Jan 1970 00:00:00 GMT' : '';
+  return `${COOKIE}=${encodeURIComponent(token)}; Path=/; HttpOnly${secure}; Max-Age=${maxAge}${expires}`;
 }
 
 export function adminSessionCookie(token, url, maxAge = 7 * 24 * 3600) {
   const secure = url.protocol === 'https:' ? '; Secure; SameSite=None' : '; SameSite=Lax';
-  return `${ADMIN_COOKIE}=${encodeURIComponent(token)}; Path=/; HttpOnly${secure}; Max-Age=${maxAge}`;
+  const expires = maxAge === 0 ? '; Expires=Thu, 01 Jan 1970 00:00:00 GMT' : '';
+  return `${ADMIN_COOKIE}=${encodeURIComponent(token)}; Path=/; HttpOnly${secure}; Max-Age=${maxAge}${expires}`;
 }
 
 export function sameOrigin(request, url) {

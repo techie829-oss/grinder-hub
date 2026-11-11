@@ -91,12 +91,28 @@ export async function login(request, env, url) {
 }
 
 export async function logout(request, env, url) {
-  if (!sameOrigin(request, url)) return bad('अनुरोध अस्वीकार हुआ', 403);
-  const token = getCookie(request, COOKIE);
-  if (token) {
-    await env.DB.prepare('DELETE FROM sessions WHERE token_hash = ?').bind(await sha256Hex(token)).run();
+  const cookieToken = getCookie(request, COOKIE);
+  let authHeaderToken = '';
+  const authHeader = request.headers.get('authorization') || '';
+  if (authHeader.startsWith('Bearer ')) {
+    authHeaderToken = authHeader.slice(7).trim();
   }
-  return json({ ok: true }, 200, { 'set-cookie': sessionCookie('', url, 0) });
+
+  let bodyToken = '';
+  try {
+    const body = await request.clone().json().catch(() => ({}));
+    if (body && body.token) bodyToken = String(body.token).trim();
+  } catch (_) {}
+
+  const tokens = [...new Set([cookieToken, authHeaderToken, bodyToken].filter(Boolean))];
+  for (const token of tokens) {
+    try {
+      const tokenHash = await sha256Hex(token);
+      await env.DB.prepare('DELETE FROM sessions WHERE token_hash = ?').bind(tokenHash).run();
+    } catch (_) {}
+  }
+
+  return json({ ok: true, message: 'लॉगआउट सफल' }, 200, { 'set-cookie': sessionCookie('', url, 0) }, request);
 }
 
 export async function changePassword(request, env, business, range) {

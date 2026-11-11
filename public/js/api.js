@@ -79,8 +79,11 @@ export async function api(path, body) {
     const hadToken = typeof localStorage !== 'undefined' && !!localStorage.getItem('cb_token');
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem('cb_token');
+      localStorage.removeItem('cb_offline_snapshot');
+      localStorage.removeItem('cb_offline_sync_queue');
     }
     state.data = null;
+    state.auth.mode = 'login';
     closeModal();
     window.__appRender?.();
     if (hadToken) {
@@ -121,6 +124,14 @@ export async function loadAdminData() {
 }
 
 export async function loadState(range) {
+  // If merchant is not logged in, DO NOT hydrate snapshot or request /api/state
+  const token = typeof localStorage !== 'undefined' ? localStorage.getItem('cb_token') : null;
+  if (!token) {
+    state.data = null;
+    window.__appRender?.();
+    return null;
+  }
+
   // 1. Instant hydration: if state.data is missing, load cached snapshot immediately
   if (!state.data) {
     const cached = loadOfflineSnapshot();
@@ -147,13 +158,98 @@ export async function loadState(range) {
 
   // Fallback if network failed
   const cached = loadOfflineSnapshot();
-  if (cached) {
+  if (cached && token) {
     state.data = cached;
     window.__appRender?.();
     return { ok: true, state: cached };
   }
 
   return data;
+}
+
+export async function performLogout() {
+  const token = typeof localStorage !== 'undefined' ? (localStorage.getItem('cb_token') || '') : '';
+  try {
+    await fetch(getApiUrl('/api/logout'), {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        ...getAuthHeaders(),
+      },
+      body: JSON.stringify({ token }),
+      credentials: 'include',
+    }).catch(() => {});
+  } catch (_) {}
+
+  // 1. Purge all localStorage auth & snapshot items
+  if (typeof localStorage !== 'undefined') {
+    localStorage.removeItem('cb_token');
+    localStorage.removeItem('cb_offline_snapshot');
+    localStorage.removeItem('cb_offline_sync_queue');
+  }
+
+  // 2. Clear sessionStorage
+  if (typeof sessionStorage !== 'undefined') {
+    sessionStorage.clear();
+  }
+
+  // 3. Clear non-HttpOnly fallback cookies
+  try {
+    document.cookie = 'cb_sid=; Path=/; Max-Age=0; Expires=Thu, 01 Jan 1970 00:00:00 GMT';
+  } catch (_) {}
+
+  // 4. Reset in-memory state completely
+  state.data = null;
+  state.customer = null;
+  state.job = { name: '', village: '', phone: '', serviceId: null, qty: '', rate: '', lossRateG: '', totalLossG: 0, netWeight: 0, amount: '', note: '', paid: true, withToken: false };
+  state.trade = { item: '', unit: 'kg', qty: '', rate: '', amount: '', paid: true, name: '', village: '', phone: '', photo: '', note: '' };
+  state.tokenForm = { name: '', village: '', phone: '', serviceId: null, qty: '', lossRateG: '', note: '' };
+  state.view = 'dashboard';
+  state.auth.mode = 'login';
+  state.auth.error = '';
+
+  // 5. Clean URL query / hash without page reload
+  try {
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  } catch (_) {}
+
+  closeModal();
+  window.__appRender?.();
+  toast('लॉगआउट सफल हुआ');
+}
+
+export async function performAdminLogout() {
+  try {
+    await fetch(getApiUrl('/api/admin/logout'), {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        ...getAuthHeaders(),
+      },
+      credentials: 'include',
+    }).catch(() => {});
+  } catch (_) {}
+
+  if (typeof localStorage !== 'undefined') {
+    localStorage.removeItem('cb_adm_token');
+  }
+
+  state.admin.authenticated = false;
+  state.admin.metrics = null;
+  state.admin.tenants = [];
+  state.admin.error = '';
+
+  try {
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  } catch (_) {}
+
+  closeModal();
+  window.__appRender?.();
+  toast('एडमिन लॉगआउट सफल हुआ');
 }
 
 export async function withBusy(el, fn) {

@@ -1,6 +1,6 @@
 // Centralized DOM Event Listeners & Dispatcher with Offline-First Fallback
 import { state } from './state.js';
-import { api, withBusy, loadState, applyState, toast, loadAdminData, getApiUrl, getAuthHeaders } from './api.js';
+import { api, withBusy, loadState, applyState, toast, loadAdminData, getApiUrl, getAuthHeaders, performLogout, performAdminLogout } from './api.js';
 import { inr, unitOf, esc } from './utils/formatters.js';
 import { printReceipt } from './utils/print.js';
 import { entryWaText, openWhatsApp } from './utils/whatsapp.js';
@@ -797,12 +797,7 @@ export function setupEventListeners() {
         break;
 
       case 'admin-logout':
-        await api('/api/admin/logout');
-        state.admin.authenticated = false;
-        state.admin.tenants = [];
-        state.admin.metrics = null;
-        toast('सुपर एडमिन लॉगआउट हुआ');
-        goTo('dashboard');
+        await performAdminLogout();
         break;
 
       case 'admin-filter':
@@ -1377,17 +1372,7 @@ export function setupEventListeners() {
         break;
 
       case 'logout':
-        await api('/api/logout', {});
-        if (typeof localStorage !== 'undefined') {
-          localStorage.removeItem('cb_token');
-        }
-        state.data = null;
-        state.customer = null;
-        state.view = 'dashboard';
-        state.auth.mode = 'login';
-        state.auth.error = '';
-        window.__appRender?.();
-        toast('Logged out');
+        await performLogout();
         break;
 
       default:

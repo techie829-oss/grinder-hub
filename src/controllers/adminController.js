@@ -92,14 +92,19 @@ export async function adminLogin(request, env, url) {
 
 export async function adminLogout(request, env, url) {
   const token = getCookie(request, ADMIN_COOKIE);
-  if (token) {
-    const tokenHash = await sha256Hex(token);
-    await env.DB.prepare('DELETE FROM sessions WHERE token_hash = ?').bind(tokenHash).run().catch(() => {});
+  const headerToken = request.headers.get('x-admin-key') || '';
+  const tokens = [...new Set([token, headerToken].filter(Boolean))];
+  for (const t of tokens) {
+    try {
+      const tokenHash = await sha256Hex(t);
+      await env.DB.prepare('DELETE FROM sessions WHERE token_hash = ?').bind(tokenHash).run();
+    } catch (_) {}
   }
   return json(
     { ok: true, message: 'लॉगआउट सफल' },
     200,
-    { 'set-cookie': adminSessionCookie('', url, 0) }
+    { 'set-cookie': adminSessionCookie('', url, 0) },
+    request
   );
 }
 
