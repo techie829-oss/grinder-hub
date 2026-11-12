@@ -55,11 +55,16 @@ export function viewTokens() {
   <!-- Today Completed Tokens List (Done & Ready for 1-Click Final Billing) -->
   ${(doneList.length) ? `
   <section class="card" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:16px;padding:16px;">
-    <div class="section-head" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+    <div class="section-head" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px;">
       <h2 class="section-title" style="display:flex;align-items:center;gap:6px;color:#15803d;font-size:15px;margin:0;font-weight:800;">
         <span>✅</span> <span>${t('completedTokensToday', { n: doneList.length })}</span>
       </h2>
-      <span class="tiny-chip" style="background:#dcfce7;color:#15803d;font-weight:700;">${t('goodsReadyBadge')}</span>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span class="tiny-chip" style="background:#dcfce7;color:#15803d;font-weight:700;">${t('goodsReadyBadge')}</span>
+        <button type="button" class="btn btn-xs btn-ghost" data-act="clear-all-done-tokens" style="font-size:11.5px;color:#dc2626;border:1px solid #fecaca;padding:3px 8px;border-radius:6px;background:#fff;font-weight:700;" title="सभी पूरे हुए टोकन साफ़ करें">
+          ✕ सब साफ़ करें
+        </button>
+      </div>
     </div>
     <div class="row-list">
       ${doneList.map((tok) => `
@@ -76,9 +81,15 @@ export function viewTokens() {
               ${tok.note ? ' · 📝 ' + esc(tok.note) : ''}
             </div>
           </div>
-          <div style="flex-shrink:0;">
-            <button type="button" class="btn btn-sm btn-primary" data-act="token-to-job" data-id="${tok.id}" style="padding:6px 12px;font-size:12px;font-weight:750;">
+          <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
+            <button type="button" class="btn btn-sm btn-primary" data-act="token-to-job" data-id="${tok.id}" style="padding:6px 10px;font-size:12px;font-weight:750;">
               ${t('createBillAction')}
+            </button>
+            <button type="button" class="btn btn-sm btn-soft" data-act="token-deliver" data-id="${tok.id}" title="माल दे दिया / साफ़ करें" style="padding:6px 8px;font-size:12px;font-weight:700;border:1px solid #cbd5e1;background:#f8fafc;color:#15803d;">
+              ✓ दिया
+            </button>
+            <button type="button" class="icon-btn" data-act="token-cancel" data-id="${tok.id}" title="रद्द करें / हटाएं" style="border:1px solid #fecaca;color:#dc2626;padding:4px 8px;border-radius:8px;font-size:11px;background:#fff;">
+              ✕
             </button>
           </div>
         </div>

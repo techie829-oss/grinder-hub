@@ -93,15 +93,15 @@ async function route(request, env, url) {
   if (path === '/api/app-version' && method === 'GET') {
     return json({
       ok: true,
-      version: '2.8.2',
-      versionCode: 5,
+      version: '2.8.3',
+      versionCode: 6,
       downloadUrl: '/tolmaal.apk',
-      releasedAt: 1794500000000,
+      releasedAt: Date.now(),
       changelog: [
-        'स्वचालित हिसाब गणना (तैयार माल / कुल वजन आधार)',
+        'टोकन बिलिंग व डिलीवरी सुधार (बिल बनने पर टोकन स्वतः साफ)',
+        'पूरे हुए टोकन को 1-क्लिक में डिलीवर या साफ़ करने की सुविधा',
+        'स्वचालित हिसाब गणना व ग्राहक नाम लेबल सुधार',
         'कैमरा, स्कैनर और वॉइस ऑर्डर परमिशन सुधार',
-        '0ms तुरंत ग्राहक खाता लोड',
-        'टोकन पर्ची और रसीद प्रिंटिंग फिक्स'
       ]
     });
   }

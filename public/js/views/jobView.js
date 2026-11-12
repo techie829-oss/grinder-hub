@@ -71,8 +71,8 @@ function renderGrindTab(data) {
   });
   const matchedCustomer = candidateMatches.length === 1 ? candidateMatches[0] : null;
 
-  const tObj = data.tokens || { waiting: [], serving: null, nextNo: 1 };
-  const activeTokens = [tObj.serving, ...(tObj.waiting || [])].filter(Boolean);
+  const tObj = data.tokens || { waiting: [], serving: null, doneList: [], nextNo: 1 };
+  const activeTokens = [tObj.serving, ...(tObj.waiting || []), ...(tObj.doneList || [])].filter(Boolean);
 
   return `
   <form class="card pos-card" data-form="job">

@@ -208,8 +208,9 @@ export async function buildState(env, businessId, range) {
       tokenMode: biz.token_mode || 'daily',
       serving: tokensToday.find((t) => t.status === 'serving') || null,
       waiting: tokensToday.filter((t) => t.status === 'waiting'),
-      done: tokensToday.filter((t) => t.status === 'done').length,
+      done: tokensToday.filter((t) => t.status === 'done' || t.status === 'delivered').length,
       doneList: tokensToday.filter((t) => t.status === 'done').reverse(),
+      delivered: tokensToday.filter((t) => t.status === 'delivered').length,
       total: tokensToday.length,
       nextNo: (biz.token_mode === 'loop100') ? ((lastNo >= 100) ? 1 : (lastNo + 1)) : (lastNo + 1),
     },
@@ -242,15 +243,15 @@ export async function buildState(env, businessId, range) {
       })),
     },
     appMeta: {
-      latestVersion: '2.8.2',
-      latestVersionCode: 5,
+      latestVersion: '2.8.3',
+      latestVersionCode: 6,
       downloadUrl: '/tolmaal.apk',
-      releasedAt: 1794500000000,
+      releasedAt: Date.now(),
       changelog: [
-        'स्वचालित हिसाब गणना (तैयार माल / कुल वजन आधार)',
+        'टोकन बिलिंग व डिलीवरी सुधार (बिल बनने पर टोकन स्वतः साफ)',
+        'पूरे हुए टोकन को 1-क्लिक में डिलीवर या साफ़ करने की सुविधा',
+        'स्वचालित हिसाब गणना व ग्राहक नाम लेबल सुधार',
         'कैमरा, स्कैनर और वॉइस ऑर्डर परमिशन सुधार',
-        '0ms तुरंत ग्राहक खाता लोड',
-        'टोकन पर्ची और रसीद प्रिंटिंग फिक्स'
       ]
     },
   };

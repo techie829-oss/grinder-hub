@@ -492,7 +492,7 @@ export function setupEventListeners() {
         if (isUpdateAvailable()) {
           openUpdatePromptModal();
         } else {
-          toast('आपका ऐप पहले से ही नवीनतम वर्ज़न (v2.8.2) पर है ✓');
+          toast(`आपका ऐप पहले से ही नवीनतम वर्ज़न (v${installed.version}) पर है ✓`);
         }
         break;
       }
@@ -1106,10 +1106,16 @@ export function setupEventListeners() {
             enqueueOfflineAction('tokenStatus', { id: el.dataset.id, status: 'done' });
             const tok = state.data.tokens.serving?.id === el.dataset.id
               ? state.data.tokens.serving
-              : state.data.tokens.waiting.find((x) => x.id === el.dataset.id);
-            if (tok) tok.status = 'done';
+              : (state.data.tokens.waiting || []).find((x) => x.id === el.dataset.id);
+            if (tok) {
+              tok.status = 'done';
+              // Move to doneList so it appears in the completed section
+              if (!state.data.tokens.doneList) state.data.tokens.doneList = [];
+              state.data.tokens.doneList.unshift(tok);
+            }
             if (state.data.tokens.serving?.id === el.dataset.id) state.data.tokens.serving = null;
-            state.data.tokens.done += 1;
+            state.data.tokens.waiting = (state.data.tokens.waiting || []).filter((x) => x.id !== el.dataset.id);
+            state.data.tokens.done = (state.data.tokens.done || 0) + 1;
             saveOfflineSnapshot(state.data);
             window.__appRender?.();
             toast('Token marked done (offline)');
@@ -1167,19 +1173,55 @@ export function setupEventListeners() {
       }
 
       case 'token-cancel':
-        if (!confirm('Cancel this token?')) return;
+        if (!confirm('क्या आप यह टोकन हटाना चाहते हैं?')) return;
         await withBusy(el, async () => {
           const data = await api('/api/tokens/delete', { id: el.dataset.id });
           if (data && data.offline) {
             enqueueOfflineAction('tokenDelete', { id: el.dataset.id });
-            state.data.tokens.waiting = state.data.tokens.waiting.filter((x) => x.id !== el.dataset.id);
+            state.data.tokens.waiting = (state.data.tokens.waiting || []).filter((x) => x.id !== el.dataset.id);
+            state.data.tokens.doneList = (state.data.tokens.doneList || []).filter((x) => x.id !== el.dataset.id);
             if (state.data.tokens.serving?.id === el.dataset.id) state.data.tokens.serving = null;
             saveOfflineSnapshot(state.data);
             window.__appRender?.();
-            toast('Token cancelled (offline)');
+            toast('Token deleted (offline)');
           } else if (data) {
             applyState(data.state);
             toast(t('tokenCancelled'));
+          }
+        });
+        break;
+
+      case 'token-deliver':
+        await withBusy(el, async () => {
+          const data = await api('/api/tokens/status', { id: el.dataset.id, status: 'delivered' });
+          if (data && data.offline) {
+            enqueueOfflineAction('tokenStatus', { id: el.dataset.id, status: 'delivered' });
+            state.data.tokens.doneList = (state.data.tokens.doneList || []).filter((x) => x.id !== el.dataset.id);
+            saveOfflineSnapshot(state.data);
+            window.__appRender?.();
+            toast('माल डिलीवर हुआ (offline)');
+          } else if (data) {
+            applyState(data.state);
+            toast('माल डिलीवर हुआ ✓');
+          }
+        });
+        break;
+
+      case 'clear-all-done-tokens':
+        if (!confirm('क्या आप पूरे हुए सभी टोकन साफ़ करना चाहते हैं?')) return;
+        await withBusy(el, async () => {
+          const data = await api('/api/tokens/status', { allDone: true, status: 'delivered' });
+          if (data && data.offline) {
+            (state.data.tokens?.doneList || []).forEach((t) => {
+              enqueueOfflineAction('tokenStatus', { id: t.id, status: 'delivered' });
+            });
+            state.data.tokens.doneList = [];
+            saveOfflineSnapshot(state.data);
+            window.__appRender?.();
+            toast('सभी पूरे हुए टोकन साफ़ हुए (offline)');
+          } else if (data) {
+            applyState(data.state);
+            toast('सभी पूरे हुए टोकन साफ़ हुए ✓');
           }
         });
         break;
@@ -1945,6 +1987,16 @@ export function setupEventListeners() {
                    (c.village || '').toLowerCase() === (jobPayload.village || '').toLowerCase()
           );
           if (cust) cust.balancePaise += amountPaise;
+        }
+
+        if (jobPayload.tokenId) {
+          state.data.tokens.doneList = (state.data.tokens.doneList || []).filter((x) => x.id !== jobPayload.tokenId);
+          if (state.data.tokens.serving?.id === jobPayload.tokenId) state.data.tokens.serving = null;
+          state.data.tokens.waiting = (state.data.tokens.waiting || []).filter((x) => x.id !== jobPayload.tokenId);
+        } else if (jobPayload.tokenNo) {
+          state.data.tokens.doneList = (state.data.tokens.doneList || []).filter((x) => x.no !== jobPayload.tokenNo);
+          if (state.data.tokens.serving?.no === jobPayload.tokenNo) state.data.tokens.serving = null;
+          state.data.tokens.waiting = (state.data.tokens.waiting || []).filter((x) => x.no !== jobPayload.tokenNo);
         }
 
         saveOfflineSnapshot(state.data);

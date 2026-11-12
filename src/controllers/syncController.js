@@ -125,11 +125,19 @@ async function processJob(env, business, data) {
   }
 
   let tokenNo = data.tokenNo ? Number(data.tokenNo) : null;
+  const at = Number(data.at) || Date.now();
   if (data.tokenId) {
     await env.DB.prepare(
-      "UPDATE tokens SET status = 'done', gross_weight = ?, loss_g = ?, net_weight = ? WHERE id = ? AND business_id = ?"
+      "UPDATE tokens SET status = 'delivered', gross_weight = ?, loss_g = ?, net_weight = ? WHERE id = ? AND business_id = ?"
     )
       .bind(grossWeight, totalLossG, netWeight, clean(data.tokenId, 40), business.id)
+      .run();
+  } else if (tokenNo) {
+    const today = dayKey(at);
+    await env.DB.prepare(
+      "UPDATE tokens SET status = 'delivered', gross_weight = ?, loss_g = ?, net_weight = ? WHERE no = ? AND day = ? AND business_id = ? AND status IN ('serving', 'done', 'waiting')"
+    )
+      .bind(grossWeight, totalLossG, netWeight, tokenNo, today, business.id)
       .run();
   }
   if (data.withToken && !tokenNo) {
@@ -138,7 +146,6 @@ async function processJob(env, business, data) {
   }
 
   const entryId = data.offlineId || crypto.randomUUID();
-  const at = Number(data.at) || Date.now();
 
   await env.DB.prepare(
     `INSERT OR IGNORE INTO entries (id, business_id, customer_id, kind, service_id, name, village, gross_weight, loss_g, net_weight,
@@ -203,7 +210,7 @@ async function processToken(env, business, data) {
 async function processTokenStatus(env, business, data) {
   const id = clean(data.id, 40);
   const status = clean(data.status, 12);
-  if (!['serving', 'waiting', 'done'].includes(status)) return;
+  if (!['serving', 'waiting', 'done', 'delivered', 'cancelled'].includes(status)) return;
 
   await env.DB.prepare('UPDATE tokens SET status = ? WHERE id = ? AND business_id = ?')
     .bind(status, id, business.id)

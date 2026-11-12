@@ -142,11 +142,19 @@ export async function createJob(request, env, business, range) {
 
   let token = null;
   let tokenNo = body.tokenNo ? Number(body.tokenNo) : null;
+  const now = Date.now();
   if (body.tokenId) {
     await env.DB.prepare(
-      "UPDATE tokens SET status = 'done', gross_weight = ?, loss_g = ?, net_weight = ? WHERE id = ? AND business_id = ?"
+      "UPDATE tokens SET status = 'delivered', gross_weight = ?, loss_g = ?, net_weight = ? WHERE id = ? AND business_id = ?"
     )
       .bind(grossWeight, totalLossG, netWeight, clean(body.tokenId, 40), business.id)
+      .run();
+  } else if (tokenNo) {
+    const today = dayKey(now);
+    await env.DB.prepare(
+      "UPDATE tokens SET status = 'delivered', gross_weight = ?, loss_g = ?, net_weight = ? WHERE no = ? AND day = ? AND business_id = ? AND status IN ('serving', 'done', 'waiting')"
+    )
+      .bind(grossWeight, totalLossG, netWeight, tokenNo, today, business.id)
       .run();
   }
   if (body.withToken) {
@@ -155,7 +163,6 @@ export async function createJob(request, env, business, range) {
   }
 
   const entryId = crypto.randomUUID();
-  const now = Date.now();
   await env.DB.prepare(
     `INSERT INTO entries (id, business_id, customer_id, kind, service_id, name, village, gross_weight, loss_g, net_weight,
        rate_paise, amount_paise, paid, note, token_no, day, created_at)

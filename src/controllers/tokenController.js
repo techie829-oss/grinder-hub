@@ -1,6 +1,6 @@
 // Queue and Token Management Controller
 import { readJson, json, bad } from '../utils/response.js';
-import { clean } from '../utils/helpers.js';
+import { clean, dayKey } from '../utils/helpers.js';
 import { issueToken } from '../services/tokenService.js';
 import { buildState } from '../services/stateService.js';
 
@@ -32,10 +32,20 @@ export async function createToken(request, env, business, range) {
 
 export async function setTokenStatus(request, env, business, range) {
   const body = await readJson(request);
-  const id = clean(body.id, 40);
   const status = clean(body.status, 12);
-  if (!['serving', 'waiting', 'done'].includes(status)) return bad('गलत स्थिति');
+  if (!['serving', 'waiting', 'done', 'delivered', 'cancelled'].includes(status)) return bad('गलत स्थिति');
 
+  if (body.allDone) {
+    const day = dayKey(Date.now());
+    await env.DB.prepare(
+      "UPDATE tokens SET status = 'delivered' WHERE business_id = ? AND day = ? AND status = 'done'"
+    )
+      .bind(business.id, day)
+      .run();
+    return json({ ok: true, state: await buildState(env, business.id, range) });
+  }
+
+  const id = clean(body.id, 40);
   const token = await env.DB.prepare('SELECT id, day, no FROM tokens WHERE id = ? AND business_id = ?')
     .bind(id, business.id)
     .first();
