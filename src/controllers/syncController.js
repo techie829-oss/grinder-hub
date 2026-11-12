@@ -89,7 +89,7 @@ async function processJob(env, business, data) {
       .first();
 
     if (!found) {
-      const candidates = await env.DB.prepare('SELECT id, name, village, phone, photo FROM customers WHERE business_id = ?').bind(business.id).all();
+      const candidates = await env.DB.prepare('SELECT id, name, village, phone FROM customers WHERE business_id = ?').bind(business.id).all();
       found = (candidates.results || []).find((c) => isPhoneticMatch(c.name, name) && (!village || isPhoneticMatch(c.village, village))) || null;
     }
 
@@ -277,7 +277,7 @@ async function processTrade(env, business, data) {
       .first();
 
     if (!found) {
-      const candidates = await env.DB.prepare('SELECT id, name, village, phone, photo FROM customers WHERE business_id = ?').bind(business.id).all();
+      const candidates = await env.DB.prepare('SELECT id, name, village, phone FROM customers WHERE business_id = ?').bind(business.id).all();
       found = (candidates.results || []).find((c) => isPhoneticMatch(c.name, name) && (!village || isPhoneticMatch(c.village, village))) || null;
     }
 

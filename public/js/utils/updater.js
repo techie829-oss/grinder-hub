@@ -201,3 +201,4 @@ export function autoCheckAppUpdate() {
     }, 1500);
   } catch (e) {}
 }
+

@@ -83,7 +83,7 @@ export async function createTrade(request, env, business, range) {
       if (!found) {
         const key = normName(name);
         const vKey = normVillage(village);
-        const candidates = await env.DB.prepare('SELECT id, phone, village, photo, name, name_key, village_key FROM customers WHERE business_id = ?').bind(business.id).all();
+        const candidates = await env.DB.prepare('SELECT id, phone, village, name, name_key, village_key FROM customers WHERE business_id = ?').bind(business.id).all();
         const matches = (candidates.results || []).filter((c) => {
           const nMatch = c.name_key === key || isPhoneticMatch(c.name, name);
           if (!nMatch) return false;
