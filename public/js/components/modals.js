@@ -22,10 +22,38 @@ export function customerBalance(id) {
 }
 
 export async function openCustomer(id) {
-  const data = await api('/api/customer?id=' + encodeURIComponent(id));
-  if (!data) return;
-  state.customer = data;
-  renderCustomerModal();
+  const localCust = state.data?.customers?.find((c) => c.id === id);
+  if (localCust) {
+    const localEntries = (state.data?.entries || []).filter((e) => e.customerId === id);
+    state.customer = {
+      customer: localCust,
+      entries: localEntries,
+      loading: true,
+    };
+    renderCustomerModal();
+  } else {
+    showModal(`
+      <div style="padding:28px 16px;text-align:center;">
+        <div style="font-size:28px;margin-bottom:8px;">⏳</div>
+        <div style="font-weight:750;color:#334155;font-size:14px;">ग्राहक विवरण लोड हो रहा है...</div>
+      </div>
+    `);
+  }
+
+  try {
+    const data = await api('/api/customer?id=' + encodeURIComponent(id));
+    if (data && data.customer) {
+      if (state.customer && state.customer.customer?.id === id) {
+        state.customer = { ...data, loading: false };
+        renderCustomerModal();
+      }
+    }
+  } catch (err) {
+    if (state.customer) {
+      state.customer.loading = false;
+      renderCustomerModal();
+    }
+  }
 }
 
 export function renderCustomerModal() {
@@ -107,7 +135,10 @@ export function renderCustomerModal() {
 
     <!-- Ledger Section -->
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-      <div style="font-size:13px;font-weight:800;color:#0f172a;">${t('oldLedger')} (${current.entries.length})</div>
+      <div style="font-size:13px;font-weight:800;color:#0f172a;">
+        ${t('oldLedger')} (${current.entries.length})
+        ${current.loading ? '<span style="font-size:11px;color:#4f46e5;font-weight:600;margin-left:4px;">(ताज़ा हो रहा है...)</span>' : ''}
+      </div>
     </div>
     <div class="row-list" style="max-height:240px;overflow-y:auto;padding-right:2px;">
       ${current.entries.length
@@ -667,9 +698,7 @@ export function openTokenReceiptModal(tok) {
         </div>
       </div>
       `}
-    </div>
-
-      ${estAmountPaise > 0 ? `
+      ${estAmountPaise > 0 && !hideLoss ? `
         <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:8px;border-top:1px dashed #cbd5e1;font-size:13px;">
           <span style="color:#64748b;font-weight:600;">अनुमानित सेवा शुल्क:</span>
           <span style="font-size:15px;font-weight:800;color:#1e293b;">${inr(estAmountPaise)}</span>

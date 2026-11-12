@@ -1,7 +1,7 @@
 // Centralized DOM Event Listeners & Dispatcher with Offline-First Fallback
 import { state } from './state.js';
 import { api, withBusy, loadState, applyState, toast, loadAdminData, getApiUrl, getAuthHeaders, performLogout, performAdminLogout } from './api.js';
-import { inr, unitOf, esc } from './utils/formatters.js';
+import { inr, unitOf, esc, qtyFmt } from './utils/formatters.js';
 import { printReceipt } from './utils/print.js';
 import { entryWaText, openWhatsApp } from './utils/whatsapp.js';
 import { closeModal, openCustomer, openCustomerEditModal, showJobDone, findEntry, openStatusModal, renderStatusResult, renderUniversalSearchResults } from './components/modals.js';
@@ -34,9 +34,14 @@ export function recalcJob() {
   state.job.rate = rateEl.value;
   state.job.lossRateG = lossRateEl ? lossRateEl.value : String(lossRateVal);
 
+  const basisInput = document.getElementById('j-charge-basis');
+  const chargeBasis = (basisInput && basisInput.value) || state.job.chargeBasis || state.data?.business?.chargeBasis || 'output';
+  state.job.chargeBasis = chargeBasis;
+
   const totalLossG = svc && svc.unit === 'kg' ? Math.round(grossWeight * lossRateVal) : 0;
   const netWeight = svc && svc.unit === 'kg' ? Math.max(0, grossWeight - (totalLossG / 1000)) : grossWeight;
-  const amountPaise = Math.round(grossWeight * rateVal * 100);
+  const billWeight = chargeBasis === 'gross' ? grossWeight : netWeight;
+  const amountPaise = Math.round(billWeight * rateVal * 100);
 
   state.job.totalLossG = totalLossG;
   state.job.netWeight = netWeight;
@@ -45,6 +50,15 @@ export function recalcJob() {
   if (grossPreview) grossPreview.textContent = grossWeight ? `${grossWeight.toFixed(2)} ${unit}` : `0 ${unit}`;
   if (lossPreview) lossPreview.textContent = totalLossG ? `-${totalLossG} g` : '0 g';
   if (netPreview) netPreview.textContent = netWeight ? `${netWeight.toFixed(3)} ${unit}` : `0 ${unit}`;
+
+  const basisTitle = document.getElementById('j-charge-basis-title');
+  if (basisTitle) {
+    basisTitle.textContent = chargeBasis === 'gross' ? 'आवक कुल वजन पर' : 'तैयार माल (Output) पर';
+  }
+  const basisFormula = document.getElementById('j-charge-basis-formula');
+  if (basisFormula) {
+    basisFormula.textContent = `${qtyFmt(billWeight)} ${unit} × ₹${rateVal} = ${inr(amountPaise)}`;
+  }
 
   const calcHint = document.getElementById('j-calc-hint');
   if (calcHint) calcHint.textContent = inr(amountPaise);
@@ -125,6 +139,8 @@ export function pickService(target, id) {
     if (lossLabel) lossLabel.textContent = t('lossRateLabel', { unit: unitOf(svc.unit) });
     if (rateInput) rateInput.value = state.job.rate;
     if (lossInput) lossInput.value = state.job.lossRateG;
+    const jAmount = document.getElementById('j-amount');
+    if (jAmount) delete jAmount.dataset.manual;
 
     recalcJob();
   } else {
@@ -409,6 +425,18 @@ export function setupEventListeners() {
       return;
     }
 
+    const jobLossPreset = ev.target.closest('.pos-loss-pill.loss-preset');
+    if (jobLossPreset) {
+      const g = jobLossPreset.dataset.g;
+      const lossInput = document.getElementById('j-loss-rate');
+      if (lossInput) {
+        lossInput.value = g;
+        state.job.lossRateG = g;
+        recalcJob();
+      }
+      return;
+    }
+
     const roundPill = ev.target.closest('.round-pill');
     if (roundPill) {
       const val = roundPill.dataset.val;
@@ -560,10 +588,22 @@ export function setupEventListeners() {
         window.__appRender?.();
         break;
 
-      case 'set-charge-basis':
-        state.job.chargeBasis = el.dataset.basis;
-        window.__appRender?.();
+      case 'set-charge-basis': {
+        const basis = el.dataset.basis || 'output';
+        state.job.chargeBasis = basis;
+        const basisInput = document.getElementById('j-charge-basis');
+        if (basisInput) basisInput.value = basis;
+        const btnOutput = document.getElementById('btn-basis-output');
+        const btnGross = document.getElementById('btn-basis-gross');
+        if (btnOutput && btnGross) {
+          btnOutput.className = `btn btn-xs ${basis === 'output' ? 'btn-primary' : 'btn-subtle'}`;
+          btnGross.className = `btn btn-xs ${basis === 'gross' ? 'btn-primary' : 'btn-subtle'}`;
+        }
+        const jAmount = document.getElementById('j-amount');
+        if (jAmount) delete jAmount.dataset.manual;
+        recalcJob();
         break;
+      }
 
       case 'issue-token-from-job': {
         const qtyVal = parseFloat(document.getElementById('j-qty')?.value) || parseFloat(state.job.qty) || 0;
@@ -1385,6 +1425,19 @@ export function setupEventListeners() {
     const tEl = ev.target;
     if (!tEl) return;
 
+    if (tEl.id === 'j-name') state.job.name = tEl.value;
+    if (tEl.id === 'j-village') state.job.village = tEl.value;
+    if (tEl.id === 'j-phone') state.job.phone = tEl.value;
+    if (tEl.id === 'tr-name') state.trade.name = tEl.value;
+    if (tEl.id === 'tr-village') state.trade.village = tEl.value;
+    if (tEl.id === 'tr-phone') state.trade.phone = tEl.value;
+    if (tEl.id === 'j-name' || tEl.id === 'j-village' || tEl.id === 'j-phone') {
+      updateCustomerDisambiguation('j');
+    }
+    if (tEl.id === 'tr-name' || tEl.id === 'tr-village' || tEl.id === 'tr-phone') {
+      updateCustomerDisambiguation('tr');
+    }
+
     if (tEl.dataset.act === 'change-lang') {
       setLanguage(tEl.value);
       window.__appRender?.();
@@ -1563,8 +1616,20 @@ export function setupEventListeners() {
       return;
     }
 
+    if (tEl.id === 'j-name') state.job.name = tEl.value;
+    if (tEl.id === 'j-village') state.job.village = tEl.value;
+    if (tEl.id === 'j-phone') state.job.phone = tEl.value;
+    if (tEl.id === 'tr-name') state.trade.name = tEl.value;
+    if (tEl.id === 'tr-village') state.trade.village = tEl.value;
+    if (tEl.id === 'tr-phone') state.trade.phone = tEl.value;
+
     if (tEl.id === 'j-phone' || tEl.id === 'j-name' || tEl.id === 'j-village') {
       updateCustomerDisambiguation('j');
+      return;
+    }
+
+    if (tEl.id === 'tr-phone' || tEl.id === 'tr-name' || tEl.id === 'tr-village') {
+      updateCustomerDisambiguation('tr');
       return;
     }
 

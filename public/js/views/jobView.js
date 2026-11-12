@@ -108,7 +108,7 @@ function renderGrindTab(data) {
     <!-- 2. Customer Name & Village (2-in-1 Compact Row) -->
     <div class="pos-row-2">
       <div class="pos-field">
-        <label for="j-name">${t('customerNameLabel')}</label>
+        <label for="j-name">${t('customerName')}</label>
         <input id="j-name" name="name" list="cust-names" maxlength="60" value="${esc(job.name)}"
           placeholder="${t('namePlaceholder')}" autocomplete="off">
         <datalist id="cust-names">
@@ -116,7 +116,7 @@ function renderGrindTab(data) {
         </datalist>
       </div>
       <div class="pos-field">
-        <label for="j-village">${t('villageLocationLabel')}</label>
+        <label for="j-village">${t('villageLabel')}</label>
         <input id="j-village" name="village" list="cust-villages" maxlength="60" value="${esc(job.village || '')}"
           placeholder="${t('villagePlaceholder')}" autocomplete="off">
         <datalist id="cust-villages">
@@ -197,19 +197,19 @@ function renderGrindTab(data) {
     <!-- 5b. Service Billing Calculation Basis & Privacy Strip -->
     <div style="background:#f1f5f9;border:1.5px solid #cbd5e1;border-radius:12px;padding:8px 10px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
       <div style="font-size:12px;font-weight:750;color:#334155;">
-        ${chargeBasis === 'gross' ? 'आवक कुल वजन पर' : 'तैयार माल (Output) पर'}:
-        <strong style="color:#0f172a;font-size:13px;">${qtyFmt(billWeight)} ${unit} × ₹${ratePerUnit} = ${inr(amountPaise)}</strong>
+        <span id="j-charge-basis-title">${chargeBasis === 'gross' ? 'आवक कुल वजन पर' : 'तैयार माल (Output) पर'}</span>:
+        <strong id="j-charge-basis-formula" style="color:#0f172a;font-size:13px;">${qtyFmt(billWeight)} ${unit} × ₹${ratePerUnit} = ${inr(amountPaise)}</strong>
       </div>
       <div style="display:flex;align-items:center;gap:4px;">
-        <button type="button" class="btn btn-xs ${chargeBasis === 'output' ? 'btn-primary' : 'btn-subtle'}" data-act="set-charge-basis" data-basis="output" style="padding:3px 9px;font-size:11px;font-weight:750;border-radius:7px;">
+        <button id="btn-basis-output" type="button" class="btn btn-xs ${chargeBasis === 'output' ? 'btn-primary' : 'btn-subtle'}" data-act="set-charge-basis" data-basis="output" style="padding:3px 9px;font-size:11px;font-weight:750;border-radius:7px;">
           तैयार माल पर ✓
         </button>
-        <button type="button" class="btn btn-xs ${chargeBasis === 'gross' ? 'btn-primary' : 'btn-subtle'}" data-act="set-charge-basis" data-basis="gross" style="padding:3px 9px;font-size:11px;font-weight:750;border-radius:7px;">
+        <button id="btn-basis-gross" type="button" class="btn btn-xs ${chargeBasis === 'gross' ? 'btn-primary' : 'btn-subtle'}" data-act="set-charge-basis" data-basis="gross" style="padding:3px 9px;font-size:11px;font-weight:750;border-radius:7px;">
           कुल वजन पर
         </button>
       </div>
     </div>
-    <input type="hidden" name="chargeBasis" value="${chargeBasis}">
+    <input id="j-charge-basis" type="hidden" name="chargeBasis" value="${chargeBasis}">
     <input type="hidden" name="hideLoss" value="${data.business.hideLossOnSlip !== false ? '1' : '0'}">
 
     <!-- 6. नोट / माल का विवरण -->
