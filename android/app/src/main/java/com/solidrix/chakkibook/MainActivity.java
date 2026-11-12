@@ -34,6 +34,30 @@ public class MainActivity extends BridgeActivity {
         // Prevent WebView from drawing under system status/notification bar
         if (this.getBridge() != null && this.getBridge().getWebView() != null) {
             this.getBridge().getWebView().setFitsSystemWindows(true);
+
+            // Expose installed native app version to client JavaScript
+            this.getBridge().getWebView().addJavascriptInterface(new Object() {
+                @android.webkit.JavascriptInterface
+                public String getAppVersion() {
+                    try {
+                        return getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
+                    } catch (Exception e) {
+                        return "2.8.2";
+                    }
+                }
+                @android.webkit.JavascriptInterface
+                public int getVersionCode() {
+                    try {
+                        return getPackageManager().getPackageInfo(getPackageName(), 0).versionCode;
+                    } catch (Exception e) {
+                        return 5;
+                    }
+                }
+                @android.webkit.JavascriptInterface
+                public boolean isNativeApp() {
+                    return true;
+                }
+            }, "AndroidAppInfo");
         }
 
         requestAppPermissions();

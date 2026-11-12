@@ -85,11 +85,26 @@ async function route(request, env, url) {
   const path = url.pathname.replace(/\/+$/, '') || '/api';
   const method = request.method.toUpperCase();
 
-  // Public auth routes
+  // Public auth & app info routes
   if (path === '/api/signup' && method === 'POST') return signup(request, env, url);
   if (path === '/api/login' && method === 'POST') return login(request, env, url);
   if (path === '/api/logout' && method === 'POST') return logout(request, env, url);
   if (path === '/api/status' && (method === 'GET' || method === 'POST')) return checkStatus(request, env, url);
+  if (path === '/api/app-version' && method === 'GET') {
+    return json({
+      ok: true,
+      version: '2.8.2',
+      versionCode: 5,
+      downloadUrl: '/tolmaal.apk',
+      releasedAt: 1794500000000,
+      changelog: [
+        'स्वचालित हिसाब गणना (तैयार माल / कुल वजन आधार)',
+        'कैमरा, स्कैनर और वॉइस ऑर्डर परमिशन सुधार',
+        '0ms तुरंत ग्राहक खाता लोड',
+        'टोकन पर्ची और रसीद प्रिंटिंग फिक्स'
+      ]
+    });
+  }
 
   // Super Admin / Tenant Management routes
   if (path === '/api/admin/login' && method === 'POST') return adminLogin(request, env, url);

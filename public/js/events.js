@@ -469,6 +469,34 @@ export function setupEventListeners() {
         await syncOfflineQueue();
         break;
 
+      case 'download-app-update': {
+        const { triggerAppDownload } = await import('./utils/updater.js');
+        triggerAppDownload();
+        break;
+      }
+
+      case 'open-update-modal': {
+        const { openUpdatePromptModal } = await import('./utils/updater.js');
+        openUpdatePromptModal();
+        break;
+      }
+
+      case 'dismiss-update-banner': {
+        const { dismissUpdateBanner } = await import('./utils/updater.js');
+        dismissUpdateBanner();
+        break;
+      }
+
+      case 'check-app-update': {
+        const { isUpdateAvailable, openUpdatePromptModal } = await import('./utils/updater.js');
+        if (isUpdateAvailable()) {
+          openUpdatePromptModal();
+        } else {
+          toast('आपका ऐप पहले से ही नवीनतम वर्ज़न (v2.8.2) पर है ✓');
+        }
+        break;
+      }
+
       case 'hard-refresh': {
         const icon = el.querySelector('.refresh-icon');
         if (icon) icon.classList.add('is-spinning');

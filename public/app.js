@@ -12,6 +12,7 @@ import { viewShell } from './js/components/shell.js';
 import { setupEventListeners } from './js/events.js';
 import { loadState } from './js/api.js';
 import { initSyncEngine, updateSyncIndicator, loadOfflineSnapshot } from './js/sync.js';
+import { autoCheckAppUpdate, triggerAppDownload } from './js/utils/updater.js';
 
 window.__appBooted = true;
 
@@ -101,6 +102,8 @@ function handleHash() {
   } else if (hash === '#status') {
     state.auth.mode = 'status';
     window.__appRender?.();
+  } else if (hash === '#download' || hash === '#update') {
+    triggerAppDownload();
   } else if (!hash) {
     // If merchant has no active session, direct to login screen
     if (!hasAuthToken() && !state.data) {
@@ -117,5 +120,7 @@ initSyncEngine();
 setupEventListeners();
 render();
 if (hasAuthToken()) {
-  loadState();
+  loadState().then(() => autoCheckAppUpdate()).catch(() => {});
+} else {
+  setTimeout(() => autoCheckAppUpdate(), 2000);
 }

@@ -1,6 +1,7 @@
 import { state, NAV, TITLES, ICONS } from '../state.js';
 import { esc, logoMark, todayTxt } from '../utils/formatters.js';
 import { LANGUAGES, getLanguage, t } from '../i18n.js';
+import { renderUpdateBanner, isUpdateAvailable } from '../utils/updater.js';
 
 export function langSelector() {
   const cur = getLanguage();
@@ -66,9 +67,15 @@ export function topbar() {
       <button type="button" class="btn btn-sm btn-subtle btn-topbar-status" data-act="open-status-modal" title="टोकन व ऑर्डर स्टेटस खोजें" style="border:1.5px solid #cbd5e1;border-radius:9px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;font-size:12px;background:#fff;width:32px;height:32px;padding:0;flex:0 0 32px;">
         <span>🔍</span>
       </button>
-      <a href="/tolmaal.apk" download="tolmaal.apk" class="btn btn-sm btn-apk-dl hide-mobile" title="TolMaal Android App (.apk) डाउनलोड करें" style="background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;font-weight:700;display:inline-flex;align-items:center;gap:4px;padding:5px 9px;border-radius:8px;text-decoration:none;font-size:11.5px;white-space:nowrap;margin-right:2px;">
-        <span>📲</span> <span>App</span>
-      </a>
+      ${isUpdateAvailable() ? `
+        <button type="button" class="btn btn-xs" data-act="open-update-modal" style="background:#dcfce7;color:#15803d;border:1.5px solid #86efac;font-weight:800;border-radius:8px;padding:4px 8px;font-size:11px;display:inline-flex;align-items:center;gap:3px;box-shadow:0 1px 4px rgba(21,128,61,0.2);" title="नया अपडेट आया है">
+          <span>🚀</span> <span style="font-size:11px;">अपडेट</span>
+        </button>
+      ` : `
+        <a href="/tolmaal.apk" download="tolmaal.apk" class="btn btn-sm btn-apk-dl hide-mobile" title="TolMaal Android App (.apk) डाउनलोड करें" style="background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;font-weight:700;display:inline-flex;align-items:center;gap:4px;padding:5px 9px;border-radius:8px;text-decoration:none;font-size:11.5px;white-space:nowrap;margin-right:2px;">
+          <span>📲</span> <span>App</span>
+        </a>
+      `}
       <span class="pill-date hide-mobile">${todayTxt()}</span>
       <div class="topbar-lang" style="flex:0 0 auto;">${langSelector()}</div>
       <div class="topbar-cta hide-mobile">
@@ -112,6 +119,7 @@ export function viewShell(content) {
     </aside>
 
     <div class="main">
+      ${renderUpdateBanner()}
       ${topbar()}
       <main class="page">${content}</main>
     </div>

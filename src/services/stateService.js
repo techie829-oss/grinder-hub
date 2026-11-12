@@ -241,5 +241,17 @@ export async function buildState(env, businessId, range) {
         amountPaise: r.amount_paise,
       })),
     },
+    appMeta: {
+      latestVersion: '2.8.2',
+      latestVersionCode: 5,
+      downloadUrl: '/tolmaal.apk',
+      releasedAt: 1794500000000,
+      changelog: [
+        'स्वचालित हिसाब गणना (तैयार माल / कुल वजन आधार)',
+        'कैमरा, स्कैनर और वॉइस ऑर्डर परमिशन सुधार',
+        '0ms तुरंत ग्राहक खाता लोड',
+        'टोकन पर्ची और रसीद प्रिंटिंग फिक्स'
+      ]
+    },
   };
 }

@@ -2,11 +2,15 @@
 import { state, UNITS } from '../state.js';
 import { inr, unitOf, esc, phoneFmt } from '../utils/formatters.js';
 import { langSelector } from '../components/shell.js';
+import { getInstalledAppInfo, isUpdateAvailable } from '../utils/updater.js';
 import { t } from '../i18n.js';
 
 export function viewSettings() {
   const data = state.data;
   const biz = data.business;
+  const installedInfo = getInstalledAppInfo();
+  const latestMeta = data.appMeta || { latestVersion: '2.8.2', latestVersionCode: 5 };
+  const isUpToDate = !isUpdateAvailable();
 
   return `
   <div class="page-head">
@@ -29,6 +33,32 @@ export function viewSettings() {
     <button type="button" class="btn btn-soft" data-act="open-hw-modal">
       <span>Manage Devices (Scale & Printer)</span>
     </button>
+  </section>
+
+  <!-- App Version & Update Section -->
+  <section class="card" style="background:#fff;border:1.5px solid #e2e8f0;border-radius:14px;padding:14px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:24px;">📲</span>
+        <div>
+          <h2 class="section-title" style="margin:0;font-size:15px;font-weight:800;color:#0f172a;">तौल-माल ऐप वर्ज़न व अपडेट</h2>
+          <div style="font-size:11.5px;color:#64748b;margin-top:2px;">
+            वर्तमान वर्ज़न: <strong>v${installedInfo.version}</strong> ${installedInfo.isNative ? '(Android App)' : '(Web)'} · नवीनतम: <strong>v${latestMeta.latestVersion}</strong>
+          </div>
+        </div>
+      </div>
+      <span class="tiny-chip" style="${isUpToDate ? 'background:#dcfce7;color:#15803d;' : 'background:#fef3c7;color:#b45309;'}font-weight:800;padding:4px 8px;">
+        ${isUpToDate ? '✓ नवीनतम वर्ज़न' : '🚀 नया अपडेट उपलब्ध'}
+      </span>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+      <button type="button" class="btn btn-primary btn-sm" data-act="download-app-update" style="font-weight:800;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;">
+        <span>📥</span> <span>नया TolMaal APK डाउनलोड करें</span>
+      </button>
+      <button type="button" class="btn btn-subtle btn-sm" data-act="check-app-update" style="font-weight:700;display:inline-flex;align-items:center;gap:6px;background:#fff;border:1.5px solid #cbd5e1;padding:8px 12px;">
+        <span>🔄</span> <span>अपडेट की जाँच करें</span>
+      </button>
+    </div>
   </section>
 
   <form class="card" data-form="settings">
