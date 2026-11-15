@@ -4,5 +4,8 @@ export {
   latinToDeva,
   normalizePhoneticKey,
   consonantSkeleton,
-  isPhoneticMatch
+  isPhoneticMatch,
+  canonicalNameKey,
+  toBilingualName,
+  DEVA_TO_LATIN_NAME_MAP
 } from '../../public/js/utils/phonetic.js';

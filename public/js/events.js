@@ -1952,6 +1952,21 @@ export function setupEventListeners() {
       showTranslitHelper(tEl);
     }
 
+    // Customer edit bilingual auto-sync
+    if (tEl.id === 'ec-name') {
+      const enEl = document.getElementById('ec-name-en');
+      if (enEl && !enEl.dataset.manual && tEl.value) {
+        enEl.value = devaToLatin(tEl.value).split(/\s+/).map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+      }
+    }
+    if (tEl.id === 'ec-name-en') {
+      tEl.dataset.manual = '1';
+      const hiEl = document.getElementById('ec-name');
+      if (hiEl && !hiEl.value && tEl.value) {
+        hiEl.value = latinToDeva(tEl.value);
+      }
+    }
+
     if (tEl.dataset.act === 'admin-search' || tEl.id === 'admin-search-input') {
       state.admin.q = tEl.value;
       window.__appRender?.();
@@ -2441,6 +2456,7 @@ export function setupEventListeners() {
       await withBusy(form.querySelector('[type="submit"]'), async () => {
         const payload = {
           name: String(fd.get('name') || '').trim(),
+          nameEn: String(fd.get('nameEn') || '').trim(),
           village: String(fd.get('village') || '').trim(),
           phone: String(fd.get('phone') || '').trim(),
           photo: String(fd.get('photo') || '').trim(),

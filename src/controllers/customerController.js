@@ -1,6 +1,6 @@
 // Customer Directory & Ledger Detail Controller
 import { readJson, json, bad } from '../utils/response.js';
-import { clean, normalizePhone, normName, normVillage, standardizeVillage } from '../utils/helpers.js';
+import { clean, normalizePhone, normName, normVillage, standardizeVillage, toBilingualName } from '../utils/helpers.js';
 import { buildState } from '../services/stateService.js';
 
 export async function customerDetail(request, env, business, url) {
@@ -48,8 +48,10 @@ export async function customerDetail(request, env, business, url) {
 export async function saveCustomer(request, env, business, range) {
   const body = await readJson(request);
   const id = clean(body.id, 40);
-  const name = clean(body.name, 60);
-  const village = clean(body.village, 60);
+  const rawName = clean(body.name, 60);
+  const rawNameEn = clean(body.nameEn || body.name_en || '', 60);
+  const name = toBilingualName(rawName, rawNameEn);
+  const village = standardizeVillage(clean(body.village, 60));
   const phone = normalizePhone(body.phone);
   const photo = typeof body.photo === 'string' ? body.photo.slice(0, 200000) : '';
   if (name.length < 2) return bad('ग्राहक का नाम लिखें');
@@ -64,11 +66,11 @@ export async function saveCustomer(request, env, business, range) {
     if (!existing) return bad('ग्राहक नहीं मिला', 404);
 
     const conflict = await env.DB.prepare(
-      'SELECT id FROM customers WHERE business_id = ? AND name_key = ? AND village_key = ? AND id <> ?'
+      'SELECT id, name FROM customers WHERE business_id = ? AND name_key = ? AND village_key = ? AND id <> ?'
     )
       .bind(business.id, key, vKey, id)
       .first();
-    if (conflict) return bad(`इस गाँव में '${name}' नाम के ग्राहक पहले से मौजूद हैं। अलग खाता रखने के लिए नाम में पिता का नाम या उपनाम जोड़ें (उदा. ${name} (मास्टर जी))`);
+    if (conflict) return bad(`इस गाँव में '${conflict.name}' ग्राहक पहले से मौजूद हैं। अलग खाता रखने के लिए नाम में पिता का नाम या उपनाम जोड़ें (उदा. ${name} (मास्टर जी))`);
 
     const finalPhoto = photo || (existing.photo || '');
     await env.DB.prepare(
@@ -78,11 +80,11 @@ export async function saveCustomer(request, env, business, range) {
       .run();
   } else {
     const exists = await env.DB.prepare(
-      'SELECT id FROM customers WHERE business_id = ? AND name_key = ? AND village_key = ?'
+      'SELECT id, name FROM customers WHERE business_id = ? AND name_key = ? AND village_key = ?'
     )
       .bind(business.id, key, vKey)
       .first();
-    if (exists) return bad(`इस गाँव में '${name}' नाम के ग्राहक पहले से मौजूद हैं। अलग खाता रखने के लिए नाम में पिता का नाम या उपनाम जोड़ें (उदा. ${name} (मास्टर जी) या ${name} (रामबली))`);
+    if (exists) return bad(`इस गाँव में '${exists.name}' ग्राहक पहले से मौजूद हैं। अलग खाता रखने के लिए नाम में पिता का नाम या उपनाम जोड़ें (उदा. ${name} (मास्टर जी) या ${name} (रामबली))`);
 
     await env.DB.prepare(
       'INSERT INTO customers (id, business_id, name, name_key, village, village_key, phone, photo, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'

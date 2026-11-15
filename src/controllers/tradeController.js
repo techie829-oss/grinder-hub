@@ -1,6 +1,6 @@
 // Trade Controller: Product Sales & Raw Material Purchases
 import { readJson, json, bad } from '../utils/response.js';
-import { clean, normalizePhone, normName, normVillage, standardizeVillage, dayKey } from '../utils/helpers.js';
+import { clean, normalizePhone, normName, normVillage, standardizeVillage, dayKey, toBilingualName } from '../utils/helpers.js';
 import { isPhoneticMatch } from '../utils/phonetic.js';
 import { buildState } from '../services/stateService.js';
 
@@ -33,7 +33,8 @@ export async function createTrade(request, env, business, range) {
   if (!(amountPaise > 0)) return bad('रकम सही नहीं है');
 
   const paid = body.paid ? 1 : 0;
-  const name = clean(body.name, 60);
+  let name = clean(body.name, 60);
+  if (name) name = toBilingualName(name);
   const village = standardizeVillage(body.village);
   const phone = normalizePhone(body.phone);
   const note = clean(body.note, 120);
@@ -47,9 +48,10 @@ export async function createTrade(request, env, business, range) {
   const photo = typeof body.photo === 'string' ? body.photo.slice(0, 200000) : '';
 
   if (customerId && customerId !== 'new') {
-    const directCust = await env.DB.prepare('SELECT id, phone, photo FROM customers WHERE id = ? AND business_id = ?').bind(customerId, business.id).first();
+    const directCust = await env.DB.prepare('SELECT id, phone, photo, name, village FROM customers WHERE id = ? AND business_id = ?').bind(customerId, business.id).first();
     if (directCust) {
       customerId = directCust.id;
+      name = directCust.name;
       if (!directCust.phone && phone) {
         await env.DB.prepare('UPDATE customers SET phone = ? WHERE id = ? AND business_id = ?').bind(phone, directCust.id, business.id).run();
       }
@@ -101,6 +103,7 @@ export async function createTrade(request, env, business, range) {
 
       if (found) {
         customerId = found.id;
+        name = found.name;
         if (!found.phone && phone) {
           await env.DB.prepare('UPDATE customers SET phone = ? WHERE id = ? AND business_id = ?').bind(phone, found.id, business.id).run();
         }

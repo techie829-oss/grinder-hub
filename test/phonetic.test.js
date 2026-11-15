@@ -74,6 +74,38 @@ test('Customer Disambiguation Safety Suite: Same Village Duplicate Name Protecti
   assert.equal(c1PhoneMatches[0].id, 'c1');
 });
 
+test('Bilingual Customer Name & Cross-Script Duplicate Collision Suite', async () => {
+  const { toBilingualName, canonicalNameKey } = await import('../src/utils/phonetic.js');
+  const { normName } = await import('../src/utils/helpers.js');
+
+  // 1. Automatic Bilingual Formatter Tests
+  assert.equal(toBilingualName('Shahnawaz'), 'शाहनवाज़ (Shahnawaz)');
+  assert.equal(toBilingualName('ganeshi'), 'गणेशी (Ganeshi)');
+  assert.equal(toBilingualName('इंद्रजीत मौर्य'), 'इंद्रजीत मौर्य (Indrajeet Maurya)');
+  assert.equal(toBilingualName('रामसागर'), 'रामसागर (Ramsagar)');
+  assert.equal(toBilingualName('ब्रजकिशोर'), 'ब्रजकिशोर (Brajkishore)');
+  assert.equal(toBilingualName('Ramesh Kumar'), 'रमेश कुमार (Ramesh Kumar)');
+  assert.equal(toBilingualName('Dinesh', 'Dinesh Master Ji'), 'Dinesh (Dinesh Master Ji)');
+
+  // 2. Canonical Name Key Collision Resistance (Hindi == English == Bilingual)
+  const key1 = canonicalNameKey('Shahnawaz');
+  const key2 = canonicalNameKey('शाहनवाज');
+  const key3 = canonicalNameKey('शाहनवाज़ (Shahnawaz)');
+  assert.equal(key1, key2);
+  assert.equal(key2, key3);
+
+  const g1 = canonicalNameKey('ganeshi');
+  const g2 = canonicalNameKey('गणेशी');
+  const g3 = canonicalNameKey('गणेशी (Ganeshi)');
+  assert.equal(g1, g2);
+  assert.equal(g2, g3);
+
+  // 3. Helper normName must produce same key to prevent database duplicates
+  assert.equal(normName('Shahnawaz'), normName('शाहनवाज'));
+  assert.equal(normName('ganeshi'), normName('गणेशी'));
+  assert.equal(normName('Ramesh'), normName('रमेश'));
+});
+
 test('Seeded Village Standardization & Fast Mapping Suite', async () => {
   const { standardizeVillage, SEEDED_VILLAGES } = await import('../src/utils/helpers.js');
   

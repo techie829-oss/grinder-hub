@@ -1,3 +1,5 @@
+import { canonicalNameKey, toBilingualName } from './phonetic.js';
+
 export const UNITS = { kg: 'किलो', ltr: 'लीटर', pc: 'नग', plate: 'प्लेट' };
 export const RANGES = ['today', 'yesterday', 'week', 'month', 'all'];
 export const IST_OFFSET = 5.5 * 60 * 60 * 1000;
@@ -11,7 +13,8 @@ export function normalizePhone(v) {
 }
 
 export function normName(v) {
-  return clean(v, 60).toLowerCase();
+  if (!v) return '';
+  return canonicalNameKey(v) || clean(v, 60).toLowerCase();
 }
 
 export const SEEDED_VILLAGES = [
@@ -101,8 +104,10 @@ export function standardizeVillage(v) {
 
 export function normVillage(v) {
   const std = standardizeVillage(v);
-  return clean(std, 60).toLowerCase();
+  return canonicalNameKey(std) || clean(std, 60).toLowerCase();
 }
+
+export { toBilingualName };
 
 export function dayKey(ts = Date.now()) {
   return new Date(ts + IST_OFFSET).toISOString().slice(0, 10);

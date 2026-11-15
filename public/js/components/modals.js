@@ -172,6 +172,21 @@ export function renderCustomerModal() {
 export function openCustomerEditModal(id) {
   const cust = id ? state.data.customers.find((c) => c.id === id) : null;
   const isNew = !cust;
+
+  let custLocalName = '';
+  let custEnName = '';
+  if (cust && cust.name) {
+    const match = cust.name.match(/^(.*?)\s*\((.*?)\)$/);
+    if (match) {
+      custLocalName = match[1].trim();
+      custEnName = match[2].trim();
+    } else if (/[\u0900-\u097F]/.test(cust.name)) {
+      custLocalName = cust.name;
+    } else {
+      custEnName = cust.name;
+    }
+  }
+
   showModal(`
     <div class="sheet-head">
       <h3>${isNew ? 'नया ग्राहक संपर्क जोड़ें' : 'ग्राहक संपर्क विवरण बदलें'}</h3>
@@ -197,15 +212,32 @@ export function openCustomerEditModal(id) {
         <div style="font-size:11.5px;color:#64748b;margin-top:4px;">उधार के समय सही पहचान के लिए फोटो बहुत उपयोगी है</div>
       </div>
 
-      <div class="field">
-        <label for="ec-name">${t('customerName')} <span class="req">*</span></label>
-        <input id="ec-name" name="name" maxlength="60" value="${esc(cust ? cust.name : '')}" placeholder="उदा. दिनेश कुमार (मास्टर जी)" required autocomplete="off">
-        <div style="font-size:11px;color:#64748b;margin-top:3px;">💡 एक ही नाम के कई लोग हों तो पिता का नाम या उपनाम जोड़ें (उदा. दिनेश (रामबली))</div>
+      <!-- Bilingual Name Inputs: Hindi (Local) and English -->
+      <div class="two-col">
+        <div class="field">
+          <label for="ec-name">नाम (हिंदी / स्थानीय) <span class="req">*</span></label>
+          <input id="ec-name" name="name" maxlength="60" value="${esc(custLocalName)}" placeholder="उदा. रमेश कुमार" required autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="ec-name-en">Name in English (अंग्रेजी)</label>
+          <input id="ec-name-en" name="nameEn" maxlength="60" value="${esc(custEnName)}" placeholder="e.g. Ramesh Kumar" autocomplete="off">
+        </div>
       </div>
+      <div style="font-size:11px;color:#64748b;margin-top:-6px;margin-bottom:10px;">
+        💡 दोनों भाषाओं में नाम रहने से ग्राहक की सटीक पहचान रहती है और डुप्लीकेट खाता बनने से बचता है।
+      </div>
+
       <div class="field">
         <label for="ec-village">${t('villageLabel')}</label>
-        <input id="ec-village" name="village" maxlength="60" value="${esc(cust ? (cust.village || '') : '')}" placeholder="Village / Area" autocomplete="off">
+        <input id="ec-village" name="village" maxlength="80" value="${esc(cust ? (cust.village || '') : '')}" placeholder="गाँव चुनें या लिखें" autocomplete="off">
       </div>
+      <div class="village-chips-scroll" style="margin-top:-6px;margin-bottom:12px;">
+        ${(state.data?.villages || []).map((v) => {
+          const vName = typeof v === 'object' ? v.name : v;
+          return `<button type="button" class="btn-village-chip" onclick="document.getElementById('ec-village').value = '${esc(vName)}';">📍 ${esc(vName)}</button>`;
+        }).join('')}
+      </div>
+
       <div class="field">
         <label for="ec-phone">${t('phoneLabel')}</label>
         <input id="ec-phone" name="phone" type="tel" inputmode="numeric" maxlength="10" value="${esc(cust ? (cust.phone || '') : '')}" placeholder="${t('phonePlaceholder')}">

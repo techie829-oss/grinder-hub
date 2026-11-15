@@ -13,6 +13,12 @@ const COMMON_INDIAN_WORDS = {
   'kilo': 'किलो', 'kg': 'किलो', 'gram': 'ग्राम', 'litre': 'लीटर', 'ltr': 'लीटर',
 
   // Common Names & Surnames
+  'shahnawaz': 'शाहनवाज़', 'shahnavaj': 'शाहनवाज़', 'shahnavaz': 'शाहनवाज़',
+  'ganeshi': 'गणेशी', 'ganesh': 'गणेश',
+  'ramsagar': 'रामसागर', 'ram sagar': 'रामसागर',
+  'indrajeet': 'इंद्रजीत', 'indrajit': 'इंद्रजीत',
+  'brajkishor': 'ब्रजकिशोर', 'brajkishore': 'ब्रजकिशोर', 'brijkishor': 'ब्रजकिशोर', 'brijkishore': 'ब्रजकिशोर',
+  'rammurat': 'राम मूरत', 'ram murat': 'राम मूरत',
   'ramesh': 'रमेश', 'dinesh': 'दिनेश', 'suresh': 'सुरेश', 'mahesh': 'महेश',
   'rajesh': 'राजेश', 'mukesh': 'मुकेश', 'rakesh': 'राकेश', 'mohan': 'मोहन',
   'sohan': 'सोहन', 'rohit': 'रोहित', 'rahul': 'राहुल', 'amit': 'अमित',
@@ -26,7 +32,7 @@ const COMMON_INDIAN_WORDS = {
   'kumar': 'कुमार', 'singh': 'सिंह', 'sharma': 'शर्मा', 'verma': 'वर्मा',
   'gupta': 'गुप्ता', 'yadav': 'यादव', 'tiwari': 'तिवारी', 'pandey': 'पांडेय',
   'mishra': 'मिश्रा', 'shukla': 'शुक्ला', 'patel': 'पटेल', 'chaudhary': 'चौधरी',
-  'pal': 'पाल', 'maurya': 'मौर्या', 'kushwaha': 'कुशवाहा', 'devi': 'देवी',
+  'pal': 'पाल', 'maurya': 'मौर्य', 'kushwaha': 'कुशवाहा', 'devi': 'देवी',
   'lal': 'लाल', 'prasad': 'प्रसाद', 'chand': 'चंद', 'das': 'दास',
 
   // Common Towns / Villages
@@ -239,4 +245,86 @@ export function isPhoneticMatch(target, query) {
   if (qSkel.length >= 2 && (tSkel.includes(qSkel) || qSkel.includes(tSkel))) return true;
 
   return false;
+}
+
+export const DEVA_TO_LATIN_NAME_MAP = {
+  'शाहनवाज़': 'Shahnawaz', 'शाहनवाज': 'Shahnawaz',
+  'गणेशी': 'Ganeshi', 'गणेश': 'Ganesh',
+  'इंद्रजीत': 'Indrajeet', 'इन्द्रजीत': 'Indrajeet',
+  'मौर्य': 'Maurya', 'मौर्या': 'Maurya',
+  'रामसागर': 'Ramsagar', 'ब्रजकिशोर': 'Brajkishore',
+  'राम मूरत': 'Ram Murat', 'राममूरत': 'Ram Murat',
+  'रमेश': 'Ramesh', 'दिनेश': 'Dinesh', 'सुरेश': 'Suresh', 'महेश': 'Mahesh',
+  'राजेश': 'Rajesh', 'मुकेश': 'Mukesh', 'राकेश': 'Rakesh', 'मोहन': 'Mohan',
+  'सोहन': 'Sohan', 'रोहित': 'Rohit', 'राहुल': 'Rahul', 'अमित': 'Amit',
+  'अनिल': 'Anil', 'सुनील': 'Sunil', 'संजय': 'Sanjay', 'अजय': 'Ajay',
+  'विजय': 'Vijay', 'कमल': 'Kamal', 'मनोज': 'Manoj', 'विनोद': 'Vinod',
+  'प्रमोद': 'Pramod', 'अशोक': 'Ashok', 'सोनू': 'Sonu', 'मोनू': 'Monu',
+  'दीपक': 'Deepak', 'पंकज': 'Pankaj', 'विकास': 'Vikas', 'रवि': 'Ravi',
+  'श्याम': 'Shyam', 'राम': 'Ram', 'किशोर': 'Kishore', 'संतोष': 'Santosh',
+  'सतीश': 'Satish', 'हरीश': 'Harish', 'सचिन': 'Sachin', 'सूरज': 'Suraj',
+  'चंदन': 'Chandan', 'अरुण': 'Arun', 'कुमार': 'Kumar', 'सिंह': 'Singh',
+  'शर्मा': 'Sharma', 'वर्मा': 'Verma', 'गुप्ता': 'Gupta', 'यादव': 'Yadav',
+  'तिवारी': 'Tiwari', 'पांडेय': 'Pandey', 'मिश्रा': 'Mishra', 'शुक्ला': 'Shukla',
+  'पटेल': 'Patel', 'चौधरी': 'Chaudhary', 'पाल': 'Pal', 'कुशवाहा': 'Kushwaha',
+  'देवी': 'Devi', 'लाल': 'Lal', 'प्रसाद': 'Prasad', 'चंद': 'Chand', 'दास': 'Das'
+};
+
+// Generates a collision-resistant canonical phonetic key for customer names
+export function canonicalNameKey(str) {
+  if (!str) return '';
+  const base = String(str).replace(/\(.*?\)/g, '').trim() || String(str);
+  return consonantSkeleton(base) || normalizePhoneticKey(base);
+}
+
+// Converts/formats customer name to unified bilingual format: LocalName (EnglishName)
+export function toBilingualName(name, nameEn = '') {
+  if (!name) return '';
+  let str = String(name).trim();
+
+  // If explicit English name is provided
+  if (nameEn && String(nameEn).trim()) {
+    const enClean = String(nameEn).trim().split(/\s+/).map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+    // Strip existing brackets if any
+    const base = str.replace(/\(.*?\)/g, '').trim() || str;
+    return `${base} (${enClean})`;
+  }
+
+  // If already contains bracket e.g. "शाहनवाज़ (Shahnawaz)" or "Shahnawaz (शाहनवाज)"
+  const match = str.match(/^(.*?)\s*\((.*?)\)$/);
+  if (match) {
+    let p1 = match[1].trim();
+    let p2 = match[2].trim();
+    const p1Deva = /[\u0900-\u097F]/.test(p1);
+    const p2Deva = /[\u0900-\u097F]/.test(p2);
+    if (p1Deva && !p2Deva) {
+      const capP2 = p2.split(/\s+/).map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+      return `${p1} (${capP2})`;
+    } else if (!p1Deva && p2Deva) {
+      const capP1 = p1.split(/\s+/).map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+      return `${p2} (${capP1})`;
+    }
+    return str;
+  }
+
+  const hasDeva = /[\u0900-\u097F]/.test(str);
+  if (hasDeva) {
+    // Devanagari -> English transliteration
+    const words = str.split(/\s+/);
+    const enWords = words.map((w) => {
+      if (DEVA_TO_LATIN_NAME_MAP[w]) return DEVA_TO_LATIN_NAME_MAP[w];
+      const lat = devaToLatin(w);
+      return lat ? lat.charAt(0).toUpperCase() + lat.slice(1).toLowerCase() : w;
+    });
+    return `${str} (${enWords.join(' ')})`;
+  } else {
+    // English -> Devanagari transliteration
+    const words = str.toLowerCase().split(/\s+/);
+    const hiWords = words.map((w) => {
+      if (COMMON_INDIAN_WORDS[w]) return COMMON_INDIAN_WORDS[w];
+      return latinToDeva(w);
+    });
+    const capEn = str.split(/\s+/).map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+    return `${hiWords.join(' ')} (${capEn})`;
+  }
 }

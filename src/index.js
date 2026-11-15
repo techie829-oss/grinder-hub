@@ -173,14 +173,14 @@ async function route(request, env, url) {
   if (path === '/api/app-version' && method === 'GET') {
     return json({
       ok: true,
-      version: '2.8.9',
-      versionCode: 11,
+      version: '2.8.10',
+      versionCode: 12,
       downloadUrl: '/tolmaal.apk',
       releasedAt: Date.now(),
       changelog: [
-        'गाँव / क्षेत्र प्रबंधन (Village Management in Settings)',
-        'हिंदी व अंग्रेजी संयुक्त गाँव नाम (केवलपुरवा (Kewalpurwa) आदि 12 गाँव)',
-        'दुकान अनुसार गाँव सूची जोड़ने, बदलने और हटाने की पूरी सुविधा',
+        'हिंदी व अंग्रेजी संयुक्त ग्राहक नाम (उदा. शाहनवाज़ (Shahnawaz))',
+        'क्रॉस-स्क्रिप्ट डुप्लीकेट ग्राहक सुरक्षा (Cross-Language Anti-Duplicate)',
+        'गाँव / क्षेत्र प्रबंधन व 1-क्लिक फास्ट विलेज चिप्स',
       ]
     });
   }
