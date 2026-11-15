@@ -368,7 +368,7 @@ export function openStatusModal(initialTokenNo = '', initialPhone = '') {
         <label for="status-phone" style="display:block;font-size:12px;font-weight:700;color:#334155;margin-bottom:4px;">
           ${t('customerPhoneFieldLabel')} <span style="color:#dc2626;">*</span>
         </label>
-        <input id="status-phone" type="tel" inputmode="numeric" maxlength="10" class="input" placeholder="9554880713" value="${esc(initialPhone)}" style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid #cbd5e1;font-size:14px;">
+        <input id="status-phone" type="tel" inputmode="numeric" maxlength="10" class="input" placeholder="9876543210" value="${esc(initialPhone)}" style="width:100%;padding:10px 14px;border-radius:10px;border:1px solid #cbd5e1;font-size:14px;">
       </div>
 
       <div>

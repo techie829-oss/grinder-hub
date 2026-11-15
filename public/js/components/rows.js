@@ -124,9 +124,15 @@ export function tokenTicketCard(tok, type = 'waiting') {
     <div class="ticket-body">
       ${svcName ? `<span class="ticket-pill svc">🌾 ${svcName}</span>` : ''}
       <div class="ticket-weights">
-        ${gross ? `<span class="tw-item gross">आवक: <b>${qtyFmt(gross)} ${unit}</b></span>` : ''}
-        ${lossG > 0 ? `<span class="tw-item loss">काट: <b>-${lossG}g</b></span>` : ''}
-        ${net > 0 ? `<span class="tw-item net">वापसी: <b>${qtyFmt(net)} ${unit}</b></span>` : ''}
+        ${lossG > 0 ? `
+          <span class="tw-item gross">आवक: <b>${qtyFmt(gross)} ${unit}</b></span>
+          <span class="tw-item loss">काट: <b>-${lossG}g</b></span>
+          <span class="tw-item net">वापसी: <b>${qtyFmt(net)} ${unit}</b></span>
+        ` : `
+          <span class="tw-item net" style="color:#15803d;font-weight:750;">
+            तैयार वजन: <b>${qtyFmt(net || gross)} ${unit}</b> <span class="tiny-chip" style="background:#f0fdf4;color:#16a34a;border:1px solid #bbf7d0;font-size:10.5px;">✓ तैयार माल (सीधा Output)</span>
+          </span>
+        `}
       </div>
     </div>
 
