@@ -2740,3 +2740,168 @@ body:has(#modal:not(:empty)) .tabbar {
 .cust-icon-btn.edit {
   color: #4f46e5;
 }
+
+/* ============================================================
+   Main Dashboard & Date-Wise Order Book Revamp Styles
+   ============================================================ */
+
+/* Dashboard Action Launcher Grid */
+.dash-launcher-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+@media (max-width: 640px) {
+  .dash-launcher-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+}
+.dash-launcher-tile {
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 12px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  border: 1.5px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.12s ease;
+}
+.dash-launcher-tile:active {
+  transform: scale(0.98);
+}
+.dash-launcher-tile.tile-purple {
+  border-color: #c7d2fe;
+  background: linear-gradient(180deg, #f5f3ff 0%, #ffffff 100%);
+}
+.dash-launcher-tile.tile-green {
+  border-color: #a7f3d0;
+  background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 100%);
+}
+.dash-launcher-tile.tile-amber {
+  border-color: #fde68a;
+  background: linear-gradient(180deg, #fffbeb 0%, #ffffff 100%);
+}
+.dash-launcher-tile.tile-blue {
+  border-color: #bfdbfe;
+  background: linear-gradient(180deg, #eff6ff 0%, #ffffff 100%);
+}
+.dash-tile-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+.dash-tile-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #0f172a;
+}
+.dash-tile-sub {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #64748b;
+  line-height: 1.2;
+}
+
+/* Day Report Datebar & Filter Tabs */
+.day-report-datebar {
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+.day-quick-pills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.day-quick-pill {
+  padding: 6px 12px;
+  border-radius: 9px;
+  border: 1.5px solid #cbd5e1;
+  background: #f8fafc;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+.day-quick-pill.is-active {
+  background: #4f46e5;
+  border-color: #4338ca;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25);
+}
+
+/* Sub Tabs Switcher */
+.report-subtabs {
+  display: flex;
+  gap: 8px;
+  background: #f1f5f9;
+  padding: 4px;
+  border-radius: 12px;
+  margin-bottom: 14px;
+}
+.report-subtab {
+  flex: 1 1 50%;
+  text-align: center;
+  padding: 8px 12px;
+  font-size: 12.5px;
+  font-weight: 750;
+  color: #475569;
+  background: transparent;
+  border: none;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+.report-subtab.is-on {
+  background: #ffffff;
+  color: #0f172a;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+}
+
+/* Day Order Card */
+.day-order-card {
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.day-order-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.day-order-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12.5px;
+  color: #334155;
+  background: #f8fafc;
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+.day-order-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 6px;
+  border-top: 1px solid #f1f5f9;
+}
+

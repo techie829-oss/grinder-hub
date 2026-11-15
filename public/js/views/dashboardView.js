@@ -1,5 +1,5 @@
 import { state } from '../state.js';
-import { inr, qtyFmt, rangeLabel, emptyBlock, esc, relTxt, todayTxt, phoneFmt } from '../utils/formatters.js';
+import { inr, qtyFmt, rangeLabel, emptyBlock, esc, todayTxt, phoneFmt } from '../utils/formatters.js';
 import { tokenCard } from '../components/tokenCard.js';
 import { entryRow } from '../components/rows.js';
 import { t } from '../i18n.js';
@@ -10,78 +10,133 @@ export function viewDashboard() {
   const label = rangeLabel(s.range);
   const recent = d.entries.slice(0, 8);
   const dues = d.customers.filter((c) => c.balancePaise > 0).slice(0, 6);
+  const tObj = d.tokens || { waiting: [], done: 0, nextNo: 1, serving: null, doneList: [] };
+  const doneList = tObj.doneList || [];
+  const tokenCountToday = tObj.nextNo ? Math.max(0, tObj.nextNo - 1) : (tObj.total || 0);
 
   return `
-  <!-- Business Info Header Banner -->
-  <div class="dash-biz-banner card" style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;background:#ffffff;border:1.5px solid #e2e8f0;border-radius:14px;margin-bottom:12px;box-shadow:0 1px 3px rgba(15,23,42,0.04);">
-    <div style="min-width:0;flex:1 1 auto;">
-      <div style="font-size:17px;font-weight:850;color:#0f172a;line-height:1.25;letter-spacing:-0.2px;word-break:break-word;">
-        ${esc(d.business.name)}
+  <!-- Business Info Header Banner (Modern Shop Hero Card) -->
+  <div class="dash-biz-banner card" style="background:#ffffff;border:1.5px solid #e2e8f0;border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 2px 8px rgba(15,23,42,0.04);">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+      <div style="min-width:0;flex:1 1 240px;">
+        <div style="font-size:19px;font-weight:900;color:#0f172a;line-height:1.25;letter-spacing:-0.3px;word-break:break-word;">
+          ${esc(d.business.name)}
+        </div>
+        <div style="font-size:12px;color:#64748b;font-weight:650;margin-top:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          ${d.business.village ? `<span style="color:#334155;">📍 ${esc(d.business.village)}</span>` : ''}
+          ${d.business.phone ? `<span>📞 ${phoneFmt(d.business.phone)}</span>` : ''}
+        </div>
       </div>
-      <div style="font-size:11.5px;color:#64748b;font-weight:600;margin-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-        ${d.business.village ? `<span style="color:#475569;">📍 ${esc(d.business.village)}</span>` : ''}
-        ${d.business.phone ? `<span>📞 ${phoneFmt(d.business.phone)}</span>` : ''}
+      <div style="flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;gap:5px;">
+        <span style="display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:750;background:#ecfdf5;color:#047857;border:1px solid #a7f3d0;padding:4px 9px;border-radius:20px;">
+          <span style="width:7px;height:7px;border-radius:50%;background:#10b981;display:inline-block;"></span> दुकान चालू है
+        </span>
+        <span style="font-size:11px;color:#64748b;font-weight:650;">
+          📅 ${todayTxt()}
+        </span>
       </div>
     </div>
-    <div style="flex:0 0 auto;text-align:right;">
-      <span style="display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:750;background:#f8fafc;color:#475569;border:1px solid #cbd5e1;padding:4px 8px;border-radius:8px;">
-        📅 ${todayTxt()}
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:11.5px;">
+      <span style="color:#475569;font-weight:700;">
+        🔄 टोकन मोड: <b style="color:#0f172a;">${d.business.tokenMode === 'loop100' ? 'चक्र 1-100' : 'दैनिक 1 से'}</b>
+      </span>
+      <span style="background:#f1f5f9;color:#334155;font-weight:750;padding:3px 8px;border-radius:8px;">
+        आज कुल: <b>${tokenCountToday}</b> टोकन
       </span>
     </div>
   </div>
 
   ${tokenCard()}
 
-  <!-- Quick Action Launcher Bar -->
-  <div class="dash-quick-actions" style="display:grid;grid-template-columns:repeat(auto-fit, minmax(100px, 1fr));gap:8px;margin-top:14px;">
-    <button type="button" class="btn btn-soft" data-act="switch-job-tab" data-tab="grind" data-goto="job"
-      style="padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;border-radius:14px;background:#fff;border:1.5px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.05);cursor:pointer;">
-      <span style="font-size:20px;">⚙️</span>
-      <span style="font-weight:800;font-size:12.5px;color:#0f172a;">${t('servicesAndProcessing')}</span>
-      <span class="tiny muted" style="font-size:10.5px;">${t('servicesSub')}</span>
+  <!-- 4 Action Launcher Tiles -->
+  <div class="dash-launcher-grid">
+    <button type="button" class="dash-launcher-tile tile-purple" data-act="goto" data-view="token">
+      <span class="dash-tile-icon">🌾</span>
+      <span class="dash-tile-title">नया टोकन / काम</span>
+      <span class="dash-tile-sub">कतार पर्ची व पिसाई</span>
     </button>
-    <button type="button" class="btn btn-soft" data-act="switch-job-tab" data-tab="sale" data-goto="job"
-      style="padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;border-radius:14px;background:#fff;border:1.5px solid #a7f3d0;box-shadow:0 1px 3px rgba(0,0,0,0.05);cursor:pointer;">
-      <span style="font-size:20px;">🛒</span>
-      <span style="font-weight:800;font-size:12.5px;color:#059669;">${t('goodsSale')}</span>
-      <span class="tiny muted" style="font-size:10.5px;">${t('goodsSaleSub')}</span>
+    <button type="button" class="dash-launcher-tile tile-green" data-act="switch-job-tab" data-tab="sale" data-goto="job">
+      <span class="dash-tile-icon">🛒</span>
+      <span class="dash-tile-title">माल बिक्री</span>
+      <span class="dash-tile-sub">आटा, तेल, चोकर आदि</span>
     </button>
-    <button type="button" class="btn btn-soft" data-act="switch-job-tab" data-tab="purchase" data-goto="job"
-      style="padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;border-radius:14px;background:#fff;border:1.5px solid #fde68a;box-shadow:0 1px 3px rgba(0,0,0,0.05);cursor:pointer;">
-      <span style="font-size:20px;">📥</span>
-      <span style="font-weight:800;font-size:12.5px;color:#d97706;">${t('rawMaterialPurchase')}</span>
-      <span class="tiny muted" style="font-size:10.5px;">${t('purchaseSub')}</span>
+    <button type="button" class="dash-launcher-tile tile-amber" data-act="switch-job-tab" data-tab="purchase" data-goto="job">
+      <span class="dash-tile-icon">📥</span>
+      <span class="dash-tile-title">फसल खरीद</span>
+      <span class="dash-tile-sub">किसान से अनाज खरीद</span>
     </button>
-    <button type="button" class="btn btn-soft" data-act="goto" data-view="reports"
-      style="padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;border-radius:14px;background:#fff;border:1.5px solid #cbd5e1;box-shadow:0 1px 3px rgba(0,0,0,0.05);cursor:pointer;">
-      <span style="font-size:20px;">📊</span>
-      <span style="font-weight:800;font-size:12.5px;color:#334155;">${t('dailyReports')}</span>
-      <span class="tiny muted" style="font-size:10.5px;">${t('reportsSub')}</span>
+    <button type="button" class="dash-launcher-tile tile-blue" data-act="goto" data-view="reports">
+      <span class="dash-tile-icon">📅</span>
+      <span class="dash-tile-title">तारीख अनुसार हिसाब</span>
+      <span class="dash-tile-sub">दिनवार ऑर्डर व बहीखाता</span>
     </button>
   </div>
 
+  <!-- Modern Financial & Operational KPI Cards -->
   <div class="kpis mt-14">
+    <div class="kpi ${s.cashPaise >= 0 ? 'green' : 'amber'}" style="${s.cashPaise < 0 ? 'background:#fff7ed;border-color:#fed7aa;' : 'background:#f0fdf4;border-color:#bbf7d0;'}">
+      <div class="kpi-label" style="${s.cashPaise < 0 ? 'color:#c2410c;' : 'color:#15803d;'}">
+        <span>💵</span> <span>गल्ले में नकद रोकड़</span>
+      </div>
+      <div class="kpi-value" style="${s.cashPaise < 0 ? 'color:#ea580c;' : 'color:#16a34a;'}">${inr(s.cashPaise)}</div>
+      <div class="kpi-sub">${s.cashPaise < 0 ? 'खर्च बिक्री से अधिक' : 'काउंटर में शुद्ध नकद'}</div>
+    </div>
+
     <div class="kpi accent">
-      <div class="kpi-label">${t('totalSalesLabel', { range: label })}</div>
+      <div class="kpi-label">
+        <span>🌾</span> <span>कुल काम व बिक्री</span>
+      </div>
       <div class="kpi-value">${inr(s.salePaise)}</div>
-      <div class="kpi-sub">${t('serviceJobsCount', { n: s.jobs || 0 })} · ${t('goodsSalesCount', { n: s.sales || 0 })}</div>
+      <div class="kpi-sub">${s.jobs || 0} पिसाई · ${s.sales || 0} बिक्री</div>
     </div>
-    <div class="kpi ${s.cashPaise >= 0 ? 'green' : 'amber'}" style="${s.cashPaise < 0 ? 'background:#fff7ed;border-color:#fed7aa;' : ''}">
-      <div class="kpi-label" style="${s.cashPaise < 0 ? 'color:#c2410c;' : ''}">${t('netCashGalla')}</div>
-      <div class="kpi-value" style="${s.cashPaise < 0 ? 'color:#ea580c;' : ''}">${inr(s.cashPaise)}</div>
-      <div class="kpi-sub">${s.cashPaise < 0 ? t('outflowWarning') : t('cashInGalla')}</div>
+
+    <div class="kpi amber" style="background:#fffbeb;border-color:#fde68a;">
+      <div class="kpi-label" style="color:#b45309;">
+        <span>🔴</span> <span>आज का नया उधार</span>
+      </div>
+      <div class="kpi-value" style="color:#d97706;">${inr(s.creditPaise)}</div>
+      <div class="kpi-sub">${s.creditPaise > 0 ? 'आज ग्राहकों को दिया उधार' : 'आज कोई नया उधार नहीं ✓'}</div>
     </div>
-    <div class="kpi amber">
-      <div class="kpi-label">${t('newCreditCard')}</div>
-      <div class="kpi-value">${inr(s.creditPaise)}</div>
-      <div class="kpi-sub">${t('creditGivenToday')}</div>
-    </div>
-    <div class="kpi" style="${s.purchasePaise > 0 ? 'background:#fffbeb;border-color:#fde68a;' : ''}">
-      <div class="kpi-label" style="${s.purchasePaise > 0 ? 'color:#b45309;' : ''}">${s.purchasePaise > 0 ? t('totalCropPurchase') : t('totalOutstanding')}</div>
-      <div class="kpi-value" style="${s.purchasePaise > 0 ? 'color:#d97706;' : ''}">${s.purchasePaise > 0 ? inr(s.purchasePaise) : inr(s.outstandingPaise)}</div>
-      <div class="kpi-sub">${s.purchasePaise > 0 ? t('purchasesCount', { n: s.purchases || 0 }) : t('receivableFromCustomers', { n: s.outstandingCount || 0 })}</div>
+
+    <div class="kpi" style="background:#fef2f2;border-color:#fecaca;">
+      <div class="kpi-label" style="color:#b91c1c;">
+        <span>⚠️</span> <span>दुकान का कुल बकाया</span>
+      </div>
+      <div class="kpi-value" style="color:#dc2626;">${inr(s.outstandingPaise)}</div>
+      <div class="kpi-sub">${s.outstandingCount || 0} ग्राहकों से कुल बाकी</div>
     </div>
   </div>
+
+  <!-- Ready to Bill Tokens Widget -->
+  ${doneList.length ? `
+  <section class="card mt-14" style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:16px;padding:14px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <div style="font-size:13.5px;font-weight:800;color:#166534;display:flex;align-items:center;gap:6px;">
+        <span>✅</span> <span>तैयार माल (1-क्लिक में बिल बनाएं)</span>
+      </div>
+      <span class="tiny-chip" style="background:#dcfce7;color:#15803d;font-weight:800;">${doneList.length} तैयार</span>
+    </div>
+    <div class="row-list">
+      ${doneList.slice(0, 5).map((tok) => `
+        <div class="row-item" style="padding:8px 0;border-bottom:1px solid #dcfce7;display:flex;align-items:center;gap:8px;">
+          <span class="token-badge" style="width:34px;height:34px;border-radius:9px;background:#e0e7ff;color:#3730a3;font-weight:800;font-size:13px;display:grid;place-items:center;flex-shrink:0;">#${tok.no}</span>
+          <div class="grow" style="min-width:0;">
+            <div style="font-weight:800;font-size:13.5px;color:#0f172a;">
+              <span>${esc(tok.name)}</span>
+              ${tok.village ? `<span class="tiny-chip" style="font-size:11px;">${esc(tok.village)}</span>` : ''}
+            </div>
+            <div class="tiny" style="color:#475569;margin-top:2px;">
+              ${tok.serviceName || 'पिसाई'} · तैयार माल: <b style="color:#15803d;">${qtyFmt(tok.netWeight || tok.grossWeight)} kg</b>
+            </div>
+          </div>
+          <button type="button" class="btn btn-sm btn-primary" data-act="token-to-job" data-id="${tok.id}" style="padding:6px 12px;font-size:12px;font-weight:750;white-space:nowrap;">
+            🧾 बिल बनाएं
+          </button>
+        </div>
+      `).join('')}
+    </div>
+  </section>
+  ` : ''}
 
   <div class="grid-2 mt-14">
     <section class="card">
@@ -91,23 +146,7 @@ export function viewDashboard() {
       </div>
       ${recent.length
         ? `<div class="row-list">${recent.map((e) => entryRow(e)).join('')}</div>`
-        : (d.tokens && d.tokens.doneList && d.tokens.doneList.length
-          ? `<div class="row-list">
-              <div style="font-size:11.5px;font-weight:750;color:#15803d;margin-bottom:8px;">${t('pendingBillsFromDoneTokens')}</div>
-              ${d.tokens.doneList.map((tok) => `
-                <div class="row-item" style="padding:8px 0;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;gap:8px;">
-                  <span class="token-badge" style="width:32px;height:32px;border-radius:8px;background:#e0e7ff;color:#3730a3;font-weight:800;font-size:13px;display:grid;place-items:center;flex-shrink:0;">#${tok.no}</span>
-                  <span class="grow" style="min-width:0;">
-                    <span class="row-title ellipsis">${esc(tok.name)}${tok.village ? ` <span class="tiny-chip">${esc(tok.village)}</span>` : ''}</span>
-                    <span class="row-sub">${tok.serviceName || t('servicesAndProcessing')} ${tok.grossWeight ? '· ' + tok.grossWeight + 'kg' : ''}</span>
-                  </span>
-                  <button type="button" class="btn btn-sm btn-primary" data-act="token-to-job" data-id="${tok.id}" style="padding:5px 10px;font-size:11.5px;font-weight:700;">
-                    ${t('createBillAction')}
-                  </button>
-                </div>
-              `).join('')}
-            </div>`
-          : emptyBlock(t('noTransactionsYet'), t('noTransactionsSub')))}
+        : emptyBlock(t('noTransactionsYet'), t('noTransactionsSub'))}
     </section>
 
     <section class="card">
@@ -118,18 +157,21 @@ export function viewDashboard() {
       ${(dues.length ? dues : d.customers.slice(0, 6)).length
         ? `<div class="row-list">
             ${(dues.length ? dues : d.customers.slice(0, 6)).map((c) => `
-              <button type="button" class="row-item" data-act="open-cust" data-id="${c.id}">
-                ${c.photo
-                  ? `<img src="${c.photo}" class="avatar small" alt="${esc(c.name)}" style="object-fit:cover;border:1px solid #cbd5e1;">`
-                  : `<span class="avatar small">${esc(c.name.trim().charAt(0) || '?')}</span>`}
-                <span class="grow">
+              <div class="row-item" style="cursor:pointer;" data-act="open-cust" data-id="${c.id}">
+                <span class="avatar" style="width:34px;height:34px;border-radius:10px;background:#eef2ff;color:#4338ca;font-weight:800;font-size:13px;display:grid;place-items:center;flex-shrink:0;">${c.name.slice(0, 1)}</span>
+                <span class="grow" style="min-width:0;">
                   <span class="row-title ellipsis">${esc(c.name)}${c.village ? ` <span class="tiny-chip">${esc(c.village)}</span>` : ''}</span>
-                  <span class="row-sub">${c.phone ? c.phone : 'फोन नहीं'}${c.lastAt ? ' · ' + relTxt(c.lastAt) : ''}</span>
+                  <span class="row-sub">${c.phone ? phoneFmt(c.phone) : '—'}</span>
                 </span>
-                <span class="bal ${c.balancePaise > 0 ? 'due' : (c.balancePaise < 0 ? 'adv' : 'zero')}">${c.balancePaise !== 0 ? inr(c.balancePaise) : 'बराबर ✓'}</span>
-              </button>`).join('')}
+                <span class="right">
+                  <span class="pill-balance ${c.balancePaise > 0 ? 'red' : (c.balancePaise < 0 ? 'green' : '')}">
+                    ${c.balancePaise > 0 ? `बाकी: ${inr(c.balancePaise)}` : (c.balancePaise < 0 ? `अग्रिम: ${inr(-c.balancePaise)}` : 'हिसाब चुकता')}
+                  </span>
+                </span>
+              </div>
+            `).join('')}
           </div>`
-        : emptyBlock('अभी कोई ग्राहक दर्ज नहीं', 'टोकन या नया बिल बनाते ही ग्राहक यहाँ दिखेगा।')}
+        : emptyBlock(t('noCustomersYet'), t('noCustomersSub'))}
     </section>
   </div>`;
 }

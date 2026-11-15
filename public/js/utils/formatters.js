@@ -70,6 +70,45 @@ export function todayTxt() {
   return new Date().toLocaleDateString(localeOf(), { weekday: 'short', day: 'numeric', month: 'long' });
 }
 
+export function getISTDayKey(ts = Date.now()) {
+  const IST_OFFSET = 5.5 * 60 * 60 * 1000;
+  return new Date(ts + IST_OFFSET).toISOString().slice(0, 10);
+}
+
+export function formatDayHindi(dayStr) {
+  if (!dayStr) return '';
+  const [y, m, d] = dayStr.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  if (isNaN(date.getTime())) return dayStr;
+  const today = getISTDayKey(Date.now());
+  const yesterday = getISTDayKey(Date.now() - 24 * 60 * 60 * 1000);
+  const twoDaysAgo = getISTDayKey(Date.now() - 48 * 60 * 60 * 1000);
+
+  const loc = localeOf();
+  const dateStr = date.toLocaleDateString(loc, { weekday: 'short', day: 'numeric', month: 'short' });
+  if (dayStr === today) return `आज (${dateStr})`;
+  if (dayStr === yesterday) return `कल (${dateStr})`;
+  if (dayStr === twoDaysAgo) return `2 दिन पहले (${dateStr})`;
+  return dateStr;
+}
+
+export function formatDayLongHindi(dayStr) {
+  if (!dayStr) return '';
+  const [y, m, d] = dayStr.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  if (isNaN(date.getTime())) return dayStr;
+  const today = getISTDayKey(Date.now());
+  const yesterday = getISTDayKey(Date.now() - 24 * 60 * 60 * 1000);
+  const twoDaysAgo = getISTDayKey(Date.now() - 48 * 60 * 60 * 1000);
+
+  const loc = localeOf();
+  const fullStr = date.toLocaleDateString(loc, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  if (dayStr === today) return `आज · ${fullStr}`;
+  if (dayStr === yesterday) return `कल · ${fullStr}`;
+  if (dayStr === twoDaysAgo) return `2 दिन पहले · ${fullStr}`;
+  return fullStr;
+}
+
 export function logoMark(size) {
   const s = size || 44;
   return `<img src="/icon.svg" width="${s}" height="${s}" class="logo-mark" alt="तौल-माल लोगो" style="width:${s}px;height:${s}px;border-radius:${Math.round(s * 0.28)}px;box-shadow:0 6px 18px rgba(245,158,11,0.3);flex:0 0 auto;object-fit:cover;border:none;">`;

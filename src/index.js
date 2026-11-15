@@ -11,6 +11,7 @@ import { saveService, deleteService } from './controllers/serviceController.js';
 import { saveProduct, deleteProduct } from './controllers/productController.js';
 import { saveVillage, deleteVillage, seedDefaultVillages } from './controllers/villageController.js';
 import { saveSettings, exportData, resetTokenCounter } from './controllers/settingsController.js';
+import { getDaySummary } from './controllers/reportController.js';
 import { syncBatch } from './controllers/syncController.js';
 import {
   adminLogin,
@@ -173,15 +174,14 @@ async function route(request, env, url) {
   if (path === '/api/app-version' && method === 'GET') {
     return json({
       ok: true,
-      version: '2.8.14',
-      versionCode: 16,
+      version: '2.8.15',
+      versionCode: 17,
       downloadUrl: '/tolmaal.apk',
       releasedAt: Date.now(),
       changelog: [
-        'टोकन विवरण संपादन (Edit/Update) सुविधा — नाम, गाँव, मोबाइल, सेवा व वज़न बिना क्रम बदले सुधारें',
-        'टॉप नोटिफिकेशन एरिया (Notch) व बॉटम नेविगेशन बटन ओवरलैप से बचाव हेतु बेहतर स्पेसिंग',
-        'Android नेविगेशन बार व बॉटम टैब बार सेफ-एरिया पैडिंग सुधार',
-        'माल जमा (टोकन) और हाथों-हाथ डिलीवरी बिल के बीच स्पष्ट विभाजक व UX सुधार',
+        'तारीख अनुसार सम्पूर्ण बहीखाता (Date-Wise Order Book) — आज, कल, 2 दिन पहले या कैलेंडर से किसी भी दिन का नकद, उधार, माल डिलीवरी व पेंडिंग हिसाब',
+        'मेन डैशबोर्ड UX व कार्ड्स का संपूर्ण आधुनिकीकरण — नया शॉप हीरो कार्ड, 4 क्विक एक्शन टाइल्स, व स्पष्ट वित्तीय कार्ड्स',
+        'ऑर्डर-वार विस्तृत सूची व 1-क्लिक बिलिंग/डिलीवरी सुविधा',
       ]
     });
   }
@@ -214,6 +214,7 @@ async function route(request, env, url) {
   if (path === '/api/state' && method === 'GET') {
     return json({ ok: true, state: await buildState(env, business.id, range) });
   }
+  if (path === '/api/day-summary' && method === 'GET') return getDaySummary(request, env, business, url);
   if (path === '/api/sync' && method === 'POST') return syncBatch(request, env, business, range);
   if (path === '/api/jobs' && method === 'POST') return createJob(request, env, business, range);
   if (path === '/api/trades' && method === 'POST') return createTrade(request, env, business, range);

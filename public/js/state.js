@@ -112,6 +112,16 @@ export const state = {
     totalLossG: 0,
     netWeight: 0,
   },
+  dayReport: {
+    selectedDay: null,
+    tab: 'orders', // 'orders' | 'range'
+    filter: 'all', // 'all' | 'unpaid' | 'paid' | 'pending' | 'delivered'
+    summary: null,
+    orders: [],
+    availableDays: [],
+    loading: false,
+    error: '',
+  },
   auth: { mode: 'status', error: '' },
   admin: {
     authenticated: false,

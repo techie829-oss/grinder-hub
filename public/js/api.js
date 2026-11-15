@@ -106,6 +106,30 @@ export function applyState(snapshot) {
   }
 }
 
+export async function loadDaySummary(day) {
+  if (!day) {
+    const { getISTDayKey } = await import('./utils/formatters.js');
+    day = getISTDayKey();
+  }
+  state.dayReport.selectedDay = day;
+  state.dayReport.loading = true;
+  state.dayReport.error = '';
+  window.__appRender?.();
+
+  const res = await api(`/api/day-summary?day=${encodeURIComponent(day)}`);
+  state.dayReport.loading = false;
+  if (res && res.ok) {
+    state.dayReport.summary = res.summary;
+    state.dayReport.orders = res.orders || [];
+    state.dayReport.availableDays = res.availableDays || [];
+    state.dayReport.error = '';
+  } else {
+    state.dayReport.error = res?.error || 'दिन का हिसाब लोड नहीं हो सका';
+  }
+  window.__appRender?.();
+  return res;
+}
+
 export async function loadAdminData() {
   state.admin.loading = true;
   window.__appRender?.();

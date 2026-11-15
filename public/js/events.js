@@ -1,6 +1,6 @@
 // Centralized DOM Event Listeners & Dispatcher with Offline-First Fallback
 import { state } from './state.js';
-import { api, withBusy, loadState, applyState, toast, loadAdminData, getApiUrl, getAuthHeaders, performLogout, performAdminLogout } from './api.js';
+import { api, withBusy, loadState, applyState, toast, loadAdminData, loadDaySummary, getApiUrl, getAuthHeaders, performLogout, performAdminLogout } from './api.js';
 import { inr, unitOf, esc, qtyFmt } from './utils/formatters.js';
 import { printReceipt } from './utils/print.js';
 import { entryWaText, openWhatsApp } from './utils/whatsapp.js';
@@ -239,6 +239,7 @@ export function goTo(view) {
   }
   if (view === 'reports') {
     loadState(state.range);
+    loadDaySummary(state.dayReport.selectedDay);
     return;
   }
   if (state.data.stats.range !== 'today') {
@@ -599,6 +600,27 @@ export function setupEventListeners() {
     switch (act) {
       case 'goto':
         goTo(el.dataset.view);
+        break;
+
+      case 'switch-report-tab':
+        state.dayReport.tab = el.dataset.tab;
+        window.__appRender?.();
+        break;
+
+      case 'set-report-day':
+        if (el.dataset.day) {
+          loadDaySummary(el.dataset.day);
+        }
+        break;
+
+      case 'filter-report-orders':
+        state.dayReport.filter = el.dataset.filter || 'all';
+        window.__appRender?.();
+        break;
+
+      case 'goto-cust-search':
+        state.q = el.dataset.q || '';
+        goTo('customers');
         break;
 
       case 'trigger-sync':
@@ -1427,6 +1449,9 @@ export function setupEventListeners() {
             toast('माल डिलीवर हुआ (offline)');
           } else if (data) {
             applyState(data.state);
+            if (state.view === 'reports' && state.dayReport.selectedDay) {
+              loadDaySummary(state.dayReport.selectedDay);
+            }
             toast('माल डिलीवर हुआ ✓');
           }
         });
@@ -1855,6 +1880,13 @@ export function setupEventListeners() {
       setLanguage(tEl.value);
       window.__appRender?.();
       toast(tEl.value === 'hi' ? 'भाषा बदली गई' : 'Language updated');
+      return;
+    }
+
+    if (tEl.dataset.act === 'change-report-day' || tEl.id === 'report-date-picker') {
+      if (tEl.value) {
+        loadDaySummary(tEl.value);
+      }
       return;
     }
 
