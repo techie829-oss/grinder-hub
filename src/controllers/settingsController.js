@@ -20,12 +20,20 @@ export async function saveSettings(request, env, business, range) {
 }
 
 export async function resetTokenCounter(request, env, business, range) {
+  const body = await readJson(request).catch(() => ({}));
   const day = dayKey();
+  let lastNo = 0;
+  if (body && (body.nextNo != null || body.tokenNo != null)) {
+    const nextNo = Number(body.nextNo != null ? body.nextNo : body.tokenNo);
+    lastNo = Math.max(0, Math.floor(nextNo) - 1);
+  } else if (body && body.lastNo != null) {
+    lastNo = Math.max(0, Number(body.lastNo));
+  }
   await env.DB.prepare(
-    `INSERT INTO day_counters (business_id, day, last_no) VALUES (?, ?, 0)
-     ON CONFLICT(business_id, day) DO UPDATE SET last_no = 0`
-  ).bind(business.id, day).run();
-  return json({ ok: true, state: await buildState(env, business.id, range) });
+    `INSERT INTO day_counters (business_id, day, last_no) VALUES (?, ?, ?)
+     ON CONFLICT(business_id, day) DO UPDATE SET last_no = ?`
+  ).bind(business.id, day, lastNo, lastNo).run();
+  return json({ ok: true, lastNo, nextNo: lastNo + 1, state: await buildState(env, business.id, range) });
 }
 
 export async function exportData(env, business) {

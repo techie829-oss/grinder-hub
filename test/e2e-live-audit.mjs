@@ -334,6 +334,22 @@ async function runAudit() {
     assert.ok(data.state.stats.purchasePaise > 0, 'Purchase paise should be recorded in stats');
   })();
 
+  await check('Set Token Counter to custom next number (e.g. 25)', async () => {
+    const res = await fetch(`${BASE_URL}/api/tokens/set-counter`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'authorization': `Bearer ${authToken}`,
+      },
+      body: JSON.stringify({ nextNo: 25 }),
+    });
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.ok, true);
+    assert.equal(data.nextNo, 25);
+    assert.equal(data.state.tokens.nextNo, 25);
+  });
+
   console.log('\n--- 7. Cleanup & Rollback of Test Records ---');
 
   await check('Delete test job, sale, payment and purchase entries cleanly', async () => {

@@ -8,6 +8,10 @@ import { t } from '../i18n.js';
 export function viewSettings() {
   const data = state.data;
   const biz = data.business;
+  const tObj = data?.tokens || { nextNo: 1, waiting: [], doneList: [] };
+  const allTokens = [...(tObj.waiting || []), ...(tObj.serving ? [tObj.serving] : []), ...(tObj.doneList || [])];
+  const maxExistingNo = allTokens.reduce((m, t) => Math.max(m, t.no || 0), 0);
+  const currentNextNo = tObj.nextNo || (maxExistingNo ? maxExistingNo + 1 : 1);
   const installedInfo = getInstalledAppInfo();
   const latestMeta = data.appMeta || { latestVersion: '2.8.2', latestVersionCode: 5 };
   const isUpToDate = !isUpdateAvailable();
@@ -82,29 +86,59 @@ export function viewSettings() {
       <input id="s-note" name="note" maxlength="120" value="${esc(biz.note)}" placeholder="${t('receiptNotePlaceholder')}">
     </div>
 
-    <!-- Token Numbering Mode (Restart from 1 after 100 vs Daily start from 1) -->
-    <div class="field" style="margin-top:14px;padding:14px;background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:14px;">
-      <label style="font-size:13.5px;font-weight:800;color:#0f172a;margin-bottom:10px;display:block;">${t('tokenModeTitle')}</label>
-      <div style="display:flex;flex-direction:column;gap:8px;">
-        <label style="display:flex;align-items:flex-start;gap:12px;padding:10px 12px;background:#fff;border:1.5px solid ${biz.tokenMode !== 'loop100' ? '#6366f1' : '#e2e8f0'};border-radius:10px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.03);">
-          <input type="radio" name="tokenMode" value="daily" ${biz.tokenMode !== 'loop100' ? 'checked' : ''} style="width:18px;height:18px;min-width:18px;flex:0 0 18px;margin-top:2px;accent-color:#4f46e5;">
-          <div style="flex:1 1 auto;min-width:0;">
-            <div style="font-size:13.5px;font-weight:750;color:#0f172a;">${t('tokenModeDaily')}</div>
-            <div style="color:#64748b;font-size:11.5px;margin-top:2px;line-height:1.35;">${t('tokenModeDailySub')}</div>
-          </div>
+    <!-- Token Counter & Numbering Management -->
+    <div class="field" style="margin-top:14px;padding:16px;background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:14px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <label style="font-size:14px;font-weight:800;color:#0f172a;display:flex;align-items:center;gap:6px;">
+          <span>🎫 टोकन काउंटर सेटिंग</span>
         </label>
-        <label style="display:flex;align-items:flex-start;gap:12px;padding:10px 12px;background:#fff;border:1.5px solid ${biz.tokenMode === 'loop100' ? '#6366f1' : '#e2e8f0'};border-radius:10px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.03);">
-          <input type="radio" name="tokenMode" value="loop100" ${biz.tokenMode === 'loop100' ? 'checked' : ''} style="width:18px;height:18px;min-width:18px;flex:0 0 18px;margin-top:2px;accent-color:#4f46e5;">
-          <div style="flex:1 1 auto;min-width:0;">
-            <div style="font-size:13.5px;font-weight:750;color:#0f172a;">${t('tokenModeLoop100')}</div>
-            <div style="color:#64748b;font-size:11.5px;margin-top:2px;line-height:1.35;">${t('tokenModeLoop100Sub')}</div>
-          </div>
-        </label>
+        <span class="badge" style="background:#e0e7ff;color:#3730a3;font-weight:800;font-size:12px;padding:4px 8px;border-radius:6px;">अगला टोकन: #${currentNextNo}</span>
       </div>
-      <div style="margin-top:10px;">
-        <button type="button" class="btn btn-xs btn-subtle" data-act="reset-token-counter" style="border:1.5px solid #cbd5e1;padding:6px 14px;border-radius:8px;font-weight:750;background:#fff;color:#334155;">
-          ${t('resetTokenCounterBtn')}
+      <div style="font-size:12px;color:#64748b;margin-bottom:12px;line-height:1.4;">
+        टोकन डिलीट होने पर या किसी खास नंबर से टोकन शुरू करने हेतु यहाँ अगला नंबर सेट करें:
+      </div>
+
+      <!-- Custom Next Token Number Input & Set Button -->
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+        <div style="flex:1;">
+          <input type="number" id="setting-next-token-no" min="1" max="999" value="${currentNextNo}" placeholder="अगला नंबर उदा. 7" style="padding:10px 12px;font-size:16px;font-weight:800;border:1.5px solid #cbd5e1;border-radius:10px;width:100%;text-align:center;background:#fff;color:#0f172a;">
+        </div>
+        <button type="button" class="btn btn-primary" data-act="set-token-counter" style="padding:10px 16px;font-weight:750;border-radius:10px;white-space:nowrap;">
+          ✓ काउंटर सेट करें
         </button>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+        <button type="button" class="btn btn-xs btn-subtle" data-act="quick-set-counter" data-no="1" style="border:1.5px solid #cbd5e1;padding:6px 12px;border-radius:8px;font-weight:750;background:#fff;color:#334155;">
+          🔄 #1 से रीसेट करें
+        </button>
+        ${maxExistingNo > 0 ? `
+          <button type="button" class="btn btn-xs btn-subtle" data-act="quick-set-counter" data-no="${maxExistingNo + 1}" style="border:1.5px solid #86efac;padding:6px 12px;border-radius:8px;font-weight:750;background:#f0fdf4;color:#15803d;">
+            ⏭️ वर्तमान कतार के बाद (#${maxExistingNo + 1}) सेट करें
+          </button>
+        ` : ''}
+      </div>
+
+      <!-- Token Loop Mode (Daily vs Loop100) -->
+      <div style="padding-top:12px;border-top:1px dashed #cbd5e1;">
+        <label style="font-size:12.5px;font-weight:750;color:#334155;margin-bottom:8px;display:block;">${t('tokenModeTitle')}</label>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <label style="display:flex;align-items:flex-start;gap:12px;padding:10px 12px;background:#fff;border:1.5px solid ${biz.tokenMode !== 'loop100' ? '#6366f1' : '#e2e8f0'};border-radius:10px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+            <input type="radio" name="tokenMode" value="daily" ${biz.tokenMode !== 'loop100' ? 'checked' : ''} style="width:18px;height:18px;min-width:18px;flex:0 0 18px;margin-top:2px;accent-color:#4f46e5;">
+            <div style="flex:1 1 auto;min-width:0;">
+              <div style="font-size:13.5px;font-weight:750;color:#0f172a;">${t('tokenModeDaily')}</div>
+              <div style="color:#64748b;font-size:11.5px;margin-top:2px;line-height:1.35;">${t('tokenModeDailySub')}</div>
+            </div>
+          </label>
+          <label style="display:flex;align-items:flex-start;gap:12px;padding:10px 12px;background:#fff;border:1.5px solid ${biz.tokenMode === 'loop100' ? '#6366f1' : '#e2e8f0'};border-radius:10px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+            <input type="radio" name="tokenMode" value="loop100" ${biz.tokenMode === 'loop100' ? 'checked' : ''} style="width:18px;height:18px;min-width:18px;flex:0 0 18px;margin-top:2px;accent-color:#4f46e5;">
+            <div style="flex:1 1 auto;min-width:0;">
+              <div style="font-size:13.5px;font-weight:750;color:#0f172a;">${t('tokenModeLoop100')}</div>
+              <div style="color:#64748b;font-size:11.5px;margin-top:2px;line-height:1.35;">${t('tokenModeLoop100Sub')}</div>
+            </div>
+          </label>
+        </div>
       </div>
     </div>
 

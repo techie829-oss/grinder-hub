@@ -988,6 +988,40 @@ export function setupEventListeners() {
         break;
       }
 
+      case 'set-token-counter': {
+        const inputEl = document.getElementById('setting-next-token-no');
+        const nextNo = inputEl ? parseInt(inputEl.value, 10) : NaN;
+        if (!nextNo || nextNo < 1) {
+          toast('कृपया मान्य टोकन नंबर (कम से कम 1) दर्ज करें');
+          return;
+        }
+        await withBusy(el, async () => {
+          const res = await api('/api/tokens/set-counter', { nextNo });
+          if (res && res.ok && res.state) {
+            applyState(res.state);
+            toast(`अगला टोकन #${nextNo} पर सेट हो गया ✓`);
+          }
+        });
+        break;
+      }
+
+      case 'quick-set-counter': {
+        const nextNo = parseInt(el.dataset.no, 10);
+        if (!nextNo || nextNo < 1) return;
+        const msg = nextNo === 1
+          ? 'क्या आप टोकन नंबर को #1 पर रीसेट करना चाहते हैं?'
+          : `क्या आप अगला टोकन #${nextNo} पर सेट करना चाहते हैं?`;
+        if (!confirm(msg)) return;
+        await withBusy(el, async () => {
+          const res = await api('/api/tokens/set-counter', { nextNo });
+          if (res && res.ok && res.state) {
+            applyState(res.state);
+            toast(`अगला टोकन #${nextNo} पर सेट हो गया ✓`);
+          }
+        });
+        break;
+      }
+
       case 'reset-token-counter': {
         if (!confirm('क्या आप टोकन नंबर को तुरंत #1 पर रीसेट करना चाहते हैं?')) return;
         const res = await api('/api/tokens/reset-counter', {});

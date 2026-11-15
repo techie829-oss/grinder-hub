@@ -189,7 +189,7 @@ export async function buildState(env, businessId, range) {
   }
 
   const maxTokenNo = tokensToday.reduce((m, t) => Math.max(m, t.no), 0);
-  const lastNo = counter && counter.last_no ? counter.last_no : maxTokenNo;
+  const lastNo = (counter && counter.last_no != null) ? counter.last_no : maxTokenNo;
 
   const cashSales = Number(s.cash_sales) || 0;
   const recovered = Number(s.recovered) || 0;
@@ -257,14 +257,14 @@ export async function buildState(env, businessId, range) {
       })),
     },
     appMeta: {
-      latestVersion: '2.8.13',
-      latestVersionCode: 15,
+      latestVersion: '2.8.14',
+      latestVersionCode: 16,
       downloadUrl: '/tolmaal.apk',
       releasedAt: Date.now(),
       changelog: [
-        'टॉप नोटिफिकेशन एरिया (Notch) व बॉटम नेविगेशन बटन ओवरलैप से बचाव हेतु बेहतर स्पेसिंग',
-        'Android नेविगेशन बार व बॉटम टैब बार सेफ-एरिया पैडिंग सुधार',
-        'माल जमा (टोकन) और हाथों-हाथ डिलीवरी बिल के बीच स्पष्ट विभाजक व UX सुधार',
+        'टोकन काउंटर मैन्युअल सेट करने की सुविधा (Settings से किसी भी नंबर से टोकन शुरू करें)',
+        'टोकन विवरण संपादन (Edit/Update) सुविधा — नाम, गाँव, मोबाइल, सेवा व वज़न सुधारें',
+        'टॉप नोटिफिकेशन एरिया व बॉटम नेविगेशन बटन ओवरलैप से बचाव हेतु बेहतर स्पेसिंग',
       ]
     },
   };

@@ -222,7 +222,7 @@ async function route(request, env, url) {
   if (path === '/api/tokens/update' && method === 'POST') return updateToken(request, env, business, range);
   if (path === '/api/tokens/status' && method === 'POST') return setTokenStatus(request, env, business, range);
   if (path === '/api/tokens/delete' && method === 'POST') return deleteToken(request, env, business, range);
-  if (path === '/api/tokens/reset-counter' && method === 'POST') return resetTokenCounter(request, env, business, range);
+  if ((path === '/api/tokens/reset-counter' || path === '/api/tokens/set-counter') && method === 'POST') return resetTokenCounter(request, env, business, range);
   if (path === '/api/services' && method === 'POST') return saveService(request, env, business, range);
   if (path === '/api/services/delete' && method === 'POST') return deleteService(request, env, business, range);
   if (path === '/api/products' && method === 'POST') return saveProduct(request, env, business, range);
