@@ -1,6 +1,6 @@
 // Job & Billing Controller
 import { readJson, json, bad } from '../utils/response.js';
-import { clean, normalizePhone, normName, normVillage, dayKey } from '../utils/helpers.js';
+import { clean, normalizePhone, normName, normVillage, standardizeVillage, dayKey } from '../utils/helpers.js';
 import { isPhoneticMatch } from '../utils/phonetic.js';
 import { issueToken } from '../services/tokenService.js';
 import { buildState } from '../services/stateService.js';
@@ -47,7 +47,7 @@ export async function createJob(request, env, business, range) {
 
   const paid = body.paid ? 1 : 0;
   const name = clean(body.name, 60);
-  const village = clean(body.village, 60);
+  const village = standardizeVillage(body.village);
   const phone = normalizePhone(body.phone);
   const note = clean(body.note, 120);
   if (!paid && !name) return bad('उधार के लिए ग्राहक का नाम ज़रूरी है');

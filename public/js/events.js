@@ -13,6 +13,50 @@ import { isPhoneticMatch, latinToDeva } from './utils/phonetic.js';
 import { setLanguage, t } from './i18n.js';
 import { enqueueOfflineAction, syncOfflineQueue, saveOfflineSnapshot } from './sync.js';
 
+export const VILLAGE_STANDARDIZATION_MAP = {
+  'kewalpurwa': 'केवलपुरवा',
+  'kewal purwa': 'केवलपुरवा',
+  'केवल पुरवा': 'केवलपुरवा',
+  'ashogapur': 'अशोगापुर',
+  'asogapur': 'अशोगापुर',
+  'nakaha': 'नकहा',
+  'sahajani': 'सहजननी',
+  'sahjani': 'सहजननी',
+  'सहजनी': 'सहजननी',
+  'sahajnani': 'सहजननी',
+  'chandidin purwa': 'चंदीदीन पुरवा',
+  'chandidin': 'चंदीदीन पुरवा',
+  'चंदीदीनपुरवा': 'चंदीदीन पुरवा',
+  'ahiran purwa': 'अहिरन पुरवा',
+  'ahiran': 'अहिरन पुरवा',
+  'अहिरनपुरवा': 'अहिरन पुरवा',
+  'loniyan purwa': 'लोनियन पुरवा',
+  'lonian purwa': 'लोनियन पुरवा',
+  'लोनिअन पुरवा': 'लोनियन पुरवा',
+  'लोनियनपुरवा': 'लोनियन पुरवा',
+  'padari purwa': 'पडरी पुरवा',
+  'padri purva': 'पडरी पुरवा',
+  'padri purwa': 'पडरी पुरवा',
+  'पडरीपुरवा': 'पडरी पुरवा',
+  'choupheri': 'चौफेरी',
+  'chaupheri': 'चौफेरी',
+  'jhandi': 'झंडी',
+  'bilriya': 'बिलरिया',
+  'bilaria': 'बिलरिया',
+  'lodhanpurwa': 'लोधनपुरवा',
+  'lodhan purwa': 'लोधनपुरवा',
+  'लोधन पुरवा': 'लोधनपुरवा',
+};
+
+export function standardizeVillage(v) {
+  if (!v) return '';
+  const trimmed = String(v).trim();
+  const lower = trimmed.toLowerCase();
+  if (VILLAGE_STANDARDIZATION_MAP[lower]) return VILLAGE_STANDARDIZATION_MAP[lower];
+  if (VILLAGE_STANDARDIZATION_MAP[trimmed]) return VILLAGE_STANDARDIZATION_MAP[trimmed];
+  return trimmed;
+}
+
 export function recalcJob() {
   const qtyEl = document.getElementById('j-qty');
   const rateEl = document.getElementById('j-rate');
@@ -1445,6 +1489,27 @@ export function setupEventListeners() {
         break;
       }
 
+      case 'quick-pick-village': {
+        const prefix = el.dataset.prefix || 'j';
+        const villageName = el.dataset.village;
+        const villageEl = document.getElementById(prefix === 'j' ? 'j-village' : (prefix === 'tr' ? 'tr-village' : 't-village'));
+        if (villageEl) {
+          villageEl.value = villageName;
+        }
+        if (prefix === 'j') state.job.village = villageName;
+        else if (prefix === 'tr') state.trade.village = villageName;
+        else if (prefix === 't') state.tokenForm.village = villageName;
+
+        const parent = el.closest('.village-chips-scroll');
+        if (parent) {
+          parent.querySelectorAll('.btn-village-chip').forEach((btn) => {
+            btn.classList.toggle('active', btn.dataset.village === villageName);
+          });
+        }
+        updateCustomerDisambiguation(prefix);
+        break;
+      }
+
       case 'force-new-cust': {
         const prefix = el.dataset.prefix || 'j';
         const hiddenIdEl = document.getElementById(prefix === 'j' ? 'j-customer-id' : 'tr-customer-id');
@@ -1656,10 +1721,18 @@ export function setupEventListeners() {
     if (!tEl) return;
 
     if (tEl.id === 'j-name') state.job.name = tEl.value;
-    if (tEl.id === 'j-village') state.job.village = tEl.value;
+    if (tEl.id === 'j-village') {
+      const std = standardizeVillage(tEl.value);
+      if (std) tEl.value = std;
+      state.job.village = tEl.value;
+    }
     if (tEl.id === 'j-phone') state.job.phone = tEl.value;
     if (tEl.id === 'tr-name') state.trade.name = tEl.value;
-    if (tEl.id === 'tr-village') state.trade.village = tEl.value;
+    if (tEl.id === 'tr-village') {
+      const std = standardizeVillage(tEl.value);
+      if (std) tEl.value = std;
+      state.trade.village = tEl.value;
+    }
     if (tEl.id === 'tr-phone') state.trade.phone = tEl.value;
     if (tEl.id === 'j-name' || tEl.id === 'j-village' || tEl.id === 'j-phone') {
       updateCustomerDisambiguation('j');
@@ -1860,10 +1933,18 @@ export function setupEventListeners() {
     }
 
     if (tEl.id === 'j-name') state.job.name = tEl.value;
-    if (tEl.id === 'j-village') state.job.village = tEl.value;
+    if (tEl.id === 'j-village') {
+      const std = standardizeVillage(tEl.value);
+      if (std) tEl.value = std;
+      state.job.village = tEl.value;
+    }
     if (tEl.id === 'j-phone') state.job.phone = tEl.value;
     if (tEl.id === 'tr-name') state.trade.name = tEl.value;
-    if (tEl.id === 'tr-village') state.trade.village = tEl.value;
+    if (tEl.id === 'tr-village') {
+      const std = standardizeVillage(tEl.value);
+      if (std) tEl.value = std;
+      state.trade.village = tEl.value;
+    }
     if (tEl.id === 'tr-phone') state.trade.phone = tEl.value;
 
     if (tEl.id === 'j-phone' || tEl.id === 'j-name' || tEl.id === 'j-village') {

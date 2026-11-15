@@ -1,5 +1,5 @@
 // Aggregated Business State Service (Normalized & Strict Schema)
-import { RANGES, rangeStart, rangeEnd, dayKey } from '../utils/helpers.js';
+import { RANGES, rangeStart, rangeEnd, dayKey, SEEDED_VILLAGES } from '../utils/helpers.js';
 
 export async function buildState(env, businessId, range) {
   const safeRange = RANGES.includes(range) ? range : 'today';
@@ -91,7 +91,12 @@ export async function buildState(env, businessId, range) {
     env.DB.prepare('SELECT id, name, phone, address, upi, note, COALESCE(token_mode, \'daily\') AS token_mode, COALESCE(hide_loss_on_slip, 1) AS hide_loss_on_slip, COALESCE(charge_basis, \'output\') AS charge_basis, COALESCE(status, \'active\') AS status, COALESCE(plan, \'free\') AS plan, COALESCE(is_super_admin, 0) AS is_super_admin, created_at FROM businesses WHERE id = ?').bind(businessId),
     // 8: dynamic products
     env.DB.prepare('SELECT id, name, type, unit, default_rate_paise, active FROM products WHERE business_id = ? AND active = 1 ORDER BY name ASC').bind(businessId),
+    // 9: configured shop villages (one-time fast query, zero distinct scans!)
+    env.DB.prepare('SELECT name FROM villages WHERE business_id = ? ORDER BY display_order ASC, name ASC').bind(businessId),
   ]);
+
+  const rawVillages = (results[9]?.results || []).map((v) => v.name);
+  const villages = rawVillages.length > 0 ? rawVillages : SEEDED_VILLAGES;
 
   const services = results[0].results.map((s) => ({
     id: s.id,
@@ -199,6 +204,7 @@ export async function buildState(env, businessId, range) {
       isSuperAdmin: Number(biz.is_super_admin) === 1,
       since: biz.created_at,
     },
+    villages,
     services,
     products,
     customers,
@@ -243,15 +249,15 @@ export async function buildState(env, businessId, range) {
       })),
     },
     appMeta: {
-      latestVersion: '2.8.7',
-      latestVersionCode: 9,
+      latestVersion: '2.8.8',
+      latestVersionCode: 10,
       downloadUrl: '/tolmaal.apk',
       releasedAt: Date.now(),
       changelog: [
-        'मोबाइल कीबोर्ड और ग्राहक सुझाव लिस्ट UX पूरी तरह सुधारा गया',
-        'स्मार्ट ग्राहक ऑटो-कम्प्लीट (फोटो, बैलेंस और गाँव के साथ)',
-        'कीबोर्ड खुलने पर लिस्ट दबने या ऊपर चढ़ने की समस्या का समाधान',
-        'सीधा आउटपुट (तैयार माल) वजन एंट्री मोड',
+        'गाँव की 1-क्लिक क्विक-पिक चिप्स (केवलपुरवा, अशोगापुर, नकहा आदि 12 गाँव)',
+        'शॉप विलेज लिस्ट के लिए अलग तालिका (Zero heavy distinct scan)',
+        'पुराने सभी गाँव नामों का शुद्ध देवनागरी मानकीकरण',
+        'मोबाइल कीबोर्ड और ग्राहक ऑटो-कम्प्लीट स्मूथ UX',
       ]
     },
   };

@@ -14,8 +14,68 @@ export function normName(v) {
   return clean(v, 60).toLowerCase();
 }
 
+export const SEEDED_VILLAGES = [
+  'केवलपुरवा',
+  'अशोगापुर',
+  'नकहा',
+  'सहजननी',
+  'चंदीदीन पुरवा',
+  'अहिरन पुरवा',
+  'लोनियन पुरवा',
+  'पडरी पुरवा',
+  'चौफेरी',
+  'झंडी',
+  'बिलरिया',
+  'लोधनपुरवा',
+];
+
+export const VILLAGE_STANDARDIZATION_MAP = {
+  'kewalpurwa': 'केवलपुरवा',
+  'kewal purwa': 'केवलपुरवा',
+  'केवल पुरवा': 'केवलपुरवा',
+  'ashogapur': 'अशोगापुर',
+  'asogapur': 'अशोगापुर',
+  'nakaha': 'नकहा',
+  'sahajani': 'सहजननी',
+  'sahjani': 'सहजननी',
+  'सहजनी': 'सहजननी',
+  'sahajnani': 'सहजननी',
+  'chandidin purwa': 'चंदीदीन पुरवा',
+  'chandidin': 'चंदीदीन पुरवा',
+  'चंदीदीनपुरवा': 'चंदीदीन पुरवा',
+  'ahiran purwa': 'अहिरन पुरवा',
+  'ahiran': 'अहिरन पुरवा',
+  'अहिरनपुरवा': 'अहिरन पुरवा',
+  'loniyan purwa': 'लोनियन पुरवा',
+  'lonian purwa': 'लोनियन पुरवा',
+  'लोनिअन पुरवा': 'लोनियन पुरवा',
+  'लोनियनपुरवा': 'लोनियन पुरवा',
+  'padari purwa': 'पडरी पुरवा',
+  'padri purva': 'पडरी पुरवा',
+  'padri purwa': 'पडरी पुरवा',
+  'पडरीपुरवा': 'पडरी पुरवा',
+  'choupheri': 'चौफेरी',
+  'chaupheri': 'चौफेरी',
+  'jhandi': 'झंडी',
+  'bilriya': 'बिलरिया',
+  'bilaria': 'बिलरिया',
+  'lodhanpurwa': 'लोधनपुरवा',
+  'lodhan purwa': 'लोधनपुरवा',
+  'लोधन पुरवा': 'लोधनपुरवा',
+};
+
+export function standardizeVillage(v) {
+  if (!v) return '';
+  const trimmed = clean(v, 60);
+  const lower = trimmed.toLowerCase();
+  if (VILLAGE_STANDARDIZATION_MAP[lower]) return VILLAGE_STANDARDIZATION_MAP[lower];
+  if (VILLAGE_STANDARDIZATION_MAP[trimmed]) return VILLAGE_STANDARDIZATION_MAP[trimmed];
+  return trimmed;
+}
+
 export function normVillage(v) {
-  return clean(v, 60).toLowerCase();
+  const std = standardizeVillage(v);
+  return clean(std, 60).toLowerCase();
 }
 
 export function dayKey(ts = Date.now()) {

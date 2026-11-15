@@ -54,7 +54,7 @@ public class MainActivity extends BridgeActivity {
                     try {
                         return getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
                     } catch (Exception e) {
-                        return "2.8.7";
+                        return "2.8.8";
                     }
                 }
                 @android.webkit.JavascriptInterface
@@ -62,7 +62,7 @@ public class MainActivity extends BridgeActivity {
                     try {
                         return getPackageManager().getPackageInfo(getPackageName(), 0).versionCode;
                     } catch (Exception e) {
-                        return 9;
+                        return 10;
                     }
                 }
                 @android.webkit.JavascriptInterface

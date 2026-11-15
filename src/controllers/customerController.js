@@ -1,6 +1,6 @@
 // Customer Directory & Ledger Detail Controller
 import { readJson, json, bad } from '../utils/response.js';
-import { clean, normalizePhone, normName, normVillage } from '../utils/helpers.js';
+import { clean, normalizePhone, normName, normVillage, standardizeVillage } from '../utils/helpers.js';
 import { buildState } from '../services/stateService.js';
 
 export async function customerDetail(request, env, business, url) {

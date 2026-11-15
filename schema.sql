@@ -113,3 +113,13 @@ CREATE TABLE IF NOT EXISTS day_counters (
   last_no      INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (business_id, day)
 );
+
+CREATE TABLE IF NOT EXISTS villages (
+  id            TEXT PRIMARY KEY,
+  business_id   TEXT NOT NULL,
+  name          TEXT NOT NULL,
+  display_order INTEGER NOT NULL DEFAULT 0,
+  created_at    INTEGER NOT NULL,
+  UNIQUE(business_id, name)
+);
+CREATE INDEX IF NOT EXISTS idx_villages_biz ON villages(business_id, display_order);

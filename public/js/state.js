@@ -1,6 +1,21 @@
 // Centralized Client-Side Reactive State Store
 import { t } from './i18n.js';
 
+export const SEEDED_VILLAGES = [
+  'केवलपुरवा',
+  'अशोगापुर',
+  'नकहा',
+  'सहजननी',
+  'चंदीदीन पुरवा',
+  'अहिरन पुरवा',
+  'लोनियन पुरवा',
+  'पडरी पुरवा',
+  'चौफेरी',
+  'झंडी',
+  'बिलरिया',
+  'लोधनपुरवा',
+];
+
 export const UNIT_LABEL = { kg: 'kg', ltr: 'ltr', pc: 'pc', plate: 'plate' };
 export const UNITS = [
   { id: 'kg', label: 'kg' },

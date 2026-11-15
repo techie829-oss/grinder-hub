@@ -73,3 +73,27 @@ test('Customer Disambiguation Safety Suite: Same Village Duplicate Name Protecti
   assert.equal(c1PhoneMatches.length, 1);
   assert.equal(c1PhoneMatches[0].id, 'c1');
 });
+
+test('Seeded Village Standardization & Fast Mapping Suite', async () => {
+  const { standardizeVillage, SEEDED_VILLAGES } = await import('../src/utils/helpers.js');
+  
+  assert.equal(SEEDED_VILLAGES.length, 12);
+  assert.ok(SEEDED_VILLAGES.includes('लोधनपुरवा'));
+  assert.ok(SEEDED_VILLAGES.includes('केवलपुरवा'));
+  assert.ok(SEEDED_VILLAGES.includes('अशोगापुर'));
+  assert.ok(SEEDED_VILLAGES.includes('नकहा'));
+  assert.ok(SEEDED_VILLAGES.includes('सहजननी'));
+  assert.ok(SEEDED_VILLAGES.includes('पडरी पुरवा'));
+
+  // Test aliases and English mapping
+  assert.equal(standardizeVillage('Ashogapur'), 'अशोगापुर');
+  assert.equal(standardizeVillage('kewalpurwa'), 'केवलपुरवा');
+  assert.equal(standardizeVillage('केवल पुरवा'), 'केवलपुरवा');
+  assert.equal(standardizeVillage('padri Purva'), 'पडरी पुरवा');
+  assert.equal(standardizeVillage('padri purwa'), 'पडरी पुरवा');
+  assert.equal(standardizeVillage('लोनिअन पुरवा'), 'लोनियन पुरवा');
+  assert.equal(standardizeVillage('सहजनी'), 'सहजननी');
+  assert.equal(standardizeVillage('sahajani'), 'सहजननी');
+  assert.equal(standardizeVillage('lodhanpurwa'), 'लोधनपुरवा');
+  assert.equal(standardizeVillage('Lodhanpurwa'), 'लोधनपुरवा');
+});

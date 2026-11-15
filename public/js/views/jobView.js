@@ -1,5 +1,5 @@
 // New Order / Job View (Grinding Processing, Product Sales, Raw Material Purchases)
-import { state } from '../state.js';
+import { state, SEEDED_VILLAGES } from '../state.js';
 import { inr, unitOf, esc, qtyFmt } from '../utils/formatters.js';
 import { serviceCards } from '../components/rows.js';
 import { isPhoneticMatch } from '../utils/phonetic.js';
@@ -131,6 +131,15 @@ function renderGrindTab(data) {
         <input id="j-village" name="village" maxlength="60" value="${esc(job.village || '')}"
           placeholder="${t('villagePlaceholder')}" autocomplete="off">
       </div>
+    </div>
+
+    <!-- Quick-Pick Village Chips (One-Tap Fast Entry) -->
+    <div class="village-chips-scroll">
+      ${(data.villages && data.villages.length ? data.villages : SEEDED_VILLAGES).map((v) => `
+        <button type="button" class="btn-village-chip ${job.village === v ? 'active' : ''}" data-act="quick-pick-village" data-prefix="j" data-village="${esc(v)}">
+          📍 ${esc(v)}
+        </button>
+      `).join('')}
     </div>
 
     <!-- 3. Phone & Quick Hardware Scale Strip -->
@@ -411,6 +420,15 @@ function renderSaleTab(data) {
       </div>
     </div>
 
+    <!-- Quick-Pick Village Chips (One-Tap Fast Entry) -->
+    <div class="village-chips-scroll">
+      ${(data.villages && data.villages.length ? data.villages : SEEDED_VILLAGES).map((v) => `
+        <button type="button" class="btn-village-chip ${trade.village === v ? 'active' : ''}" data-act="quick-pick-village" data-prefix="tr" data-village="${esc(v)}">
+          📍 ${esc(v)}
+        </button>
+      `).join('')}
+    </div>
+
     <div class="pos-field">
       <label for="tr-phone">मोबाइल नंबर</label>
       <input id="tr-phone" name="phone" type="tel" inputmode="numeric" maxlength="10"
@@ -593,6 +611,15 @@ function renderPurchaseTab(data) {
         <input id="tr-village" name="village" maxlength="60" value="${esc(trade.village || '')}"
           placeholder="गाँव या स्थान" autocomplete="off">
       </div>
+    </div>
+
+    <!-- Quick-Pick Village Chips (One-Tap Fast Entry) -->
+    <div class="village-chips-scroll">
+      ${(data.villages && data.villages.length ? data.villages : SEEDED_VILLAGES).map((v) => `
+        <button type="button" class="btn-village-chip ${trade.village === v ? 'active' : ''}" data-act="quick-pick-village" data-prefix="tr" data-village="${esc(v)}">
+          📍 ${esc(v)}
+        </button>
+      `).join('')}
     </div>
 
     <div class="pos-field">
