@@ -38,7 +38,7 @@ export async function exportData(env, business) {
   ]);
 
   const payload = {
-    app: 'chakki-book',
+    app: 'tolmaal',
     version: '2.1.0',
     exportedAt: new Date().toISOString(),
     business: biz.results[0] || null,
@@ -51,7 +51,7 @@ export async function exportData(env, business) {
   return new Response(JSON.stringify(payload, null, 2), {
     headers: {
       'content-type': 'application/json; charset=utf-8',
-      'content-disposition': `attachment; filename="chakki-book-${dayKey()}.json"`,
+      'content-disposition': `attachment; filename="tolmaal-${dayKey()}.json"`,
       'cache-control': 'no-store',
     },
   });
