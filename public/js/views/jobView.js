@@ -135,11 +135,13 @@ function renderGrindTab(data) {
 
     <!-- Quick-Pick Village Chips (One-Tap Fast Entry) -->
     <div class="village-chips-scroll">
-      ${(data.villages && data.villages.length ? data.villages : SEEDED_VILLAGES).map((v) => `
-        <button type="button" class="btn-village-chip ${job.village === v ? 'active' : ''}" data-act="quick-pick-village" data-prefix="j" data-village="${esc(v)}">
-          📍 ${esc(v)}
-        </button>
-      `).join('')}
+      ${(data.villages && data.villages.length ? data.villages : SEEDED_VILLAGES).map((v) => {
+        const vName = typeof v === 'object' ? v.name : v;
+        return `
+        <button type="button" class="btn-village-chip ${job.village === vName ? 'active' : ''}" data-act="quick-pick-village" data-prefix="j" data-village="${esc(vName)}">
+          📍 ${esc(vName)}
+        </button>`;
+      }).join('')}
     </div>
 
     <!-- 3. Phone & Quick Hardware Scale Strip -->
@@ -422,11 +424,13 @@ function renderSaleTab(data) {
 
     <!-- Quick-Pick Village Chips (One-Tap Fast Entry) -->
     <div class="village-chips-scroll">
-      ${(data.villages && data.villages.length ? data.villages : SEEDED_VILLAGES).map((v) => `
-        <button type="button" class="btn-village-chip ${trade.village === v ? 'active' : ''}" data-act="quick-pick-village" data-prefix="tr" data-village="${esc(v)}">
-          📍 ${esc(v)}
-        </button>
-      `).join('')}
+      ${(data.villages && data.villages.length ? data.villages : SEEDED_VILLAGES).map((v) => {
+        const vName = typeof v === 'object' ? v.name : v;
+        return `
+        <button type="button" class="btn-village-chip ${trade.village === vName ? 'active' : ''}" data-act="quick-pick-village" data-prefix="tr" data-village="${esc(vName)}">
+          📍 ${esc(vName)}
+        </button>`;
+      }).join('')}
     </div>
 
     <div class="pos-field">
@@ -615,11 +619,13 @@ function renderPurchaseTab(data) {
 
     <!-- Quick-Pick Village Chips (One-Tap Fast Entry) -->
     <div class="village-chips-scroll">
-      ${(data.villages && data.villages.length ? data.villages : SEEDED_VILLAGES).map((v) => `
-        <button type="button" class="btn-village-chip ${trade.village === v ? 'active' : ''}" data-act="quick-pick-village" data-prefix="tr" data-village="${esc(v)}">
-          📍 ${esc(v)}
-        </button>
-      `).join('')}
+      ${(data.villages && data.villages.length ? data.villages : SEEDED_VILLAGES).map((v) => {
+        const vName = typeof v === 'object' ? v.name : v;
+        return `
+        <button type="button" class="btn-village-chip ${trade.village === vName ? 'active' : ''}" data-act="quick-pick-village" data-prefix="tr" data-village="${esc(vName)}">
+          📍 ${esc(vName)}
+        </button>`;
+      }).join('')}
     </div>
 
     <div class="pos-field">

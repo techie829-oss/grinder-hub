@@ -252,6 +252,52 @@ export function viewSettings() {
     </div>
   </section>
 
+  <!-- Village / Location Management Section -->
+  <section class="card">
+    <div class="section-head" style="display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <h2 class="section-title">🏘️ गाँव व क्षेत्र प्रबंधन (Village Management)</h2>
+        <span class="muted">${(data.villages || []).length} पंजीकृत गाँव</span>
+      </div>
+      <button type="button" class="btn btn-sm btn-soft" data-act="open-village-modal" style="font-weight:700;">
+        + नया गाँव जोड़ें
+      </button>
+    </div>
+    <p class="tiny muted" style="margin-bottom:12px">
+      दुकान के आसपास के मुख्य गाँव यहाँ सेट करें ताकि नई एंट्री या ग्राहक जोड़ते समय 1-क्लिक में सिलेक्ट हो सकें। नाम में हिंदी व अंग्रेजी दोनों साथ लिखने से (जैसे: केवलपुरवा (Kewalpurwa)) दोनों कीबोर्ड से तुरंत सर्च होता है।
+    </p>
+
+    <div class="row-list" id="settings-village-list">
+      ${(data.villages || []).length ? data.villages.map((v, idx) => {
+        const vName = typeof v === 'object' ? v.name : v;
+        const vId = typeof v === 'object' ? v.id : `vil-${idx + 1}`;
+        const vOrder = typeof v === 'object' ? (v.displayOrder || idx + 1) : idx + 1;
+        return `
+        <div class="row-item" style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <div style="flex:1;display:flex;align-items:center;gap:10px;">
+            <span class="tiny-chip" style="background:#f1f5f9;color:#475569;font-weight:750;min-width:28px;text-align:center;">#${vOrder}</span>
+            <div style="font-weight:750;font-size:14px;color:#0f172a;">
+              ${esc(vName)}
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <button type="button" class="btn btn-sm btn-ghost" data-act="edit-village" data-id="${esc(vId)}" data-name="${esc(vName)}" data-order="${vOrder}" title="बदलें">✏️</button>
+            <button type="button" class="icon-btn" data-act="del-village" data-id="${esc(vId)}" data-name="${esc(vName)}" title="हटाएं">✕</button>
+          </div>
+        </div>`;
+      }).join('') : `
+        <div style="padding:16px;text-align:center;color:#64748b;font-size:13px;background:#f8fafc;border-radius:12px;border:1px dashed #cbd5e1;">
+          अभी तक कोई गाँव नहीं जोड़ा गया है। ऊपर <b>"+ नया गाँव जोड़ें"</b> पर क्लिक करें या 12 मुख्य स्थानीय गाँव स्वतः लोड करें।
+          <div style="margin-top:10px;">
+            <button type="button" class="btn btn-sm btn-primary" data-act="seed-default-villages" style="font-weight:800;">
+              📍 स्थानीय 12 मुख्य गाँव लोड करें
+            </button>
+          </div>
+        </div>
+      `}
+    </div>
+  </section>
+
   <form class="card" data-form="password">
     <div class="section-head"><h2 class="section-title">${t('changePasswordTitle')}</h2></div>
     <div class="two-col">

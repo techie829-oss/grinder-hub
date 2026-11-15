@@ -2,18 +2,18 @@
 import { t } from './i18n.js';
 
 export const SEEDED_VILLAGES = [
-  'केवलपुरवा',
-  'अशोगापुर',
-  'नकहा',
-  'सहजननी',
-  'चंदीदीन पुरवा',
-  'अहिरन पुरवा',
-  'लोनियन पुरवा',
-  'पडरी पुरवा',
-  'चौफेरी',
-  'झंडी',
-  'बिलरिया',
-  'लोधनपुरवा',
+  'केवलपुरवा (Kewalpurwa)',
+  'अशोगापुर (Ashogapur)',
+  'नकहा (Nakaha)',
+  'सहजननी (Sahajani)',
+  'चंदीदीन पुरवा (Chandidin Purwa)',
+  'अहिरन पुरवा (Ahiran Purwa)',
+  'लोनियन पुरवा (Loniyan Purwa)',
+  'पडरी पुरवा (Padari Purwa)',
+  'चौफेरी (Choupheri)',
+  'झंडी (Jhandi)',
+  'बिलरिया (Bilriya)',
+  'लोधनपुरवा (Lodhanpurwa)',
 ];
 
 export const UNIT_LABEL = { kg: 'kg', ltr: 'ltr', pc: 'pc', plate: 'plate' };

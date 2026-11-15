@@ -629,6 +629,56 @@ export function openProductModal(productId = null, defaultType = 'both') {
   `);
 }
 
+export function openVillageModal(villageObj = null) {
+  const isEdit = !!(villageObj && (villageObj.id || villageObj.name));
+  const vId = villageObj?.id || '';
+  const vName = villageObj?.name || '';
+  const vOrder = villageObj?.displayOrder || villageObj?.display_order || ((state.data?.villages?.length || 0) + 1);
+
+  showModal(`
+    <div class="sheet-head">
+      <div>
+        <h3 style="margin:0;font-size:18px;font-weight:800;color:#0f172a;">
+          ${isEdit ? '✏️ गाँव विवरण बदलें' : '🏘️ नया गाँव / क्षेत्र जोड़ें'}
+        </h3>
+        <p class="tiny muted" style="margin-top:2px;">
+          गाँव का नाम हिंदी व अंग्रेजी दोनों में साथ लिखें, जैसे: केवलपुरवा (Kewalpurwa)
+        </p>
+      </div>
+      <button class="icon-btn" data-act="close-modal" aria-label="Close">✕</button>
+    </div>
+
+    <form data-form="village" style="display:flex;flex-direction:column;gap:12px;margin-top:12px;">
+      ${isEdit && vId ? `<input type="hidden" name="id" value="${esc(vId)}">` : ''}
+
+      <div class="field">
+        <label for="vil-name">गाँव का नाम (Village Name) *</label>
+        <input id="vil-name" name="name" maxlength="80" value="${isEdit ? esc(vName) : ''}"
+          placeholder="e.g. केवलपुरवा (Kewalpurwa), अशोगापुर (Ashogapur)..." required autofocus>
+        <span class="tiny muted">ब्रैकेट में अंग्रेजी नाम लिखने से हिंदी व इंग्लिश दोनों कीबोर्ड से तुरंत सर्च होता है।</span>
+      </div>
+
+      <div class="field">
+        <label for="vil-order">प्रदर्शन क्रम # (Display Order)</label>
+        <input id="vil-order" name="displayOrder" type="number" min="1" max="999" inputmode="numeric"
+          value="${vOrder}" placeholder="1">
+        <span class="tiny muted">कम नंबर वाले गाँव ऊपर और चिप्स में सबसे पहले दिखेंगे।</span>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:8px;">
+        <button class="btn btn-primary" type="submit" style="flex:1;padding:12px;font-weight:800;">
+          ${isEdit ? 'बदलाव सुरक्षित करें ✓' : 'गाँव जोड़ें ✓'}
+        </button>
+        ${isEdit ? `
+          <button type="button" class="btn btn-ghost" data-act="del-village" data-id="${esc(vId)}" data-name="${esc(vName)}" style="color:#dc2626;font-weight:700;">
+            हटाएं
+          </button>
+        ` : ''}
+      </div>
+    </form>
+  `);
+}
+
 export function openTokenReceiptModal(tok) {
   const biz = state.data?.business || { name: 'तौल-माल' };
   const hideLoss = (tok.hideLoss != null) ? Boolean(tok.hideLoss) : Boolean(biz.hideLossOnSlip != null ? biz.hideLossOnSlip : 1);

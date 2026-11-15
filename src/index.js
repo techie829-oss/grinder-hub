@@ -9,6 +9,7 @@ import { createToken, setTokenStatus, deleteToken } from './controllers/tokenCon
 import { customerDetail, saveCustomer, deleteCustomer } from './controllers/customerController.js';
 import { saveService, deleteService } from './controllers/serviceController.js';
 import { saveProduct, deleteProduct } from './controllers/productController.js';
+import { saveVillage, deleteVillage, seedDefaultVillages } from './controllers/villageController.js';
 import { saveSettings, exportData, resetTokenCounter } from './controllers/settingsController.js';
 import { syncBatch } from './controllers/syncController.js';
 import {
@@ -172,15 +173,14 @@ async function route(request, env, url) {
   if (path === '/api/app-version' && method === 'GET') {
     return json({
       ok: true,
-      version: '2.8.8',
-      versionCode: 10,
+      version: '2.8.9',
+      versionCode: 11,
       downloadUrl: '/tolmaal.apk',
       releasedAt: Date.now(),
       changelog: [
-        'गाँव की 1-क्लिक क्विक-पिक चिप्स (केवलपुरवा, अशोगापुर, नकहा आदि 12 गाँव)',
-        'शॉप विलेज लिस्ट के लिए अलग तालिका (Zero heavy distinct scan)',
-        'पुराने सभी गाँव नामों का शुद्ध देवनागरी मानकीकरण',
-        'मोबाइल कीबोर्ड और ग्राहक ऑटो-कम्प्लीट स्मूथ UX',
+        'गाँव / क्षेत्र प्रबंधन (Village Management in Settings)',
+        'हिंदी व अंग्रेजी संयुक्त गाँव नाम (केवलपुरवा (Kewalpurwa) आदि 12 गाँव)',
+        'दुकान अनुसार गाँव सूची जोड़ने, बदलने और हटाने की पूरी सुविधा',
       ]
     });
   }
@@ -225,6 +225,9 @@ async function route(request, env, url) {
   if (path === '/api/services/delete' && method === 'POST') return deleteService(request, env, business, range);
   if (path === '/api/products' && method === 'POST') return saveProduct(request, env, business, range);
   if (path === '/api/products/delete' && method === 'POST') return deleteProduct(request, env, business, range);
+  if (path === '/api/villages' && method === 'POST') return saveVillage(request, env, business, range);
+  if (path === '/api/villages/delete' && method === 'POST') return deleteVillage(request, env, business, range);
+  if (path === '/api/villages/seed' && method === 'POST') return seedDefaultVillages(request, env, business, range);
   if (path === '/api/settings' && method === 'POST') return saveSettings(request, env, business, range);
   if (path === '/api/entries/delete' && method === 'POST') return deleteEntry(request, env, business, range);
   if (path === '/api/customer' && method === 'GET') return customerDetail(request, env, business, url);

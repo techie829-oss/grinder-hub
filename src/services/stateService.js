@@ -92,11 +92,19 @@ export async function buildState(env, businessId, range) {
     // 8: dynamic products
     env.DB.prepare('SELECT id, name, type, unit, default_rate_paise, active FROM products WHERE business_id = ? AND active = 1 ORDER BY name ASC').bind(businessId),
     // 9: configured shop villages (one-time fast query, zero distinct scans!)
-    env.DB.prepare('SELECT name FROM villages WHERE business_id = ? ORDER BY display_order ASC, name ASC').bind(businessId),
+    env.DB.prepare('SELECT id, name, display_order FROM villages WHERE business_id = ? ORDER BY display_order ASC, name ASC').bind(businessId),
   ]);
 
-  const rawVillages = (results[9]?.results || []).map((v) => v.name);
-  const villages = rawVillages.length > 0 ? rawVillages : SEEDED_VILLAGES;
+  const rawVillages = (results[9]?.results || []).map((v, idx) => ({
+    id: v.id,
+    name: v.name,
+    displayOrder: Number(v.display_order) || (idx + 1),
+  }));
+  const villages = rawVillages.length > 0 ? rawVillages : SEEDED_VILLAGES.map((name, idx) => ({
+    id: `vil-${idx + 1}`,
+    name,
+    displayOrder: idx + 1,
+  }));
 
   const services = results[0].results.map((s) => ({
     id: s.id,
@@ -249,15 +257,14 @@ export async function buildState(env, businessId, range) {
       })),
     },
     appMeta: {
-      latestVersion: '2.8.8',
-      latestVersionCode: 10,
+      latestVersion: '2.8.9',
+      latestVersionCode: 11,
       downloadUrl: '/tolmaal.apk',
       releasedAt: Date.now(),
       changelog: [
-        'गाँव की 1-क्लिक क्विक-पिक चिप्स (केवलपुरवा, अशोगापुर, नकहा आदि 12 गाँव)',
-        'शॉप विलेज लिस्ट के लिए अलग तालिका (Zero heavy distinct scan)',
-        'पुराने सभी गाँव नामों का शुद्ध देवनागरी मानकीकरण',
-        'मोबाइल कीबोर्ड और ग्राहक ऑटो-कम्प्लीट स्मूथ UX',
+        'गाँव / क्षेत्र प्रबंधन (Village Management in Settings)',
+        'हिंदी व अंग्रेजी संयुक्त गाँव नाम (केवलपुरवा (Kewalpurwa) आदि 12 गाँव)',
+        'दुकान अनुसार गाँव सूची जोड़ने, बदलने और हटाने की पूरी सुविधा',
       ]
     },
   };

@@ -1676,6 +1676,49 @@ export function setupEventListeners() {
         break;
       }
 
+      case 'open-village-modal': {
+        const { openVillageModal } = await import('./components/modals.js');
+        openVillageModal(null);
+        break;
+      }
+
+      case 'edit-village': {
+        const { openVillageModal } = await import('./components/modals.js');
+        openVillageModal({
+          id: el.dataset.id,
+          name: el.dataset.name,
+          displayOrder: el.dataset.order,
+        });
+        break;
+      }
+
+      case 'del-village': {
+        const id = el.dataset.id;
+        const name = el.dataset.name;
+        if (!confirm(`क्या आप वाकई गाँव "${name || ''}" को सूची से हटाना चाहते हैं?`)) return;
+        await withBusy(el, async () => {
+          const data = await api('/api/villages/delete', { id, name });
+          if (data && data.state) {
+            applyState(data.state);
+            const { closeModal } = await import('./components/modals.js');
+            closeModal();
+            toast('गाँव सूची से हटाया गया');
+          }
+        });
+        break;
+      }
+
+      case 'seed-default-villages': {
+        await withBusy(el, async () => {
+          const data = await api('/api/villages/seed', {});
+          if (data && data.state) {
+            applyState(data.state);
+            toast('12 मुख्य स्थानीय गाँव लोड हो गए ✓');
+          }
+        });
+        break;
+      }
+
       case 'edit-product': {
         const { openProductModal } = await import('./components/modals.js');
         openProductModal(el.dataset.id);
@@ -2564,6 +2607,24 @@ export function setupEventListeners() {
           applyState(data.state);
           closeModal();
           toast(body.id ? 'सामान अपडेट हुआ ✓' : 'नया सामान सूची में जुड़ा ✓');
+        }
+      });
+      return;
+    }
+
+    if (kind === 'village') {
+      const body = {
+        name: String(fd.get('name') || '').trim(),
+        displayOrder: parseInt(fd.get('displayOrder') || 0, 10),
+      };
+      if (fd.get('id')) body.id = fd.get('id');
+      await withBusy(form.querySelector('[type="submit"]'), async () => {
+        const data = await api('/api/villages', body);
+        if (data && data.state) {
+          applyState(data.state);
+          const { closeModal } = await import('./components/modals.js');
+          closeModal();
+          toast(body.id ? 'गाँव अपडेट हुआ ✓' : 'नया गाँव सूची में जुड़ा ✓');
         }
       });
       return;
