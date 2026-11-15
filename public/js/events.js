@@ -203,7 +203,7 @@ export function goTo(view) {
   window.__appRender?.();
 }
 
-export function updateCustomerDisambiguation(prefix = 'j') {
+export function updateCustomerDisambiguation(prefix = 'j', isConfirmed = false) {
   const isJob = prefix === 'j';
   const nameEl = document.getElementById(isJob ? 'j-name' : 'tr-name');
   const villageEl = document.getElementById(isJob ? 'j-village' : 'tr-village');
@@ -234,12 +234,12 @@ export function updateCustomerDisambiguation(prefix = 'j') {
   if (hiddenNewEl && hiddenNewEl.value === '1') {
     disambigWrap.style.display = 'block';
     disambigWrap.innerHTML = `
-      <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
-        <div style="font-size:12px;color:#166534;line-height:1.3;">
+      <div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
+        <div style="font-size:12px;color:#166534;line-height:1.35;">
           <strong>✨ नया अलग खाता बनेगा:</strong> ${esc(rawName || 'नया ग्राहक')}${rawVillage ? ' (' + esc(rawVillage) + ')' : ''}<br>
-          <span style="font-size:11px;color:#15803d;">पहचान अलग रखने के लिए नाम में पिता का नाम या उपनाम जोड़ें (उदा: ${esc(rawName || 'दिनेश')} (मास्टर जी))</span>
+          <span style="font-size:11px;color:#15803d;">अलग पहचान के लिए नाम में उपनाम या पिता का नाम जोड़ें (उदा: ${esc(rawName || 'दिनेश')} (मास्टर जी))</span>
         </div>
-        <button type="button" class="btn btn-xs btn-ghost" data-act="reset-cust-match" data-prefix="${prefix}" style="font-size:11px;color:#4f46e5;font-weight:750;padding:2px 6px;white-space:nowrap;flex-shrink:0;">
+        <button type="button" class="btn btn-xs btn-ghost" data-act="reset-cust-match" data-prefix="${prefix}" style="font-size:11px;color:#4f46e5;font-weight:750;padding:4px 8px;border-radius:6px;border:1px solid #c7d2fe;background:#fff;white-space:nowrap;flex-shrink:0;">
           🔄 दोबारा खोजें
         </button>
       </div>`;
@@ -248,8 +248,19 @@ export function updateCustomerDisambiguation(prefix = 'j') {
     return;
   }
 
-  // 2. If no sufficient input
-  if (rawName.length < 2 && rawPhone.length < 4) {
+  // 2. If already confirmed selection exists
+  const currentCustId = hiddenIdEl?.value;
+  if (currentCustId && currentCustId !== 'new') {
+    const matched = (state.data.customers || []).find((c) => c.id === currentCustId);
+    if (matched && (!rawName || isPhoneticMatch(matched.name, rawName) || matched.name.toLowerCase() === rawName.toLowerCase())) {
+      disambigWrap.style.display = 'none';
+      renderCustomerBanner(matched, banner, prefix, photoImg, photoPh, photoHidden, photoBtnTxt, photoClear);
+      return;
+    }
+  }
+
+  // 3. If no input to search
+  if (rawName.length < 1 && rawPhone.length < 2) {
     disambigWrap.style.display = 'none';
     banner.style.display = 'none';
     if (hiddenIdEl) hiddenIdEl.value = '';
@@ -261,123 +272,196 @@ export function updateCustomerDisambiguation(prefix = 'j') {
     return;
   }
 
-  // 3. Search candidate matches
-  const matches = (state.data.customers || []).filter((c) => {
-    // If phone has 10 digits and customer has 10 digit phone, must match exactly
-    if (rawPhone.length === 10 && c.phone) {
+  // 4. Search matching candidates
+  const candidates = (state.data.customers || []).filter((c) => {
+    // Exact or partial phone match
+    if (rawPhone && c.phone) {
       const cPhone = c.phone.replace(/\D/g, '');
-      if (cPhone.length === 10 && cPhone !== rawPhone) {
-        return false; // Different phone = strictly different person!
-      }
+      if (cPhone.includes(rawPhone)) return true;
+    }
+    if (!rawName) return false;
+
+    // Direct name match or substring
+    const cNameLower = (c.name || '').toLowerCase();
+    const qLower = rawName.toLowerCase();
+    if (cNameLower.includes(qLower)) return true;
+
+    // Village filter if specified
+    if (rawVillage && c.village && !isPhoneticMatch(c.village, rawVillage)) {
+      return false;
     }
 
-    if (!rawName || rawName === 'Walk-in') {
-      return c.phone && c.phone.replace(/\D/g, '').includes(rawPhone);
-    }
+    // Phonetic Hindi/English match
+    if (isPhoneticMatch(c.name, rawName)) return true;
+    if (isPhoneticMatch(c.name, latinToDeva(rawName))) return true;
 
-    const nMatch = isPhoneticMatch(c.name, rawName);
-    if (!nMatch) return false;
-
-    if (rawVillage) {
-      return isPhoneticMatch(c.village, rawVillage);
-    }
-    return true;
+    return false;
   });
 
+  // Sort candidates
+  candidates.sort((a, b) => {
+    const aName = (a.name || '').toLowerCase();
+    const bName = (b.name || '').toLowerCase();
+    const q = rawName.toLowerCase();
+    if (aName === q) return -1;
+    if (bName === q) return 1;
+    if (aName.startsWith(q) && !bName.startsWith(q)) return -1;
+    if (!aName.startsWith(q) && bName.startsWith(q)) return 1;
+    return 0;
+  });
+
+  const matches = candidates.slice(0, 8);
+
   if (matches.length === 0) {
-    disambigWrap.style.display = 'none';
     banner.style.display = 'none';
     if (hiddenIdEl) hiddenIdEl.value = '';
+    if (rawName.length >= 2 || rawPhone.length >= 4) {
+      disambigWrap.style.display = 'block';
+      disambigWrap.innerHTML = `
+        <div class="cust-suggest-box" style="padding:10px 12px;background:#f8fafc;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+            <div style="font-size:12px;color:#334155;line-height:1.4;">
+              <span>ℹ️</span> <strong>"${esc(rawName || rawPhone)}"</strong> रिकॉर्ड में नहीं मिला।
+            </div>
+            <button type="button" class="cust-suggest-close" data-act="close-cust-suggest" data-prefix="${prefix}">✕</button>
+          </div>
+          <div style="margin-top:6px;font-size:11.5px;color:#16a34a;font-weight:600;">
+            ✓ यह नया ग्राहक माना जाएगा और बिल सेव करते ही इसका खाता बन जाएगा।
+          </div>
+        </div>`;
+    } else {
+      disambigWrap.style.display = 'none';
+    }
     return;
   }
 
-  if (matches.length === 1) {
-    const c = matches[0];
-    if (rawPhone.length === 10 && c.phone && c.phone.replace(/\D/g, '') !== rawPhone) {
-      disambigWrap.style.display = 'none';
-      banner.style.display = 'none';
-      if (hiddenIdEl) hiddenIdEl.value = '';
-      return;
-    }
+  // Exact 100% full match
+  const exact = matches.length === 1 && (
+    (rawName && matches[0].name.trim().toLowerCase() === rawName.trim().toLowerCase()) ||
+    (rawPhone.length === 10 && matches[0].phone && matches[0].phone.replace(/\D/g, '') === rawPhone) ||
+    isConfirmed
+  );
 
+  if (exact) {
+    const c = matches[0];
     disambigWrap.style.display = 'none';
     if (hiddenIdEl) hiddenIdEl.value = c.id;
     if (hiddenNewEl) hiddenNewEl.value = '0';
-
-    const cls = c.balancePaise > 0 ? 'due' : (c.balancePaise < 0 ? 'adv' : 'zero');
-    const balTxt = c.balancePaise > 0
-      ? inr(c.balancePaise) + ' ' + t('dueTag')
-      : (c.balancePaise < 0 ? inr(-c.balancePaise) + ' ' + t('advTag') : t('settledTag'));
-
-    banner.className = `cust-banner ${cls}`;
-    banner.style.display = 'flex';
-    banner.style.alignItems = 'center';
-    banner.style.justifyContent = 'space-between';
-    banner.style.gap = '8px';
-    banner.innerHTML = `
-      <div style="display:flex;align-items:center;gap:6px;min-width:0;" class="ellipsis">
-        ${c.photo ? `<img src="${c.photo}" style="width:24px;height:24px;border-radius:50%;object-fit:cover;border:1px solid #a5b4fc;flex-shrink:0;">` : ''}
-        <span class="ellipsis"><strong>${esc(c.name)}${c.village ? ' (' + esc(c.village) + ')' : ''}</strong> खाता:</span>
-        <strong style="white-space:nowrap;">${balTxt}</strong>
-        ${c.phone ? `<span style="font-size:11px;color:#64748b;">(📞 ${esc(c.phone)})</span>` : ''}
-      </div>
-      <button type="button" class="btn btn-xs btn-ghost" data-act="force-new-cust" data-prefix="${prefix}" title="अगर यह व्यक्ति अलग हैं तो नया खाता बनाएं" style="color:#dc2626;font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid #fecaca;background:#fff;white-space:nowrap;flex-shrink:0;">
-        ✕ यह वो नहीं हैं
-      </button>
-    `;
-
-    if (c.photo) {
-      if (photoImg) { photoImg.src = c.photo; photoImg.style.display = 'block'; }
-      if (photoPh) photoPh.style.display = 'none';
-      if (photoHidden) photoHidden.value = c.photo;
-      if (photoBtnTxt) photoBtnTxt.textContent = 'नया फोटो लें';
-      if (photoClear) photoClear.style.display = 'inline-flex';
-    }
+    renderCustomerBanner(c, banner, prefix, photoImg, photoPh, photoHidden, photoBtnTxt, photoClear);
     return;
   }
 
-  // Multiple candidates (matches.length > 1) - Prompt operator to choose!
+  // Show modern suggestions list
   if (hiddenIdEl) hiddenIdEl.value = '';
   banner.style.display = 'none';
   disambigWrap.style.display = 'block';
   disambigWrap.innerHTML = `
-    <div style="background:#fffbeb;border:1.5px solid #fde68a;border-radius:10px;padding:8px 10px;margin-bottom:8px;">
-      <div style="font-size:12px;font-weight:800;color:#92400e;display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-        <span>⚠️</span> <span>एक ही नाम के ${matches.length} ग्राहक मिले — सही ग्राहक चुनें:</span>
+    <div class="cust-suggest-box">
+      <div class="cust-suggest-header">
+        <div class="cust-suggest-title">
+          <span>👥</span> <span>ग्राहक सूची (${matches.length})</span>
+        </div>
+        <button type="button" class="cust-suggest-close" data-act="close-cust-suggest" data-prefix="${prefix}" title="बंद करें">✕</button>
       </div>
-      <div style="display:flex;flex-direction:column;gap:5px;max-height:160px;overflow-y:auto;padding-right:2px;">
+      <div class="cust-suggest-list">
         ${matches.map((c) => {
-          const bal = c.balancePaise > 0
+          const balCls = c.balancePaise > 0 ? 'due' : (c.balancePaise < 0 ? 'adv' : 'zero');
+          const balTxt = c.balancePaise > 0
             ? inr(c.balancePaise) + ' बाकी'
-            : (c.balancePaise < 0 ? inr(-c.balancePaise) + ' जमा' : 'बराबर');
+            : (c.balancePaise < 0 ? inr(-c.balancePaise) + ' जमा' : '₹0 चुकता');
           return `
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fff;padding:6px 8px;border-radius:8px;border:1px solid #e2e8f0;">
-            <div style="display:flex;align-items:center;gap:8px;min-width:0;">
-              ${c.photo ? `<img src="${c.photo}" style="width:30px;height:30px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1px solid #cbd5e1;">` : `<span class="avatar small" style="width:30px;height:30px;font-size:12px;flex-shrink:0;">${esc(c.name.charAt(0))}</span>`}
-              <div style="min-width:0;line-height:1.2;">
-                <div style="font-size:12px;font-weight:750;color:#0f172a;" class="ellipsis">${esc(c.name)}${c.village ? ` <span style="font-size:10.5px;color:#64748b;font-weight:normal;">(${esc(c.village)})</span>` : ''}</div>
-                <div style="font-size:11px;color:#64748b;">${c.phone ? '📞 ' + esc(c.phone) : 'फोन नहीं'} · <strong style="color:${c.balancePaise > 0 ? '#b45309' : '#15803d'}">${bal}</strong></div>
+          <div class="cust-suggest-item" data-act="pick-disambig-cust" data-prefix="${prefix}" data-id="${c.id}">
+            <div class="cust-suggest-avatar">
+              ${c.photo ? `<img src="${c.photo}" alt="${esc(c.name)}">` : `<span>${esc((c.name || 'G').charAt(0).toUpperCase())}</span>`}
+            </div>
+            <div class="cust-suggest-info">
+              <div class="cust-suggest-name-row">
+                <span class="cust-suggest-name">${esc(c.name)}</span>
+                ${c.village ? `<span class="cust-suggest-village">📍 ${esc(c.village)}</span>` : ''}
+              </div>
+              <div class="cust-suggest-meta">
+                ${c.phone ? `<span class="cust-suggest-phone">📞 ${esc(c.phone)}</span>` : '<span class="cust-suggest-phone muted">फोन नहीं</span>'}
+                <span class="cust-suggest-bal ${balCls}">${balTxt}</span>
               </div>
             </div>
-            <button type="button" class="btn btn-xs btn-primary" data-act="pick-disambig-cust" data-prefix="${prefix}" data-id="${c.id}" style="padding:4px 10px;font-size:11.5px;font-weight:750;border-radius:6px;white-space:nowrap;flex-shrink:0;">
+            <button type="button" class="cust-suggest-pick-btn" data-act="pick-disambig-cust" data-prefix="${prefix}" data-id="${c.id}">
               चुनें ✓
             </button>
           </div>`;
         }).join('')}
       </div>
-      <div style="margin-top:6px;padding-top:6px;border-top:1px dashed #fde68a;display:flex;align-items:center;justify-content:space-between;">
-        <span style="font-size:11px;color:#78350f;">यह इनमें से कोई नहीं हैं?</span>
-        <button type="button" class="btn btn-xs btn-subtle" data-act="force-new-cust" data-prefix="${prefix}" style="border:1px solid #cbd5e1;background:#fff;font-size:11px;padding:3px 8px;border-radius:6px;font-weight:700;color:#1e293b;">
+      <div class="cust-suggest-footer">
+        <span style="font-size:11px;color:#64748b;">यह इनमें से कोई नहीं हैं?</span>
+        <button type="button" class="btn btn-xs cust-new-btn" data-act="force-new-cust" data-prefix="${prefix}">
           ➕ नया अलग खाता बनाएं
         </button>
       </div>
     </div>
   `;
+
+  // Auto-scroll into view smoothly so keyboard doesn't hide it
+  try {
+    disambigWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  } catch (ignored) {}
+}
+
+function renderCustomerBanner(c, banner, prefix, photoImg, photoPh, photoHidden, photoBtnTxt, photoClear) {
+  const cls = c.balancePaise > 0 ? 'due' : (c.balancePaise < 0 ? 'adv' : 'zero');
+  const balTxt = c.balancePaise > 0
+    ? inr(c.balancePaise) + ' ' + t('dueTag')
+    : (c.balancePaise < 0 ? inr(-c.balancePaise) + ' ' + t('advTag') : t('settledTag'));
+
+  banner.className = `cust-banner ${cls}`;
+  banner.style.display = 'flex';
+  banner.style.alignItems = 'center';
+  banner.style.justifyContent = 'space-between';
+  banner.style.gap = '8px';
+  banner.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;min-width:0;" class="ellipsis">
+      ${c.photo ? `<img src="${c.photo}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;border:1.5px solid #a5b4fc;flex-shrink:0;">` : `<span class="avatar small" style="width:28px;height:28px;font-size:12px;flex-shrink:0;">${esc((c.name || 'G').charAt(0).toUpperCase())}</span>`}
+      <div class="ellipsis" style="line-height:1.25;">
+        <div><strong>${esc(c.name)}${c.village ? ' (' + esc(c.village) + ')' : ''}</strong></div>
+        <div style="font-size:11.5px;">खाता: <strong>${balTxt}</strong> ${c.phone ? `<span style="font-size:11px;color:#64748b;">(📞 ${esc(c.phone)})</span>` : ''}</div>
+      </div>
+    </div>
+    <button type="button" class="btn btn-xs btn-ghost" data-act="force-new-cust" data-prefix="${prefix}" title="अगर यह व्यक्ति अलग हैं तो नया खाता बनाएं" style="color:#dc2626;font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid #fecaca;background:#fff;white-space:nowrap;flex-shrink:0;">
+      ✕ यह वो नहीं हैं
+    </button>
+  `;
+
+  if (c.photo) {
+    if (photoImg) { photoImg.src = c.photo; photoImg.style.display = 'block'; }
+    if (photoPh) photoPh.style.display = 'none';
+    if (photoHidden) photoHidden.value = c.photo;
+    if (photoBtnTxt) photoBtnTxt.textContent = 'नया फोटो लें';
+    if (photoClear) photoClear.style.display = 'inline-flex';
+  }
 }
 
 export function setupEventListeners() {
   // Global click handler
   document.addEventListener('click', async (ev) => {
+    // Tap anywhere on a customer suggestion card item to select
+    const suggestItem = ev.target.closest('.cust-suggest-item');
+    if (suggestItem && !ev.target.closest('.cust-suggest-pick-btn')) {
+      const pickBtn = suggestItem.querySelector('.cust-suggest-pick-btn');
+      if (pickBtn) {
+        pickBtn.click();
+        return;
+      }
+    }
+
+    // Dismiss suggestions when clicking outside customer inputs
+    const isInsideCust = ev.target.closest('#cust-disambig-wrap, #tr-cust-disambig-wrap, #j-name, #j-village, #j-phone, #tr-name, #tr-village, #tr-phone');
+    if (!isInsideCust) {
+      const jWrap = document.getElementById('cust-disambig-wrap');
+      const trWrap = document.getElementById('tr-cust-disambig-wrap');
+      const jNew = document.getElementById('j-is-new-customer');
+      if (jWrap && (!jNew || jNew.value !== '1')) jWrap.style.display = 'none';
+      const trNew = document.getElementById('tr-is-new-customer');
+      if (trWrap && (!trNew || trNew.value !== '1')) trWrap.style.display = 'none';
+    }
+
     // Photo clear buttons
     if (ev.target && ev.target.id === 'job-photo-clear') {
       const hidden = document.getElementById('j-photo');
@@ -1331,14 +1415,33 @@ export function setupEventListeners() {
         const disambigWrap = document.getElementById(prefix === 'j' ? 'cust-disambig-wrap' : 'tr-cust-disambig-wrap');
 
         if (nameEl) nameEl.value = cust.name;
-        if (villageEl && cust.village) villageEl.value = cust.village;
-        if (phoneEl && cust.phone && !phoneEl.value) phoneEl.value = cust.phone;
+        if (villageEl) villageEl.value = cust.village || '';
+        if (phoneEl) phoneEl.value = cust.phone || '';
         if (hiddenIdEl) hiddenIdEl.value = cust.id;
         if (hiddenNewEl) hiddenNewEl.value = '0';
         if (disambigWrap) disambigWrap.style.display = 'none';
 
+        if (prefix === 'j') {
+          state.job.name = cust.name;
+          state.job.village = cust.village || '';
+          state.job.phone = cust.phone || '';
+          state.job.customerId = cust.id;
+        } else {
+          state.trade.name = cust.name;
+          state.trade.village = cust.village || '';
+          state.trade.phone = cust.phone || '';
+          state.trade.customerId = cust.id;
+        }
+
         toast(`ग्राहक चुना गया: ${cust.name}`);
-        updateCustomerDisambiguation(prefix);
+        updateCustomerDisambiguation(prefix, true);
+        break;
+      }
+
+      case 'close-cust-suggest': {
+        const prefix = el.dataset.prefix || 'j';
+        const disambigWrap = document.getElementById(prefix === 'j' ? 'cust-disambig-wrap' : 'tr-cust-disambig-wrap');
+        if (disambigWrap) disambigWrap.style.display = 'none';
         break;
       }
 
@@ -1709,6 +1812,19 @@ export function setupEventListeners() {
       const helper = document.getElementById('typing-translit-helper');
       if (helper && document.activeElement !== ev.target) helper.remove();
     }, 200);
+  });
+
+  // Global focus listener to re-trigger suggestions if input already has text
+  document.addEventListener('focusin', (ev) => {
+    const tEl = ev.target;
+    if (tEl && (tEl.id === 'j-name' || tEl.id === 'j-phone')) {
+      const val = (tEl.value || '').trim();
+      if (val.length >= 1) updateCustomerDisambiguation('j');
+    }
+    if (tEl && (tEl.id === 'tr-name' || tEl.id === 'tr-phone')) {
+      const val = (tEl.value || '').trim();
+      if (val.length >= 1) updateCustomerDisambiguation('tr');
+    }
   });
 
   // Global input listener

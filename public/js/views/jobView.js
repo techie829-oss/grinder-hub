@@ -123,19 +123,13 @@ function renderGrindTab(data) {
     <div class="pos-row-2">
       <div class="pos-field">
         <label for="j-name">${t('customerName')}</label>
-        <input id="j-name" name="name" list="cust-names" maxlength="60" value="${esc(job.name)}"
+        <input id="j-name" name="name" maxlength="60" value="${esc(job.name)}"
           placeholder="${t('namePlaceholder')}" autocomplete="off">
-        <datalist id="cust-names">
-          ${data.customers.map((c) => `<option value="${esc(c.name)}">${c.village ? esc(c.village) : ''}${c.phone ? ' · ' + c.phone : ''}</option>`).join('')}
-        </datalist>
       </div>
       <div class="pos-field">
         <label for="j-village">${t('villageLabel')}</label>
-        <input id="j-village" name="village" list="cust-villages" maxlength="60" value="${esc(job.village || '')}"
+        <input id="j-village" name="village" maxlength="60" value="${esc(job.village || '')}"
           placeholder="${t('villagePlaceholder')}" autocomplete="off">
-        <datalist id="cust-villages">
-          ${[...new Set(data.customers.map((c) => c.village).filter(Boolean))].map((v) => `<option value="${esc(v)}"></option>`).join('')}
-        </datalist>
       </div>
     </div>
 
@@ -143,11 +137,8 @@ function renderGrindTab(data) {
     <div style="display:flex;gap:6px;align-items:flex-end;margin-bottom:8px;">
       <div class="pos-field" style="flex:1;margin-bottom:0;">
         <label for="j-phone">${t('phoneLabel')}</label>
-        <input id="j-phone" name="phone" list="cust-phones" type="tel" inputmode="numeric" maxlength="10"
-          value="${esc(job.phone)}" placeholder="${t('phonePlaceholderTen')}">
-        <datalist id="cust-phones">
-          ${data.customers.filter((c) => c.phone).map((c) => `<option value="${esc(c.phone)}">${esc(c.name)}${c.village ? ' (' + esc(c.village) + ')' : ''}</option>`).join('')}
-        </datalist>
+        <input id="j-phone" name="phone" type="tel" inputmode="numeric" maxlength="10"
+          value="${esc(job.phone)}" placeholder="${t('phonePlaceholderTen')}" autocomplete="off">
       </div>
       <div style="display:flex;gap:4px;flex-shrink:0;">
         <button type="button" class="btn btn-sm btn-ghost" data-act="hw-voice-mic" style="padding:6px 8px;font-size:12px;height:38px;border-radius:10px;" title="बोलकर ऑर्डर भरें (Voice Order)">🎙️ ${t('voiceBtnLabel')}</button>
@@ -410,12 +401,12 @@ function renderSaleTab(data) {
     <div class="pos-row-2">
       <div class="pos-field">
         <label for="tr-name">ग्राहक का नाम</label>
-        <input id="tr-name" name="name" list="cust-names" maxlength="60" value="${esc(trade.name)}"
+        <input id="tr-name" name="name" maxlength="60" value="${esc(trade.name)}"
           placeholder="ग्राहक का नाम" autocomplete="off">
       </div>
       <div class="pos-field">
         <label for="tr-village">गाँव / पता</label>
-        <input id="tr-village" name="village" list="cust-villages" maxlength="60" value="${esc(trade.village || '')}"
+        <input id="tr-village" name="village" maxlength="60" value="${esc(trade.village || '')}"
           placeholder="गाँव या स्थान" autocomplete="off">
       </div>
     </div>
@@ -594,12 +585,12 @@ function renderPurchaseTab(data) {
     <div class="pos-row-2">
       <div class="pos-field">
         <label for="tr-name">किसान का नाम</label>
-        <input id="tr-name" name="name" list="cust-names" maxlength="60" value="${esc(trade.name)}"
+        <input id="tr-name" name="name" maxlength="60" value="${esc(trade.name)}"
           placeholder="किसान का नाम" autocomplete="off">
       </div>
       <div class="pos-field">
         <label for="tr-village">गाँव / पता</label>
-        <input id="tr-village" name="village" list="cust-villages" maxlength="60" value="${esc(trade.village || '')}"
+        <input id="tr-village" name="village" maxlength="60" value="${esc(trade.village || '')}"
           placeholder="गाँव या स्थान" autocomplete="off">
       </div>
     </div>

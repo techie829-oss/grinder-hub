@@ -1340,6 +1340,218 @@ body:has(#modal:not(:empty)) .tabbar {
 .cust-banner.adv { background: var(--brand-soft); color: var(--brand-ink); border: 1px solid rgba(79, 70, 229, .2); }
 .cust-banner.zero { background: var(--green-soft); color: var(--green); border: 1px solid rgba(15, 157, 107, .2); }
 
+/* Smart Customer Autocomplete & Suggestion Dropdown (Mobile-First UX) */
+.cust-suggest-box {
+  background: #ffffff;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 14px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
+  padding: 10px;
+  margin-top: 4px;
+  margin-bottom: 8px;
+  animation: custSlideDownFade 0.18s ease-out;
+}
+
+@keyframes custSlideDownFade {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.cust-suggest-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.cust-suggest-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cust-suggest-close {
+  background: #f1f5f9;
+  border: none;
+  font-size: 14px;
+  color: #64748b;
+  cursor: pointer;
+  padding: 3px 8px;
+  border-radius: 6px;
+  line-height: 1;
+}
+.cust-suggest-close:hover, .cust-suggest-close:active {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.cust-suggest-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 2px;
+}
+
+.cust-suggest-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: #f8fafc;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.cust-suggest-item:hover, .cust-suggest-item:active {
+  background: #eef2ff;
+  border-color: #6366f1;
+}
+
+.cust-suggest-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: linear-gradient(135deg, #4f46e5, #9333ea);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 800;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.cust-suggest-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cust-suggest-info {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.cust-suggest-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+
+.cust-suggest-name {
+  font-size: 13px;
+  font-weight: 750;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cust-suggest-village {
+  font-size: 11px;
+  color: #475569;
+  background: #ffffff;
+  padding: 1px 6px;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.cust-suggest-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 3px;
+  font-size: 11px;
+}
+
+.cust-suggest-phone {
+  color: #64748b;
+  font-weight: 500;
+}
+.cust-suggest-phone.muted {
+  color: #94a3b8;
+}
+
+.cust-suggest-bal {
+  font-size: 10.5px;
+  font-weight: 750;
+  padding: 1px 7px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.cust-suggest-bal.due {
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+.cust-suggest-bal.adv {
+  background: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+.cust-suggest-bal.zero {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+.cust-suggest-pick-btn {
+  background: #4f46e5;
+  color: #ffffff;
+  border: none;
+  padding: 6px 12px;
+  font-size: 11.5px;
+  font-weight: 750;
+  border-radius: 8px;
+  cursor: pointer;
+  flex-shrink: 0;
+  box-shadow: 0 1px 2px rgba(79, 70, 229, 0.3);
+}
+.cust-suggest-pick-btn:active {
+  transform: scale(0.96);
+}
+
+.cust-suggest-footer {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed #e2e8f0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cust-new-btn {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  font-size: 11.5px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-weight: 700;
+  color: #1e293b;
+}
+.cust-new-btn:hover, .cust-new-btn:active {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
 .filter-chips {
   display: flex;
   gap: 8px;

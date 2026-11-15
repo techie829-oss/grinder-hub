@@ -2,8 +2,8 @@
 import { state } from '../state.js';
 import { showModal, closeModal } from '../components/modals.js';
 
-export const CURRENT_APP_VERSION = '2.8.6';
-export const CURRENT_VERSION_CODE = 7;
+export const CURRENT_APP_VERSION = '2.8.7';
+export const CURRENT_VERSION_CODE = 9;
 
 let updateBannerDismissed = false;
 
