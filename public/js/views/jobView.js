@@ -44,17 +44,31 @@ function renderGrindTab(data) {
   const scaleConnected = !!(state.scale && state.scale.connected);
   const liveWt = (state.scale && state.scale.weight) || 0;
 
-  const grossWeight = Number(job.qty) || 0;
+  const weightMode = job.weightMode || 'gross';
+  const enteredQty = Number(job.qty) || 0;
   const ratePerUnit = Number(job.rate) || 0;
-  const lossRatePerKg = job.lossRateG !== '' && job.lossRateG !== undefined
-    ? Number(job.lossRateG)
-    : (svc ? Number(svc.lossRateG || 0) : 0);
 
-  const totalLossG = svc && svc.unit === 'kg' ? Math.round(grossWeight * lossRatePerKg) : 0;
-  const netWeight = svc && svc.unit === 'kg' ? Math.max(0, grossWeight - (totalLossG / 1000)) : grossWeight;
+  let grossWeight = enteredQty;
+  let lossRatePerKg = 0;
+  let totalLossG = 0;
+  let netWeight = enteredQty;
+  let billWeight = enteredQty;
 
-  const chargeBasis = job.chargeBasis || data.business.chargeBasis || 'output';
-  const billWeight = chargeBasis === 'gross' ? grossWeight : netWeight;
+  if (weightMode === 'output') {
+    grossWeight = enteredQty;
+    netWeight = enteredQty;
+    totalLossG = 0;
+    billWeight = enteredQty;
+  } else {
+    lossRatePerKg = job.lossRateG !== '' && job.lossRateG !== undefined
+      ? Number(job.lossRateG)
+      : (svc ? Number(svc.lossRateG || 0) : 0);
+    totalLossG = svc && svc.unit === 'kg' ? Math.round(grossWeight * lossRatePerKg) : 0;
+    netWeight = svc && svc.unit === 'kg' ? Math.max(0, grossWeight - (totalLossG / 1000)) : grossWeight;
+    const chargeBasis = data.business.chargeBasis || 'output';
+    billWeight = chargeBasis === 'gross' ? grossWeight : netWeight;
+  }
+
   const amountPaise = Math.round(billWeight * ratePerUnit * 100);
 
   const candidateMatches = data.customers.filter((c) => {
@@ -155,11 +169,22 @@ function renderGrindTab(data) {
       ${matchedCustomer ? `<button type="button" class="btn btn-xs btn-ghost" data-act="force-new-cust" style="color:#dc2626;font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid #fecaca;background:#fff;flex-shrink:0;">✕ यह वो नहीं हैं</button>` : ''}
     </div>
 
-    <!-- 4. POS Core Billing Dashboard Box (Weight + Rate = Total) -->
+    <!-- 4. Weight Entry Mode Toggle: Gross (आवक) vs Direct Output (तैयार माल) -->
+    <div style="display:flex;align-items:center;background:#e2e8f0;border-radius:10px;padding:3px;margin-bottom:8px;gap:3px;">
+      <button type="button" class="btn btn-xs ${weightMode !== 'output' ? 'btn-primary' : 'btn-ghost'}" data-act="set-weight-mode" data-mode="gross" style="flex:1;padding:6px 10px;font-size:12px;font-weight:800;border-radius:8px;${weightMode !== 'output' ? '' : 'color:#475569;'}">
+        📥 आवक वजन (कच्चा माल)
+      </button>
+      <button type="button" class="btn btn-xs ${weightMode === 'output' ? 'btn-primary' : 'btn-ghost'}" data-act="set-weight-mode" data-mode="output" style="flex:1;padding:6px 10px;font-size:12px;font-weight:800;border-radius:8px;${weightMode === 'output' ? '' : 'color:#475569;'}">
+        📦 तैयार माल (सीधा Output)
+      </button>
+    </div>
+    <input type="hidden" id="j-weight-mode" name="weightMode" value="${weightMode}">
+
+    <!-- POS Core Billing Dashboard Box (Weight + Rate = Total) -->
     <div class="pos-billing-strip">
       <div class="pos-bill-input-group">
         <div class="pos-bill-field">
-          <label for="j-qty">${t('grossWeightInputLabel', { unit })} ${scaleConnected ? `<span style="color:#15803d;font-weight:700;">● ${liveWt}</span>` : ''}</label>
+          <label id="j-qty-label" for="j-qty">${weightMode === 'output' ? `तैयार माल वजन (${unit}) *` : `${t('grossWeightInputLabel', { unit })}`} ${scaleConnected ? `<span style="color:#15803d;font-weight:700;">● ${liveWt}</span>` : ''}</label>
           <input id="j-qty" name="qty" type="number" step="any" min="0" inputmode="decimal"
             value="${job.qty}" placeholder="0.00" required>
         </div>
@@ -175,8 +200,8 @@ function renderGrindTab(data) {
       </div>
     </div>
 
-    <!-- 5. Inline Loss / Deduction Strip -->
-    <div class="pos-loss-strip">
+    <!-- 5. Inline Loss / Deduction Strip (Gross Mode only) -->
+    <div id="j-loss-strip" class="pos-loss-strip" style="display:${weightMode === 'output' ? 'none' : 'flex'};">
       <div class="pos-loss-left">
         <span style="font-weight:750;color:#c2410c;">✂️ ${t('lossRateCut')}</span>
         <input id="j-loss-rate" name="lossRateG" type="number" step="any" min="0" inputmode="numeric"
@@ -194,22 +219,12 @@ function renderGrindTab(data) {
       </div>
     </div>
 
-    <!-- 5b. Service Billing Calculation Basis & Privacy Strip -->
-    <div style="background:#f1f5f9;border:1.5px solid #cbd5e1;border-radius:12px;padding:8px 10px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-      <div style="font-size:12px;font-weight:750;color:#334155;">
-        <span id="j-charge-basis-title">${chargeBasis === 'gross' ? 'आवक कुल वजन पर' : 'तैयार माल (Output) पर'}</span>:
-        <strong id="j-charge-basis-formula" style="color:#0f172a;font-size:13px;">${qtyFmt(billWeight)} ${unit} × ₹${ratePerUnit} = ${inr(amountPaise)}</strong>
-      </div>
-      <div style="display:flex;align-items:center;gap:4px;">
-        <button id="btn-basis-output" type="button" class="btn btn-xs ${chargeBasis === 'output' ? 'btn-primary' : 'btn-subtle'}" data-act="set-charge-basis" data-basis="output" style="padding:3px 9px;font-size:11px;font-weight:750;border-radius:7px;">
-          तैयार माल पर ✓
-        </button>
-        <button id="btn-basis-gross" type="button" class="btn btn-xs ${chargeBasis === 'gross' ? 'btn-primary' : 'btn-subtle'}" data-act="set-charge-basis" data-basis="gross" style="padding:3px 9px;font-size:11px;font-weight:750;border-radius:7px;">
-          कुल वजन पर
-        </button>
-      </div>
+    <!-- Direct Output Mode Strip (Active only for Output Mode) -->
+    <div id="j-output-info-strip" class="pos-loss-strip" style="background:#ecfdf5;border:1.5px solid #a7f3d0;display:${weightMode === 'output' ? 'flex' : 'none'};align-items:center;justify-content:space-between;padding:8px 12px;">
+      <span style="font-weight:750;color:#065f46;font-size:12px;">✓ सीधा तैयार माल (कोई चकोती नहीं कटेगी)</span>
+      <strong id="output-net-preview" style="color:#047857;font-size:13px;">${job.qty ? qtyFmt(Number(job.qty)) + ' ' + unit : '0 ' + unit}</strong>
     </div>
-    <input id="j-charge-basis" type="hidden" name="chargeBasis" value="${chargeBasis}">
+
     <input type="hidden" name="hideLoss" value="${data.business.hideLossOnSlip !== false ? '1' : '0'}">
 
     <!-- 6. नोट / माल का विवरण -->

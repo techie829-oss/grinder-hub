@@ -55,6 +55,7 @@ export const state = {
   busy: false,
   jobTab: 'grind', // 'grind' | 'sale' | 'purchase'
   job: {
+    weightMode: 'gross', // 'gross' | 'output'
     serviceId: null,
     qty: '',
     rate: '',

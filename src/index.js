@@ -172,7 +172,7 @@ async function route(request, env, url) {
   if (path === '/api/app-version' && method === 'GET') {
     return json({
       ok: true,
-      version: '2.8.5',
+      version: '2.8.6',
       versionCode: 7,
       downloadUrl: '/tolmaal.apk',
       releasedAt: Date.now(),

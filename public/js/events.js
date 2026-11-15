@@ -21,44 +21,52 @@ export function recalcJob() {
   const grossPreview = document.getElementById('gross-qty-preview');
   const lossPreview = document.getElementById('loss-total-preview');
   const netPreview = document.getElementById('net-qty-preview');
+  const outputNetPreview = document.getElementById('output-net-preview');
 
   if (!qtyEl || !rateEl) return;
   const svc = currentService();
   const unit = svc ? unitOf(svc.unit) : 'kg';
 
-  const grossWeight = Number(qtyEl.value) || 0;
+  const enteredWeight = Number(qtyEl.value) || 0;
   const rateVal = Number(rateEl.value) || 0;
-  const lossRateVal = lossRateEl ? (Number(lossRateEl.value) || 0) : (svc ? Number(svc.lossRateG || 0) : 0);
+  const modeInput = document.getElementById('j-weight-mode');
+  const weightMode = (modeInput && modeInput.value) || state.job.weightMode || 'gross';
+
+  let grossWeight = enteredWeight;
+  let totalLossG = 0;
+  let netWeight = enteredWeight;
+  let billWeight = enteredWeight;
+
+  if (weightMode === 'output') {
+    // Direct Output Entry — No chakoti / loss deduction
+    grossWeight = enteredWeight;
+    netWeight = enteredWeight;
+    totalLossG = 0;
+    billWeight = enteredWeight;
+  } else {
+    const lossRateVal = lossRateEl ? (Number(lossRateEl.value) || 0) : (svc ? Number(svc.lossRateG || 0) : 0);
+    state.job.lossRateG = lossRateEl ? lossRateEl.value : String(lossRateVal);
+    totalLossG = svc && svc.unit === 'kg' ? Math.round(grossWeight * lossRateVal) : 0;
+    netWeight = svc && svc.unit === 'kg' ? Math.max(0, grossWeight - (totalLossG / 1000)) : grossWeight;
+
+    // Default business chargeBasis from Settings
+    const chargeBasis = state.data?.business?.chargeBasis || 'output';
+    billWeight = chargeBasis === 'gross' ? grossWeight : netWeight;
+  }
+
+  const amountPaise = Math.round(billWeight * rateVal * 100);
 
   state.job.qty = qtyEl.value;
   state.job.rate = rateEl.value;
-  state.job.lossRateG = lossRateEl ? lossRateEl.value : String(lossRateVal);
-
-  const basisInput = document.getElementById('j-charge-basis');
-  const chargeBasis = (basisInput && basisInput.value) || state.job.chargeBasis || state.data?.business?.chargeBasis || 'output';
-  state.job.chargeBasis = chargeBasis;
-
-  const totalLossG = svc && svc.unit === 'kg' ? Math.round(grossWeight * lossRateVal) : 0;
-  const netWeight = svc && svc.unit === 'kg' ? Math.max(0, grossWeight - (totalLossG / 1000)) : grossWeight;
-  const billWeight = chargeBasis === 'gross' ? grossWeight : netWeight;
-  const amountPaise = Math.round(billWeight * rateVal * 100);
-
   state.job.totalLossG = totalLossG;
   state.job.netWeight = netWeight;
+  state.job.grossWeight = grossWeight;
 
   if (amtPreview) amtPreview.textContent = inr(amountPaise);
   if (grossPreview) grossPreview.textContent = grossWeight ? `${grossWeight.toFixed(2)} ${unit}` : `0 ${unit}`;
   if (lossPreview) lossPreview.textContent = totalLossG ? `-${totalLossG} g` : '0 g';
   if (netPreview) netPreview.textContent = netWeight ? `${netWeight.toFixed(3)} ${unit}` : `0 ${unit}`;
-
-  const basisTitle = document.getElementById('j-charge-basis-title');
-  if (basisTitle) {
-    basisTitle.textContent = chargeBasis === 'gross' ? 'आवक कुल वजन पर' : 'तैयार माल (Output) पर';
-  }
-  const basisFormula = document.getElementById('j-charge-basis-formula');
-  if (basisFormula) {
-    basisFormula.textContent = `${qtyFmt(billWeight)} ${unit} × ₹${rateVal} = ${inr(amountPaise)}`;
-  }
+  if (outputNetPreview) outputNetPreview.textContent = enteredWeight ? `${qtyFmt(enteredWeight)} ${unit}` : `0 ${unit}`;
 
   const calcHint = document.getElementById('j-calc-hint');
   if (calcHint) calcHint.textContent = inr(amountPaise);
@@ -631,17 +639,34 @@ export function setupEventListeners() {
         window.__appRender?.();
         break;
 
-      case 'set-charge-basis': {
-        const basis = el.dataset.basis || 'output';
-        state.job.chargeBasis = basis;
-        const basisInput = document.getElementById('j-charge-basis');
-        if (basisInput) basisInput.value = basis;
-        const btnOutput = document.getElementById('btn-basis-output');
-        const btnGross = document.getElementById('btn-basis-gross');
-        if (btnOutput && btnGross) {
-          btnOutput.className = `btn btn-xs ${basis === 'output' ? 'btn-primary' : 'btn-subtle'}`;
-          btnGross.className = `btn btn-xs ${basis === 'gross' ? 'btn-primary' : 'btn-subtle'}`;
+      case 'set-weight-mode': {
+        const mode = el.dataset.mode || 'gross';
+        state.job.weightMode = mode;
+        const modeInput = document.getElementById('j-weight-mode');
+        if (modeInput) modeInput.value = mode;
+
+        // Update toggle button styles without full page reload
+        const modeButtons = document.querySelectorAll('[data-act="set-weight-mode"]');
+        modeButtons.forEach((btn) => {
+          const isSelected = btn.dataset.mode === mode;
+          btn.className = `btn btn-xs ${isSelected ? 'btn-primary' : 'btn-ghost'}`;
+          btn.style.color = isSelected ? '#fff' : '#475569';
+        });
+
+        // Toggle label and strips without clearing customer name, phone or village
+        const qtyLabel = document.getElementById('j-qty-label');
+        const svc = currentService();
+        const unit = svc ? unitOf(svc.unit) : 'kg';
+        if (qtyLabel) {
+          qtyLabel.innerHTML = mode === 'output'
+            ? `तैयार माल (Output) वजन (${unit}) *`
+            : `आवक वजन (${unit}) *`;
         }
+        const lossStrip = document.getElementById('j-loss-strip');
+        const outputStrip = document.getElementById('j-output-info-strip');
+        if (lossStrip) lossStrip.style.display = mode === 'output' ? 'none' : 'flex';
+        if (outputStrip) outputStrip.style.display = mode === 'output' ? 'flex' : 'none';
+
         const jAmount = document.getElementById('j-amount');
         if (jAmount) delete jAmount.dataset.manual;
         recalcJob();
@@ -651,27 +676,44 @@ export function setupEventListeners() {
       case 'issue-token-from-job': {
         const qtyVal = parseFloat(document.getElementById('j-qty')?.value) || parseFloat(state.job.qty) || 0;
         if (!(qtyVal > 0)) {
-          toast('कृपया आवक वजन दर्ज करें', true);
+          toast('कृपया वजन दर्ज करें', true);
           document.getElementById('j-qty')?.focus();
           break;
         }
 
+        const modeInput = document.getElementById('j-weight-mode');
+        const weightMode = (modeInput && modeInput.value) || state.job.weightMode || 'gross';
+
         const name = String(document.getElementById('j-name')?.value || state.job.name || '').trim();
         const village = String(document.getElementById('j-village')?.value || state.job.village || '').trim();
         const phone = String(document.getElementById('j-phone')?.value || state.job.phone || '').trim();
-        const lossRateG = parseFloat(document.getElementById('j-loss-rate')?.value) || parseFloat(state.job.lossRateG) || 0;
-        const totalLossG = Math.round(qtyVal * lossRateG);
-        const netWeight = Math.max(0, qtyVal - (totalLossG / 1000));
+
+        let grossWeight = qtyVal;
+        let lossRateG = 0;
+        let totalLossG = 0;
+        let netWeight = qtyVal;
+
+        if (weightMode === 'output') {
+          grossWeight = qtyVal;
+          netWeight = qtyVal;
+          lossRateG = 0;
+          totalLossG = 0;
+        } else {
+          lossRateG = parseFloat(document.getElementById('j-loss-rate')?.value) || parseFloat(state.job.lossRateG) || 0;
+          totalLossG = Math.round(qtyVal * lossRateG);
+          netWeight = Math.max(0, qtyVal - (totalLossG / 1000));
+        }
+
         const note = String(document.getElementById('j-note')?.value || state.job.note || '').trim();
         const hideLoss = Boolean(state.data?.business?.hideLossOnSlip !== false);
-        const chargeBasis = state.job.chargeBasis || state.data?.business?.chargeBasis || 'output';
+        const chargeBasis = weightMode === 'output' ? 'output' : (state.data?.business?.chargeBasis || 'output');
 
         const payload = {
           serviceId: state.job.serviceId,
           name,
           village,
           phone,
-          grossWeight: qtyVal,
+          grossWeight,
           lossRateG,
           totalLossG,
           netWeight,
@@ -1916,12 +1958,29 @@ export function setupEventListeners() {
       state.job.paid = fd.get('paid') !== 'no';
       state.job.withToken = fd.get('withToken') === 'on';
 
-      const grossWeight = Number(fd.get('qty'));
+      const weightMode = fd.get('weightMode') || state.job.weightMode || 'gross';
+      const enteredQty = Number(fd.get('qty'));
       const rate = Number(fd.get('rate'));
-      const lossRateG = Number(fd.get('lossRateG') || 0);
-      const totalLossG = Math.round(grossWeight * lossRateG);
-      const netWeight = Math.max(0, grossWeight - (totalLossG / 1000));
-      const chargeBasis = fd.get('chargeBasis') || state.job.chargeBasis || state.data?.business?.chargeBasis || 'output';
+
+      let grossWeight = enteredQty;
+      let lossRateG = 0;
+      let totalLossG = 0;
+      let netWeight = enteredQty;
+      let chargeBasis = 'output';
+
+      if (weightMode === 'output') {
+        grossWeight = enteredQty;
+        netWeight = enteredQty;
+        lossRateG = 0;
+        totalLossG = 0;
+        chargeBasis = 'output';
+      } else {
+        lossRateG = Number(fd.get('lossRateG') || 0);
+        totalLossG = Math.round(grossWeight * lossRateG);
+        netWeight = Math.max(0, grossWeight - (totalLossG / 1000));
+        chargeBasis = state.data?.business?.chargeBasis || 'output';
+      }
+
       const billWeight = chargeBasis === 'gross' ? grossWeight : netWeight;
       const calcPaise = Math.round(billWeight * rate * 100);
       const rawAmt = fd.get('amount');

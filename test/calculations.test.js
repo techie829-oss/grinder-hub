@@ -59,6 +59,15 @@ describe('Chakki Book Calculations & Formatters Suite', () => {
       assert.equal(result.amount, 0);
     });
 
+    it('should calculate direct output weight without any loss deduction', () => {
+      // Direct output entry: 35 kg entered directly at ₹1.20/kg
+      const result = computeJob(35, 1.2, 0, 'output');
+      assert.equal(result.grossWeight, 35);
+      assert.equal(result.totalLossG, 0);
+      assert.equal(result.netWeight, 35);
+      assert.equal(result.amount, 42); // 35 * 1.2 = 42
+    });
+
     it('should ensure net weight never drops below zero', () => {
       const result = computeJob(0.1, 5, 2000);
       assert.ok(result.netWeight >= 0);
