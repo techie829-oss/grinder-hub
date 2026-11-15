@@ -114,7 +114,7 @@ test('Seeded Village Standardization & Fast Mapping Suite', async () => {
   assert.ok(SEEDED_VILLAGES.some((v) => v.includes('केवलपुरवा') && v.includes('Kewalpurwa')));
   assert.ok(SEEDED_VILLAGES.some((v) => v.includes('अशोगापुर') && v.includes('Ashogapur')));
   assert.ok(SEEDED_VILLAGES.some((v) => v.includes('नकहा') && v.includes('Nakaha')));
-  assert.ok(SEEDED_VILLAGES.some((v) => v.includes('सहजननी') && v.includes('Sahajani')));
+  assert.ok(SEEDED_VILLAGES.some((v) => v.includes('सहजनी') && v.includes('Sahajani')));
   assert.ok(SEEDED_VILLAGES.some((v) => v.includes('पडरी पुरवा') && v.includes('Padari Purwa')));
 
   // Test aliases and English mapping to unified bilingual format
@@ -124,8 +124,8 @@ test('Seeded Village Standardization & Fast Mapping Suite', async () => {
   assert.equal(standardizeVillage('padri Purva'), 'पडरी पुरवा (Padari Purwa)');
   assert.equal(standardizeVillage('padri purwa'), 'पडरी पुरवा (Padari Purwa)');
   assert.equal(standardizeVillage('लोनिअन पुरवा'), 'लोनियन पुरवा (Loniyan Purwa)');
-  assert.equal(standardizeVillage('सहजनी'), 'सहजननी (Sahajani)');
-  assert.equal(standardizeVillage('sahajani'), 'सहजननी (Sahajani)');
+  assert.equal(standardizeVillage('सहजनी'), 'सहजनी (Sahajani)');
+  assert.equal(standardizeVillage('sahajani'), 'सहजनी (Sahajani)');
   assert.equal(standardizeVillage('lodhanpurwa'), 'लोधनपुरवा (Lodhanpurwa)');
   assert.equal(standardizeVillage('Lodhanpurwa'), 'लोधनपुरवा (Lodhanpurwa)');
 });

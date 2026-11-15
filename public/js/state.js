@@ -5,7 +5,7 @@ export const SEEDED_VILLAGES = [
   'केवलपुरवा (Kewalpurwa)',
   'अशोगापुर (Ashogapur)',
   'नकहा (Nakaha)',
-  'सहजननी (Sahajani)',
+  'सहजनी (Sahajani)',
   'चंदीदीन पुरवा (Chandidin Purwa)',
   'अहिरन पुरवा (Ahiran Purwa)',
   'लोनियन पुरवा (Loniyan Purwa)',
