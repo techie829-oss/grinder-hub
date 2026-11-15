@@ -2,7 +2,7 @@
 import { state } from '../state.js';
 import { showModal, closeModal } from '../components/modals.js';
 
-export const CURRENT_APP_VERSION = '2.8.4';
+export const CURRENT_APP_VERSION = '2.8.5';
 export const CURRENT_VERSION_CODE = 7;
 
 let updateBannerDismissed = false;
@@ -173,8 +173,6 @@ export function openDownloadModal(externalWorkerUrl = 'https://tolmaal.rohitkmar
     <button type="button" class="btn btn-ghost" data-act="close-modal" style="width:100%;padding:8px;font-weight:700;color:#64748b;">
       ✕ बंद करें
     </button>
-  `);
-}
   `);
 }
 

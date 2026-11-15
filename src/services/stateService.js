@@ -243,7 +243,7 @@ export async function buildState(env, businessId, range) {
       })),
     },
     appMeta: {
-      latestVersion: '2.8.4',
+      latestVersion: '2.8.5',
       latestVersionCode: 7,
       downloadUrl: '/tolmaal.apk',
       releasedAt: Date.now(),
