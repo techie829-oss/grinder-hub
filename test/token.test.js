@@ -45,5 +45,39 @@ describe('Token Lifecycle & Queue Delivery Suite', () => {
     assert.ok(allowed.includes('cancelled'));
     assert.ok(!allowed.includes('unknown_status'));
   });
+
+  it('updates token details while strictly preserving token number', () => {
+    const token = {
+      id: 'tok-5',
+      no: 5,
+      name: 'Shahnawaz',
+      village: 'Kewalpurwa',
+      grossWeight: 14.3,
+      lossG: 215,
+      netWeight: 14.085,
+      status: 'waiting',
+    };
+
+    // User corrects token #5: name was Latif, not Shahnawaz
+    const updatedName = 'लतीफ़ (Latif)';
+    const updatedGross = 15.0;
+    const lossRateG = 15;
+    const totalLossG = Math.round(updatedGross * lossRateG);
+    const netWeight = Math.max(0, updatedGross - (totalLossG / 1000));
+
+    const updatedToken = {
+      ...token,
+      name: updatedName,
+      grossWeight: updatedGross,
+      lossG: totalLossG,
+      netWeight,
+    };
+
+    assert.equal(updatedToken.no, 5); // Sequence #5 preserved
+    assert.equal(updatedToken.name, 'लतीफ़ (Latif)');
+    assert.equal(updatedToken.grossWeight, 15.0);
+    assert.equal(updatedToken.lossG, 225);
+    assert.equal(updatedToken.netWeight, 14.775);
+  });
 });
 

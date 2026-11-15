@@ -1,6 +1,6 @@
 // Offline-First Batch Synchronization Controller
 import { readJson, json, bad } from '../utils/response.js';
-import { clean, normalizePhone, normName, normVillage, dayKey } from '../utils/helpers.js';
+import { clean, normalizePhone, normName, normVillage, dayKey, toBilingualName, standardizeVillage } from '../utils/helpers.js';
 import { isPhoneticMatch } from '../utils/phonetic.js';
 import { issueToken } from '../services/tokenService.js';
 import { buildState } from '../services/stateService.js';
@@ -24,6 +24,8 @@ export async function syncBatch(request, env, business, range) {
         await processToken(env, business, data);
       } else if (type === 'tokenStatus') {
         await processTokenStatus(env, business, data);
+      } else if (type === 'tokenUpdate') {
+        await processTokenUpdate(env, business, data);
       } else if (type === 'customer') {
         await processCustomer(env, business, data);
       }
@@ -214,6 +216,59 @@ async function processTokenStatus(env, business, data) {
 
   await env.DB.prepare('UPDATE tokens SET status = ? WHERE id = ? AND business_id = ?')
     .bind(status, id, business.id)
+    .run();
+}
+
+async function processTokenUpdate(env, business, data) {
+  const id = clean(data.id, 40);
+  if (!id) return;
+
+  const existing = await env.DB.prepare('SELECT id, no, day FROM tokens WHERE id = ? AND business_id = ?')
+    .bind(id, business.id)
+    .first();
+  if (!existing) return;
+
+  const serviceId = clean(data.serviceId, 40);
+  let svc = null;
+  if (serviceId) {
+    svc = await env.DB.prepare(
+      'SELECT id, unit, rate_paise, COALESCE(loss_rate_g, 0) AS loss_rate_g FROM services WHERE id = ? AND business_id = ? AND active = 1'
+    )
+      .bind(serviceId, business.id)
+      .first();
+  }
+
+  let name = clean(data.name, 60);
+  const nameEn = clean(data.nameEn, 60);
+  if (name && name !== 'Customer' && name !== 'ग्राहक') {
+    name = toBilingualName(name, nameEn);
+  }
+  const village = standardizeVillage(clean(data.village, 60));
+  const phone = data.phone ? String(data.phone).replace(/\D/g, '').slice(-10) : '';
+  const note = clean(data.note, 120);
+  const grossWeight = Number(data.grossWeight != null ? data.grossWeight : data.qty) || 0;
+  const lossRateG = data.lossRateG !== undefined && data.lossRateG !== '' ? Number(data.lossRateG) : (svc ? Number(svc.loss_rate_g || 0) : 0);
+  const totalLossG = grossWeight ? Math.round(grossWeight * lossRateG) : 0;
+  const netWeight = grossWeight ? Math.max(0, grossWeight - (totalLossG / 1000)) : 0;
+
+  await env.DB.prepare(`
+    UPDATE tokens 
+    SET name = ?, village = ?, phone = ?, note = ?, service_id = ?, 
+        gross_weight = ?, loss_g = ?, net_weight = ?
+    WHERE id = ? AND business_id = ?
+  `)
+    .bind(
+      name || 'ग्राहक',
+      village || '',
+      phone || '',
+      note || '',
+      svc ? svc.id : null,
+      grossWeight,
+      totalLossG,
+      netWeight,
+      id,
+      business.id
+    )
     .run();
 }
 

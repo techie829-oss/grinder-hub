@@ -70,6 +70,77 @@ export async function setTokenStatus(request, env, business, range) {
   return json({ ok: true, state: await buildState(env, business.id, range) });
 }
 
+export async function updateToken(request, env, business, range) {
+  const body = await readJson(request);
+  const id = clean(body.id, 40);
+  if (!id) return bad('टोकन ID आवश्यक है');
+
+  const existing = await env.DB.prepare('SELECT id, no, day FROM tokens WHERE id = ? AND business_id = ?')
+    .bind(id, business.id)
+    .first();
+  if (!existing) return bad('टोकन नहीं मिला', 404);
+
+  const serviceId = clean(body.serviceId, 40);
+  let svc = null;
+  if (serviceId) {
+    svc = await env.DB.prepare(
+      'SELECT id, unit, rate_paise, COALESCE(loss_rate_g, 0) AS loss_rate_g FROM services WHERE id = ? AND business_id = ? AND active = 1'
+    )
+      .bind(serviceId, business.id)
+      .first();
+  }
+
+  let name = clean(body.name, 60);
+  const nameEn = clean(body.nameEn, 60);
+  if (name && name !== 'Customer' && name !== 'ग्राहक') {
+    name = toBilingualName(name, nameEn);
+  }
+  const village = standardizeVillage(clean(body.village, 60));
+  const phone = body.phone ? String(body.phone).replace(/\D/g, '').slice(-10) : '';
+  const note = clean(body.note, 120);
+  const grossWeight = Number(body.grossWeight != null ? body.grossWeight : body.qty) || 0;
+  const lossRateG = body.lossRateG !== undefined && body.lossRateG !== '' ? Number(body.lossRateG) : (svc ? Number(svc.loss_rate_g || 0) : 0);
+  const totalLossG = grossWeight ? Math.round(grossWeight * lossRateG) : 0;
+  const netWeight = grossWeight ? Math.max(0, grossWeight - (totalLossG / 1000)) : 0;
+
+  await env.DB.prepare(`
+    UPDATE tokens 
+    SET name = ?, village = ?, phone = ?, note = ?, service_id = ?, 
+        gross_weight = ?, loss_g = ?, net_weight = ?
+    WHERE id = ? AND business_id = ?
+  `)
+    .bind(
+      name || 'ग्राहक',
+      village || '',
+      phone || '',
+      note || '',
+      svc ? svc.id : null,
+      grossWeight,
+      totalLossG,
+      netWeight,
+      id,
+      business.id
+    )
+    .run();
+
+  const updatedToken = {
+    id: existing.id,
+    day: existing.day,
+    no: existing.no,
+    name: name || 'ग्राहक',
+    village: village || '',
+    phone: phone || '',
+    note: note || '',
+    serviceId: svc ? svc.id : null,
+    grossWeight,
+    lossG: totalLossG,
+    netWeight,
+    status: existing.status,
+  };
+
+  return json({ ok: true, token: updatedToken, state: await buildState(env, business.id, range) });
+}
+
 export async function deleteToken(request, env, business, range) {
   const body = await readJson(request);
   const id = clean(body.id, 40);

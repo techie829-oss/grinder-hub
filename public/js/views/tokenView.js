@@ -85,6 +85,9 @@ export function viewTokens() {
             <button type="button" class="btn btn-sm btn-soft" data-act="token-deliver" data-id="${tok.id}" title="माल दे दिया / साफ़ करें" style="padding:6px 8px;font-size:12px;font-weight:700;border:1px solid #cbd5e1;background:#f8fafc;color:#15803d;">
               ✓ दिया
             </button>
+            <button type="button" class="icon-btn" data-act="token-edit" data-id="${tok.id}" title="टोकन विवरण सुधारें (Edit)" style="border:1px solid #cbd5e1;padding:4px 8px;border-radius:8px;font-size:12px;background:#fff;">
+              ✏️
+            </button>
             <button type="button" class="icon-btn" data-act="token-cancel" data-id="${tok.id}" title="रद्द करें / हटाएं" style="border:1px solid #fecaca;color:#dc2626;padding:4px 8px;border-radius:8px;font-size:11px;background:#fff;">
               ✕
             </button>

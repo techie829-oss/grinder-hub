@@ -24,6 +24,7 @@ export function tokenCard() {
     <div class="token-actions">
       ${serving ? `<button class="btn btn-primary" data-act="token-to-job" data-id="${serving.id}">${t('createBill')}</button>` : ''}
       ${serving ? `<button class="btn btn-gold" data-act="token-done" data-id="${serving.id}">${t('markDone')}</button>` : ''}
+      ${serving ? `<button class="btn btn-soft" data-act="token-edit" data-id="${serving.id}" title="टोकन विवरण सुधारें">✏️ सुधारें</button>` : ''}
       ${serving ? `<button class="btn btn-soft" data-act="token-print-pos" data-id="${serving.id}" title="Print Slip">${t('printSlip')}</button>` : ''}
       ${waitingCount ? `<button class="btn btn-soft" data-act="token-next">${t('callNext')}</button>` : ''}
       <button class="btn btn-ghost" data-act="goto" data-view="token">${t('tokenBoard')}</button>

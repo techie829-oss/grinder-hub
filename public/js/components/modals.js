@@ -816,3 +816,111 @@ export function openTokenReceiptModal(tok) {
   `);
 }
 
+export function openEditTokenModal(tokenId) {
+  const tok = state.data?.tokens?.serving?.id === tokenId
+    ? state.data.tokens.serving
+    : ((state.data?.tokens?.waiting || []).find((x) => x.id === tokenId) ||
+       (state.data?.tokens?.doneList || []).find((x) => x.id === tokenId));
+
+  if (!tok) {
+    alert('टोकन नहीं मिला!');
+    return;
+  }
+
+  let localName = '';
+  let enName = '';
+  if (tok.name && tok.name !== 'Customer' && tok.name !== 'ग्राहक') {
+    const match = tok.name.match(/^(.*?)\s*\((.*?)\)$/);
+    if (match) {
+      localName = match[1].trim();
+      enName = match[2].trim();
+    } else if (/[\u0900-\u097F]/.test(tok.name)) {
+      localName = tok.name;
+    } else {
+      enName = tok.name;
+    }
+  }
+
+  const services = state.data?.services || [];
+  const activeSvcId = tok.serviceId || '';
+
+  showModal(`
+    <div class="sheet-head" style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e2e8f0;padding-bottom:12px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:24px;">✏️</span>
+        <div>
+          <div class="sheet-title" style="font-size:17px;font-weight:800;color:#0f172a;">टोकन विवरण सुधारें (#${tok.no})</div>
+          <div style="font-size:12px;color:#64748b;">टोकन नंबर और क्रम वही रहेगा, केवल विवरण अपडेट होगा</div>
+        </div>
+      </div>
+      <button type="button" class="icon-btn" data-act="close-modal" aria-label="Close">✕</button>
+    </div>
+
+    <form data-form="edit-token">
+      <input type="hidden" name="id" value="${tok.id}">
+
+      <!-- Bilingual Name Inputs: Hindi (Local) and English -->
+      <div class="two-col">
+        <div class="field">
+          <label for="et-name">ग्राहक का नाम (हिंदी / स्थानीय)</label>
+          <input id="et-name" name="name" maxlength="60" value="${esc(localName)}" placeholder="उदा. लतीफ़" autocomplete="off">
+        </div>
+        <div class="field">
+          <label for="et-name-en">Name in English (अंग्रेजी)</label>
+          <input id="et-name-en" name="nameEn" maxlength="60" value="${esc(enName)}" placeholder="e.g. Latif" autocomplete="off">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="et-village">${t('villageLabel')}</label>
+        <input id="et-village" name="village" maxlength="80" value="${esc(tok.village || '')}" placeholder="गाँव चुनें या लिखें" autocomplete="off">
+      </div>
+      <div class="village-chips-scroll" style="margin-top:-6px;margin-bottom:12px;">
+        ${(state.data?.villages || []).map((v) => {
+          const vName = typeof v === 'object' ? v.name : v;
+          return `<button type="button" class="btn-village-chip" data-act="quick-pick-village" data-prefix="et" data-village="${esc(vName)}">📍 ${esc(vName)}</button>`;
+        }).join('')}
+      </div>
+
+      <div class="field">
+        <label for="et-phone">${t('phoneLabel')}</label>
+        <input id="et-phone" name="phone" type="tel" inputmode="numeric" maxlength="10" value="${esc(tok.phone || '')}" placeholder="${t('phonePlaceholder')}">
+      </div>
+
+      <!-- Service Selection -->
+      <div class="field">
+        <label for="et-service">सुविधा / सेवा चुनें</label>
+        <select id="et-service" name="serviceId" class="select-input">
+          <option value="">-- सेवा चुनें --</option>
+          ${services.map((s) => `
+            <option value="${s.id}" ${s.id === activeSvcId ? 'selected' : ''}>
+              ${esc(s.name)} (₹${(s.ratePaise / 100).toFixed(2)}/${unitOf(s.unit)}) ${s.lossRateG ? '[-' + s.lossRateG + 'g]' : ''}
+            </option>
+          `).join('')}
+        </select>
+      </div>
+
+      <!-- Weight & Note -->
+      <div class="two-col">
+        <div class="field">
+          <label for="et-gross">आवक वजन (kg)</label>
+          <input id="et-gross" name="grossWeight" type="number" step="0.01" min="0" value="${tok.grossWeight || ''}" placeholder="0.00">
+        </div>
+        <div class="field">
+          <label for="et-loss-rate">काट दर (g/kg)</label>
+          <input id="et-loss-rate" name="lossRateG" type="number" step="1" min="0" value="${tok.lossRateG || ''}" placeholder="उदा. 15">
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="et-note">नोट / विवरण</label>
+        <input id="et-note" name="note" maxlength="120" value="${esc(tok.note || '')}" placeholder="उदा. 2 कट्टा, सूखा गेंहू">
+      </div>
+
+      <button class="btn btn-primary btn-block mt-14" type="submit" style="padding:12px;font-size:15px;font-weight:800;">
+        ✓ टोकन सुरक्षित करें (Save Token)
+      </button>
+    </form>
+  `);
+}
+

@@ -5,7 +5,7 @@ import { buildState } from './services/stateService.js';
 import { signup, login, logout, changePassword } from './controllers/authController.js';
 import { createJob, createPayment, deleteEntry } from './controllers/jobController.js';
 import { createTrade } from './controllers/tradeController.js';
-import { createToken, setTokenStatus, deleteToken } from './controllers/tokenController.js';
+import { createToken, updateToken, setTokenStatus, deleteToken } from './controllers/tokenController.js';
 import { customerDetail, saveCustomer, deleteCustomer } from './controllers/customerController.js';
 import { saveService, deleteService } from './controllers/serviceController.js';
 import { saveProduct, deleteProduct } from './controllers/productController.js';
@@ -173,11 +173,12 @@ async function route(request, env, url) {
   if (path === '/api/app-version' && method === 'GET') {
     return json({
       ok: true,
-      version: '2.8.13',
-      versionCode: 15,
+      version: '2.8.14',
+      versionCode: 16,
       downloadUrl: '/tolmaal.apk',
       releasedAt: Date.now(),
       changelog: [
+        'टोकन विवरण संपादन (Edit/Update) सुविधा — नाम, गाँव, मोबाइल, सेवा व वज़न बिना क्रम बदले सुधारें',
         'टॉप नोटिफिकेशन एरिया (Notch) व बॉटम नेविगेशन बटन ओवरलैप से बचाव हेतु बेहतर स्पेसिंग',
         'Android नेविगेशन बार व बॉटम टैब बार सेफ-एरिया पैडिंग सुधार',
         'माल जमा (टोकन) और हाथों-हाथ डिलीवरी बिल के बीच स्पष्ट विभाजक व UX सुधार',
@@ -218,6 +219,7 @@ async function route(request, env, url) {
   if (path === '/api/trades' && method === 'POST') return createTrade(request, env, business, range);
   if (path === '/api/payments' && method === 'POST') return createPayment(request, env, business, range);
   if (path === '/api/tokens' && method === 'POST') return createToken(request, env, business, range);
+  if (path === '/api/tokens/update' && method === 'POST') return updateToken(request, env, business, range);
   if (path === '/api/tokens/status' && method === 'POST') return setTokenStatus(request, env, business, range);
   if (path === '/api/tokens/delete' && method === 'POST') return deleteToken(request, env, business, range);
   if (path === '/api/tokens/reset-counter' && method === 'POST') return resetTokenCounter(request, env, business, range);

@@ -4,7 +4,7 @@ import { api, withBusy, loadState, applyState, toast, loadAdminData, getApiUrl, 
 import { inr, unitOf, esc, qtyFmt } from './utils/formatters.js';
 import { printReceipt } from './utils/print.js';
 import { entryWaText, openWhatsApp } from './utils/whatsapp.js';
-import { closeModal, openCustomer, openCustomerEditModal, showJobDone, findEntry, openStatusModal, renderStatusResult, renderUniversalSearchResults } from './components/modals.js';
+import { closeModal, openCustomer, openCustomerEditModal, openEditTokenModal, showJobDone, findEntry, openStatusModal, renderStatusResult, renderUniversalSearchResults } from './components/modals.js';
 import { customerRows } from './components/rows.js';
 import { filteredCustomers } from './views/customerView.js';
 import { currentService } from './views/jobView.js';
@@ -1278,6 +1278,11 @@ export function setupEventListeners() {
         break;
       }
 
+      case 'token-edit': {
+        openEditTokenModal(el.dataset.id);
+        break;
+      }
+
       case 'open-hw-modal': {
         const { openHardwareDevicesModal } = await import('./hardware/hardwareModal.js');
         openHardwareDevicesModal();
@@ -1493,7 +1498,7 @@ export function setupEventListeners() {
         const prefix = el.dataset.prefix || 'j';
         const villageName = el.dataset.village;
         const villageEl = document.getElementById(
-          prefix === 'j' ? 'j-village' : (prefix === 'tr' ? 'tr-village' : (prefix === 'ec' ? 'ec-village' : 't-village'))
+          prefix === 'j' ? 'j-village' : (prefix === 'tr' ? 'tr-village' : (prefix === 'ec' ? 'ec-village' : (prefix === 'et' ? 'et-village' : 't-village')))
         );
         if (villageEl) {
           villageEl.value = villageName;
@@ -2502,6 +2507,56 @@ export function setupEventListeners() {
           applyState(data.state);
           closeModal();
           toast('ग्राहक संपर्क सुरक्षित ✓');
+        }
+      });
+      return;
+    }
+
+    if (kind === 'edit-token') {
+      await withBusy(form.querySelector('[type="submit"]'), async () => {
+        const payload = {
+          id: String(fd.get('id') || '').trim(),
+          name: String(fd.get('name') || '').trim(),
+          nameEn: String(fd.get('nameEn') || '').trim(),
+          village: String(fd.get('village') || '').trim(),
+          phone: String(fd.get('phone') || '').trim(),
+          serviceId: String(fd.get('serviceId') || '').trim(),
+          grossWeight: fd.get('grossWeight') !== '' ? Number(fd.get('grossWeight')) : 0,
+          lossRateG: fd.get('lossRateG') !== '' ? Number(fd.get('lossRateG')) : '',
+          note: String(fd.get('note') || '').trim(),
+        };
+
+        const data = await api('/api/tokens/update', payload);
+        if (data && data.offline) {
+          enqueueOfflineAction('tokenUpdate', payload);
+          const bilingualName = toBilingualName(payload.name, payload.nameEn);
+          const tok = state.data.tokens.serving?.id === payload.id
+            ? state.data.tokens.serving
+            : ((state.data.tokens.waiting || []).find((x) => x.id === payload.id) ||
+               (state.data.tokens.doneList || []).find((x) => x.id === payload.id));
+          if (tok) {
+            tok.name = bilingualName || 'ग्राहक';
+            tok.village = payload.village;
+            tok.phone = payload.phone;
+            tok.note = payload.note;
+            tok.serviceId = payload.serviceId || null;
+            tok.grossWeight = payload.grossWeight;
+            if (payload.serviceId) {
+              const s = (state.data.services || []).find((x) => x.id === payload.serviceId);
+              tok.serviceName = s ? s.name : '';
+            }
+          }
+          saveOfflineSnapshot(state.data);
+          closeModal();
+          window.__appRender?.();
+          toast('टोकन विवरण सुरक्षित (ऑफलाइन)');
+          return;
+        }
+
+        if (data) {
+          applyState(data.state);
+          closeModal();
+          toast('टोकन विवरण सफलतापूर्वक अपडेट हुआ ✓');
         }
       });
       return;

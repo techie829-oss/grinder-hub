@@ -2,8 +2,8 @@
 import assert from 'node:assert/strict';
 
 const BASE_URL = 'https://tolmaal.solidrix.com';
-const TEST_PHONE = '9554880713';
-const TEST_PASS = '9554880713';
+const TEST_PHONE = '9000000000';
+const TEST_PASS = 'TestChakkiPass123!';
 
 console.log('🚀 Starting TolMaal Live End-to-End Bug Audit on:', BASE_URL);
 
@@ -78,6 +78,8 @@ async function runAudit() {
     assert.ok(data.state, 'Must return state');
   })();
 
+  let activeServiceId = null;
+
   console.log('\n--- 2. Business State & Data Integrity Audit ---');
 
   await check('State contains required structures (business, services, products, tokens, stats)', async () => {
@@ -93,10 +95,11 @@ async function runAudit() {
     assert.ok(state.stats, 'Stats object required');
     
     // Check services have ratePaise and lossRateG
-    const wheatSvc = state.services.find(s => s.id === 'svc-1');
-    assert.ok(wheatSvc, 'Wheat service svc-1 should exist');
-    assert.ok(typeof wheatSvc.ratePaise === 'number', 'ratePaise must be numeric');
-    assert.ok(typeof wheatSvc.lossRateG === 'number', 'lossRateG must be numeric');
+    const firstSvc = state.services[0];
+    assert.ok(firstSvc, 'At least one service should exist');
+    activeServiceId = firstSvc.id;
+    assert.ok(typeof firstSvc.ratePaise === 'number', 'ratePaise must be numeric');
+    assert.ok(typeof firstSvc.lossRateG === 'number', 'lossRateG must be numeric');
   })();
 
   console.log('\n--- 3. Token Issuance & Weight/Deduction Calculation Audit ---');
@@ -117,7 +120,7 @@ async function runAudit() {
         'authorization': `Bearer ${authToken}`,
       },
       body: JSON.stringify({
-        serviceId: 'svc-1',
+        serviceId: activeServiceId,
         name: testName,
         village: testVillage,
         phone: testPhone,
@@ -147,6 +150,35 @@ async function runAudit() {
     testCustomerId = cust.id;
   })();
 
+  await check('Edit/Update Token in-place preserving token sequence number', async () => {
+    const res = await fetch(`${BASE_URL}/api/tokens/update`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'authorization': `Bearer ${authToken}`,
+      },
+      body: JSON.stringify({
+        id: testTokenId,
+        name: 'लतीफ़',
+        nameEn: 'Latif',
+        village: 'केवलपुरवा',
+        phone: '9871122334',
+        serviceId: activeServiceId,
+        grossWeight: 45.0,
+        lossRateG: 15,
+        note: 'सुधार परीक्षण',
+      }),
+    });
+
+    assert.equal(res.status, 200, 'Token update should return 200');
+    const data = await res.json();
+    assert.equal(data.ok, true);
+    assert.equal(data.token.id, testTokenId);
+    assert.equal(data.token.no, testTokenNo, 'Token number sequence must NOT change');
+    assert.equal(data.token.name, 'लतीफ़ (Latif)', 'Name should be standard bilingual format');
+    assert.equal(data.token.grossWeight, 45.0);
+  })();
+
   console.log('\n--- 4. Public Customer Order Status Tracking Audit ---');
 
   await check('Public /api/status can track token without merchant credentials', async () => {
@@ -164,13 +196,13 @@ async function runAudit() {
     assert.equal(data.ok, true);
     assert.ok(data.token, 'Should return token details to customer');
     assert.equal(data.token.tokenNo || data.token.no, testTokenNo);
-    assert.equal(data.token.grossWeight, 42.5);
+    assert.equal(data.token.grossWeight, 45.0);
     if (data.token.hideLoss) {
       assert.equal(data.token.lossG, 0);
-      assert.equal(data.token.netWeight, 42.5);
+      assert.equal(data.token.netWeight, 45.0);
     } else {
-      assert.equal(data.token.lossG, 638);
-      assert.equal(data.token.netWeight, 41.862);
+      assert.equal(data.token.lossG, 675);
+      assert.equal(data.token.netWeight, 44.325);
     }
   })();
 
@@ -184,15 +216,15 @@ async function runAudit() {
         'authorization': `Bearer ${authToken}`,
       },
       body: JSON.stringify({
-        serviceId: 'svc-1',
-        qty: 42.5,
+        serviceId: activeServiceId,
+        qty: 45.0,
         rate: 1.20, // Decimal rate e.g. 1.2
         lossRateG: 15,
-        totalLossG: 638,
-        netWeight: 41.862,
+        totalLossG: 675,
+        netWeight: 44.325,
         paid: true,
-        name: 'परीक्षण रमेश',
-        village: 'रामपुर टेस्ट',
+        name: 'लतीफ़ (Latif)',
+        village: 'केवलपुरवा',
         phone: '9871122334',
         tokenId: testTokenId,
         tokenNo: testTokenNo,
@@ -213,8 +245,8 @@ async function runAudit() {
     const entry = (data.state.entries || []).find(e => e.id === testJobEntryId);
     assert.ok(entry, 'Entry should exist in daily log');
     assert.equal(entry.tokenNo, testTokenNo);
-    const expectedPaise = Math.round((data.state.business?.chargeBasis === 'gross' ? 42.5 : 41.862) * 1.20 * 100);
-    assert.equal(entry.amountPaise, expectedPaise); // output basis: 41.862kg * 1.20 = ₹50.23 (5023 paise)
+    const expectedPaise = Math.round((data.state.business?.chargeBasis === 'gross' ? 45.0 : 44.325) * 1.20 * 100);
+    assert.equal(entry.amountPaise, expectedPaise);
   })();
 
   console.log('\n--- 6. Trade Store Sale & Farmer Raw Material Purchase Audit ---');
