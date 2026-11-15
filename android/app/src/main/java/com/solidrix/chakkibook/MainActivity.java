@@ -35,14 +35,26 @@ public class MainActivity extends BridgeActivity {
         if (this.getBridge() != null && this.getBridge().getWebView() != null) {
             this.getBridge().getWebView().setFitsSystemWindows(true);
 
-            // Expose installed native app version to client JavaScript
+            // Enable file download handling so clicks on .apk or files open system browser/DownloadManager
+            this.getBridge().getWebView().setDownloadListener(new android.webkit.DownloadListener() {
+                @Override
+                public void onDownloadStart(String url, String userAgent, String contentDisposition, String mimetype, long contentLength) {
+                    try {
+                        android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_VIEW);
+                        intent.setData(android.net.Uri.parse(url));
+                        startActivity(intent);
+                    } catch (Exception ignored) {}
+                }
+            });
+
+            // Expose installed native app version and helper to client JavaScript
             this.getBridge().getWebView().addJavascriptInterface(new Object() {
                 @android.webkit.JavascriptInterface
                 public String getAppVersion() {
                     try {
                         return getPackageManager().getPackageInfo(getPackageName(), 0).versionName;
                     } catch (Exception e) {
-                        return "2.8.2";
+                        return "2.8.4";
                     }
                 }
                 @android.webkit.JavascriptInterface
@@ -50,12 +62,20 @@ public class MainActivity extends BridgeActivity {
                     try {
                         return getPackageManager().getPackageInfo(getPackageName(), 0).versionCode;
                     } catch (Exception e) {
-                        return 5;
+                        return 7;
                     }
                 }
                 @android.webkit.JavascriptInterface
                 public boolean isNativeApp() {
                     return true;
+                }
+                @android.webkit.JavascriptInterface
+                public void openExternalUrl(String url) {
+                    try {
+                        android.content.Intent intent = new android.content.Intent(android.content.Intent.ACTION_VIEW);
+                        intent.setData(android.net.Uri.parse(url));
+                        startActivity(intent);
+                    } catch (Exception ignored) {}
                 }
             }, "AndroidAppInfo");
         }

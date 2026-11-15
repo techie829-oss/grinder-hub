@@ -2,8 +2,8 @@
 import { state } from '../state.js';
 import { showModal, closeModal } from '../components/modals.js';
 
-export const CURRENT_APP_VERSION = '2.8.3';
-export const CURRENT_VERSION_CODE = 6;
+export const CURRENT_APP_VERSION = '2.8.4';
+export const CURRENT_VERSION_CODE = 7;
 
 let updateBannerDismissed = false;
 
@@ -77,28 +77,49 @@ export function renderUpdateBanner() {
 }
 
 export function triggerAppDownload() {
-  const downloadUrl = (state.data?.appMeta && state.data.appMeta.downloadUrl) || '/tolmaal.apk';
+  const externalWorkerUrl = 'https://tolmaal.rohitkmarch96.workers.dev/tolmaal.apk';
+  const downloadPageUrl = 'https://tolmaal.solidrix.com/download';
+  const installed = getInstalledAppInfo();
 
-  // 1. Trigger APK file download
-  const a = document.createElement('a');
-  a.href = downloadUrl;
-  a.download = 'tolmaal.apk';
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(() => a.remove(), 100);
+  // 1. If running inside Android Native App / Capacitor WebView:
+  if (installed.isNative) {
+    if (typeof window !== 'undefined' && window.AndroidAppInfo && typeof window.AndroidAppInfo.openExternalUrl === 'function') {
+      try {
+        window.AndroidAppInfo.openExternalUrl(externalWorkerUrl);
+      } catch (e) {}
+    } else {
+      // Domains outside allowNavigation (*.solidrix.com) trigger Bridge.launchIntent -> Intent.ACTION_VIEW -> Chrome
+      try {
+        window.open(externalWorkerUrl, '_system');
+      } catch (e) {}
+      setTimeout(() => {
+        try {
+          window.location.href = externalWorkerUrl;
+        } catch (e) {}
+      }, 150);
+    }
+  } else {
+    // Standard web browser download
+    const a = document.createElement('a');
+    a.href = '/tolmaal.apk';
+    a.download = 'tolmaal.apk';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => a.remove(), 100);
+  }
 
-  // 2. Open instructional download modal
-  openDownloadModal(downloadUrl);
+  // 2. Open instructional download modal with fallback buttons
+  openDownloadModal(externalWorkerUrl, downloadPageUrl);
 }
 
-export function openDownloadModal(downloadUrl = '/tolmaal.apk') {
+export function openDownloadModal(externalWorkerUrl = 'https://tolmaal.rohitkmarch96.workers.dev/tolmaal.apk', downloadPageUrl = 'https://tolmaal.solidrix.com/download') {
   showModal(`
     <div class="sheet-head" style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e2e8f0;padding-bottom:10px;margin-bottom:12px;">
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="font-size:24px;">📥</span>
         <div>
           <div style="font-size:16px;font-weight:800;color:#0f172a;">नया ऐप डाउनलोड हो रहा है...</div>
-          <div style="font-size:11.5px;color:#64748b;">TolMaal Android App (APK)</div>
+          <div style="font-size:11.5px;color:#059669;font-weight:700;">TolMaal Android APK (v2.8.4)</div>
         </div>
       </div>
       <button type="button" class="icon-btn" data-act="close-modal" aria-label="Close">✕</button>
@@ -106,18 +127,37 @@ export function openDownloadModal(downloadUrl = '/tolmaal.apk') {
 
     <div style="background:linear-gradient(135deg, #ecfdf5, #d1fae5);border:1.5px solid #a7f3d0;border-radius:12px;padding:14px;margin-bottom:14px;text-align:center;">
       <div style="font-size:32px;margin-bottom:4px;">📲</div>
-      <div style="font-size:15px;font-weight:800;color:#065f46;">डाउनलोड शुरू हो चुका है!</div>
+      <div style="font-size:15px;font-weight:800;color:#065f46;">डाउनलोड शुरू करने के विकल्प</div>
       <div style="font-size:12px;color:#047857;margin-top:4px;">
-        कृपया अपने मोबाइल का <strong>Notification Bar</strong> (ऊपर से नीचे स्वाइप करके) देखें।
+        कृपया अपने मोबाइल का <strong>Notification Bar</strong> (ऊपर से नीचे स्वाइप करके) देखें या नीचे दिए गए बटन दबाएं:
       </div>
     </div>
 
-    <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:12px;margin-bottom:14px;">
+    <div style="display:flex;gap:10px;flex-direction:column;margin-bottom:14px;">
+      <a href="${externalWorkerUrl}" target="_blank" class="btn btn-primary" style="padding:13px;font-weight:800;font-size:14px;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg, #059669, #047857);border:none;box-shadow:0 3px 10px rgba(5,150,105,0.3);">
+        <span>🌐</span> <span>Chrome / ब्राउज़र में सीधे डाउनलोड करें</span>
+      </a>
+
+      <a href="${downloadPageUrl}" target="_blank" class="btn" style="padding:11px;font-weight:700;font-size:13px;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;background:#f1f5f9;color:#334155;border:1px solid #cbd5e1;">
+        <span>📄</span> <span>डाउनलोड पेज खोलें (Download Page)</span>
+      </a>
+
+      <div style="display:flex;gap:8px;">
+        <button type="button" class="btn btn-ghost" data-act="copy-update-link" data-url="${downloadPageUrl}" style="flex:1;padding:9px;font-weight:700;font-size:12px;color:#4f46e5;background:#eef2ff;border:1px solid #c7d2fe;border-radius:8px;">
+          📋 लिंक कॉपी करें
+        </button>
+        <a href="https://api.whatsapp.com/send?text=${encodeURIComponent('तौल-माल (TolMaal) नया ऐप अपडेट डाउनलोड करें: https://tolmaal.solidrix.com/download')}" target="_blank" class="btn" style="flex:1;padding:9px;font-weight:700;font-size:12px;text-align:center;text-decoration:none;background:#25d366;color:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;gap:4px;">
+          <span>📲</span> <span>WhatsApp</span>
+        </a>
+      </div>
+    </div>
+
+    <div style="background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;padding:12px;margin-bottom:12px;">
       <div style="font-size:12.5px;font-weight:800;color:#1e293b;margin-bottom:8px;">अपडेट इंस्टॉल कैसे करें:</div>
       <div style="display:flex;flex-direction:column;gap:8px;font-size:12px;color:#475569;">
         <div style="display:flex;align-items:flex-start;gap:8px;">
           <span style="background:#4f46e5;color:#fff;border-radius:50%;width:18px;height:18px;display:grid;place-items:center;font-size:11px;font-weight:800;flex-shrink:0;">1</span>
-          <span>डाउनलोड पूरा होने पर नोटिफिकेशन बार से <strong>tolmaal.apk</strong> पर क्लिक करें।</span>
+          <span>डाउनलोड पूरा होने पर नोटिफिकेशन से <strong>tolmaal.apk</strong> पर क्लिक करें।</span>
         </div>
         <div style="display:flex;align-items:flex-start;gap:8px;">
           <span style="background:#4f46e5;color:#fff;border-radius:50%;width:18px;height:18px;display:grid;place-items:center;font-size:11px;font-weight:800;flex-shrink:0;">2</span>
@@ -125,19 +165,16 @@ export function openDownloadModal(downloadUrl = '/tolmaal.apk') {
         </div>
         <div style="display:flex;align-items:flex-start;gap:8px;">
           <span style="background:#4f46e5;color:#fff;border-radius:50%;width:18px;height:18px;display:grid;place-items:center;font-size:11px;font-weight:800;flex-shrink:0;">3</span>
-          <span>इंस्टॉल होते ही ऐप खोलें — आपका सारा पुराना डेटा सुरक्षित रहेगा!</span>
+          <span>ऐप खोलें — आपका कोई भी पुराना हिसाब या डेटा डिलीट नहीं होगा!</span>
         </div>
       </div>
     </div>
 
-    <div style="display:flex;gap:8px;flex-direction:column;">
-      <a href="${downloadUrl}" download="tolmaal.apk" class="btn btn-primary" style="padding:11px;font-weight:800;font-size:13.5px;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px;">
-        <span>🔄</span> <span>अगर डाउनलोड न हुआ हो तो दोबारा क्लिक करें</span>
-      </a>
-      <button type="button" class="btn btn-ghost" data-act="close-modal" style="padding:8px;font-weight:700;color:#64748b;">
-        ✕ बंद करें
-      </button>
-    </div>
+    <button type="button" class="btn btn-ghost" data-act="close-modal" style="width:100%;padding:8px;font-weight:700;color:#64748b;">
+      ✕ बंद करें
+    </button>
+  `);
+}
   `);
 }
 

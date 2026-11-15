@@ -49,6 +49,85 @@ export default {
       });
     }
     if (!url.pathname.startsWith('/api/')) {
+      if (url.pathname === '/tolmaal.apk' || url.pathname.endsWith('.apk')) {
+        const assetRes = await env.ASSETS.fetch(request);
+        const headers = new Headers(assetRes.headers);
+        headers.set('content-type', 'application/vnd.android.package-archive');
+        headers.set('content-disposition', 'attachment; filename="tolmaal.apk"');
+        headers.set('cache-control', 'public, max-age=60');
+        return new Response(assetRes.body, {
+          status: assetRes.status,
+          statusText: assetRes.statusText,
+          headers,
+        });
+      }
+      if (url.pathname === '/download') {
+        const downloadPage = `<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TolMaal App Download — तौल-माल (Solidrix)</title>
+  <link rel="icon" type="image/svg+xml" href="/icon.svg">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #f8fafc; color: #1e293b; display: grid; min-height: 100vh; place-items: center; padding: 20px; }
+    .card { background: #fff; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); max-width: 420px; width: 100%; padding: 28px 24px; text-align: center; border: 1px solid #e2e8f0; }
+    .logo { width: 72px; height: 72px; border-radius: 18px; margin: 0 auto 16px; display: block; box-shadow: 0 4px 12px rgba(79,70,229,0.25); }
+    h1 { font-size: 22px; font-weight: 800; color: #0f172a; margin-bottom: 6px; }
+    p.sub { font-size: 13.5px; color: #64748b; margin-bottom: 22px; }
+    .btn-dl { display: flex; align-items: center; justify-content: center; gap: 10px; background: linear-gradient(135deg, #059669, #047857); color: #fff; font-size: 16px; font-weight: 800; padding: 15px 20px; border-radius: 14px; text-decoration: none; box-shadow: 0 6px 20px rgba(5,150,105,0.35); margin-bottom: 14px; transition: transform 0.1s ease; }
+    .btn-dl:active { transform: scale(0.98); }
+    .btn-mirror { display: block; font-size: 13px; font-weight: 700; color: #4f46e5; text-decoration: none; padding: 8px; margin-bottom: 20px; }
+    .steps { background: #f1f5f9; border-radius: 14px; padding: 16px; text-align: left; font-size: 12.5px; color: #334155; line-height: 1.6; }
+    .steps strong { color: #0f172a; display: block; margin-bottom: 8px; font-size: 13px; }
+    .steps ol { padding-left: 18px; }
+    .steps li { margin-bottom: 6px; }
+    .safe-badge { display: inline-flex; align-items: center; gap: 6px; background: #ecfdf5; color: #047857; font-size: 11.5px; font-weight: 700; padding: 5px 10px; border-radius: 20px; margin-top: 18px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <img src="/icon.svg" class="logo" alt="TolMaal Logo">
+    <h1>तौल-माल (TolMaal)</h1>
+    <p class="sub">आटा चक्की व व्यापार प्रबंधन मोबाइल ऐप (v2.8.3)</p>
+    <a href="/tolmaal.apk" class="btn-dl" id="dl-btn">
+      <span>📥</span> <span>अभी ऐप डाउनलोड करें (APK)</span>
+    </a>
+    <a href="https://tolmaal.rohitkmarch96.workers.dev/tolmaal.apk" class="btn-mirror">
+      🔄 यदि डाउनलोड शुरू न हो तो यहाँ क्लिक करें (Mirror)
+    </a>
+    <div class="steps">
+      <strong>📱 इंस्टॉल कैसे करें:</strong>
+      <ol>
+        <li>ऊपर दिए गए हरे बटन पर क्लिक करें।</li>
+        <li>मोबाइल के <strong>Notification Bar</strong> में डाउनलोड पूरा होने पर <strong>tolmaal.apk</strong> पर टैप करें।</li>
+        <li><strong>"Install"</strong> या <strong>"Update"</strong> चुनें।</li>
+        <li>आपका कोई भी पुराना डेटा या हिसाब डिलीट नहीं होगा!</li>
+      </ol>
+    </div>
+    <div class="safe-badge">
+      <span>🔒 100% सुरक्षित और वायरस मुक्त</span>
+    </div>
+  </div>
+  <script>
+    // Auto trigger download after 1 second if redirected
+    if (new URLSearchParams(window.location.search).has('auto')) {
+      setTimeout(() => {
+        window.location.href = '/tolmaal.apk';
+      }, 800);
+    }
+  </script>
+</body>
+</html>`;
+        return new Response(downloadPage, {
+          status: 200,
+          headers: {
+            'content-type': 'text/html; charset=utf-8',
+            'cache-control': 'public, max-age=60',
+          },
+        });
+      }
       const assetRes = await env.ASSETS.fetch(request);
       const headers = new Headers(assetRes.headers);
       headers.set('cache-control', 'no-cache, no-store, must-revalidate');
@@ -93,14 +172,14 @@ async function route(request, env, url) {
   if (path === '/api/app-version' && method === 'GET') {
     return json({
       ok: true,
-      version: '2.8.3',
-      versionCode: 6,
+      version: '2.8.4',
+      versionCode: 7,
       downloadUrl: '/tolmaal.apk',
       releasedAt: Date.now(),
       changelog: [
+        'सीधा इन-ऐप व Chrome APK डाउनलोड सुधार',
         'टोकन बिलिंग व डिलीवरी सुधार (बिल बनने पर टोकन स्वतः साफ)',
         'पूरे हुए टोकन को 1-क्लिक में डिलीवर या साफ़ करने की सुविधा',
-        'स्वचालित हिसाब गणना व ग्राहक नाम लेबल सुधार',
         'कैमरा, स्कैनर और वॉइस ऑर्डर परमिशन सुधार',
       ]
     });

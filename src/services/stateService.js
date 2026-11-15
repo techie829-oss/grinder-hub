@@ -243,14 +243,14 @@ export async function buildState(env, businessId, range) {
       })),
     },
     appMeta: {
-      latestVersion: '2.8.3',
-      latestVersionCode: 6,
+      latestVersion: '2.8.4',
+      latestVersionCode: 7,
       downloadUrl: '/tolmaal.apk',
       releasedAt: Date.now(),
       changelog: [
+        'सीधा इन-ऐप व Chrome APK डाउनलोड सुधार',
         'टोकन बिलिंग व डिलीवरी सुधार (बिल बनने पर टोकन स्वतः साफ)',
         'पूरे हुए टोकन को 1-क्लिक में डिलीवर या साफ़ करने की सुविधा',
-        'स्वचालित हिसाब गणना व ग्राहक नाम लेबल सुधार',
         'कैमरा, स्कैनर और वॉइस ऑर्डर परमिशन सुधार',
       ]
     },

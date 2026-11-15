@@ -488,11 +488,26 @@ export function setupEventListeners() {
       }
 
       case 'check-app-update': {
-        const { isUpdateAvailable, openUpdatePromptModal } = await import('./utils/updater.js');
+        const { isUpdateAvailable, openUpdatePromptModal, getInstalledAppInfo } = await import('./utils/updater.js');
         if (isUpdateAvailable()) {
           openUpdatePromptModal();
         } else {
+          const installed = getInstalledAppInfo();
           toast(`आपका ऐप पहले से ही नवीनतम वर्ज़न (v${installed.version}) पर है ✓`);
+        }
+        break;
+      }
+
+      case 'copy-update-link': {
+        const link = el.dataset.url || 'https://tolmaal.solidrix.com/download';
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(link).then(() => {
+            toast('डाउनलोड लिंक कॉपी हो गया! अपने ब्राउज़र में खोलें ✓');
+          }).catch(() => {
+            prompt('डाउनलोड लिंक यहाँ से कॉपी करें:', link);
+          });
+        } else {
+          prompt('डाउनलोड लिंक यहाँ से कॉपी करें:', link);
         }
         break;
       }
