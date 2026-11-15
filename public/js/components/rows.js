@@ -78,39 +78,99 @@ export function entryRow(entry, options = {}) {
   </div>`;
 }
 
-export function queueRow(tokenRow, isServing) {
-  const svc = tokenRow.serviceId ? state.data.services.find((s) => s.id === tokenRow.serviceId) : null;
-  const svcName = svc ? esc(svc.name) : '';
-  const lossG = tokenRow.lossG || 0;
-  const netWeight = tokenRow.netWeight;
-  const lossTxt = lossG > 0 ? ` · -${lossG}g` : '';
-  const netTxt = netWeight > 0 ? ` · ${qtyFmt(netWeight)} ${unitOf(svc ? svc.unit : 'kg')}` : '';
+export function tokenTicketCard(tok, type = 'waiting') {
+  const isServing = type === 'serving' || tok.status === 'serving';
+  const isDone = type === 'done' || tok.status === 'done';
+  const isWaiting = !isServing && !isDone;
+
+  const svc = tok.serviceId ? (state.data?.services || []).find((s) => s.id === tok.serviceId) : null;
+  const svcName = svc ? esc(svc.name) : (tok.serviceName ? esc(tok.serviceName) : '');
+  const unit = unitOf(svc ? svc.unit : 'kg');
+
+  const gross = Number(tok.grossWeight) || 0;
+  const lossG = Number(tok.lossG) || 0;
+  const net = tok.netWeight != null ? Number(tok.netWeight) : (gross ? Math.max(0, gross - (lossG / 1000)) : 0);
+
+  const cardCls = isServing ? 'token-ticket is-serving' : (isDone ? 'token-ticket is-done' : 'token-ticket is-waiting');
+
+  let statusBadge = '';
+  if (isServing) {
+    statusBadge = `<span class="ticket-status-pill serving"><span class="pulse-dot"></span> चल रहा है</span>`;
+  } else if (isDone) {
+    statusBadge = `<span class="ticket-status-pill done">✓ माल तैयार</span>`;
+  } else {
+    statusBadge = `<span class="ticket-status-pill waiting">${relTxt(tok.at)}</span>`;
+  }
 
   return `
-  <div class="row-item queue-item">
-    <span class="queue-no${isServing ? ' serving' : ''}">${tokenRow.no}</span>
-    <span class="grow">
-      <span class="row-title ellipsis">
-        ${esc(tokenRow.name)}${tokenRow.village ? ` <span class="tiny-chip">${esc(tokenRow.village)}</span>` : ''}
-        ${svcName ? `<span class="tiny-chip">${svcName}</span>` : ''}
-      </span>
-      <span class="row-sub">
-        ${isServing ? t('servingNow') : relTxt(tokenRow.at)}
-        ${tokenRow.grossWeight ? ` · ${qtyFmt(tokenRow.grossWeight)} ${unitOf(svc ? svc.unit : 'kg')}` : ''}
-        ${lossTxt}${netTxt}
-      </span>
-    </span>
-    <div class="queue-actions">
-      <button class="btn btn-sm btn-primary" data-act="token-to-job" data-id="${tokenRow.id}">${t('createBillShort')}</button>
-      ${isServing
-        ? `<button class="btn btn-sm btn-soft" data-act="token-done" data-id="${tokenRow.id}">${t('done')}</button>`
-        : `<button class="btn btn-sm btn-soft" data-act="token-start" data-id="${tokenRow.id}">${t('call')}</button>`}
-      <button type="button" class="icon-btn" data-act="token-edit" data-id="${tokenRow.id}" title="टोकन विवरण सुधारें (Edit)">✏️</button>
-      <button type="button" class="icon-btn" data-act="token-notify-wa" data-id="${tokenRow.id}" title="WhatsApp 'Aata Ready' Notification">💬</button>
-      <button type="button" class="icon-btn" data-act="token-print-pos" data-id="${tokenRow.id}" title="Thermal POS Print">🖨️</button>
-      <button type="button" class="icon-btn" data-act="token-cancel" data-id="${tokenRow.id}" aria-label="Cancel">✕</button>
+  <div class="${cardCls}">
+    <!-- Header: Token Badge, Customer Name & Status -->
+    <div class="ticket-head">
+      <div class="ticket-badge">#${tok.no}</div>
+      <div class="ticket-info">
+        <div class="ticket-name ellipsis">${esc(tok.name || 'ग्राहक')}</div>
+        <div class="ticket-sub">
+          ${tok.village ? `<span class="ticket-pill loc">📍 ${esc(tok.village)}</span>` : ''}
+          ${tok.phone ? `<span class="ticket-pill phone">📞 ${esc(tok.phone)}</span>` : ''}
+          ${tok.note ? `<span class="ticket-pill note">📝 ${esc(tok.note)}</span>` : ''}
+        </div>
+      </div>
+      <div class="ticket-status-wrap">
+        ${statusBadge}
+      </div>
+    </div>
+
+    <!-- Weight & Service Bar (Always rounded with qtyFmt, never raw float!) -->
+    <div class="ticket-body">
+      ${svcName ? `<span class="ticket-pill svc">🌾 ${svcName}</span>` : ''}
+      <div class="ticket-weights">
+        ${gross ? `<span class="tw-item gross">आवक: <b>${qtyFmt(gross)} ${unit}</b></span>` : ''}
+        ${lossG > 0 ? `<span class="tw-item loss">काट: <b>-${lossG}g</b></span>` : ''}
+        ${net > 0 ? `<span class="tw-item net">वापसी: <b>${qtyFmt(net)} ${unit}</b></span>` : ''}
+      </div>
+    </div>
+
+    <!-- Action Bar: Cleanly split into Primary Actions (left) & Quick Utilities (right) -->
+    <div class="ticket-actions">
+      <div class="ticket-primary-actions">
+        <button type="button" class="btn btn-sm btn-primary btn-ticket-bill" data-act="token-to-job" data-id="${tok.id}">
+          🧾 बिल बनाएं
+        </button>
+        ${isDone ? `
+          <button type="button" class="btn btn-sm btn-soft btn-ticket-deliver" data-act="token-deliver" data-id="${tok.id}" title="ग्राहक को माल दिया">
+            ✓ दिया
+          </button>
+        ` : (isServing ? `
+          <button type="button" class="btn btn-sm btn-gold btn-ticket-done" data-act="token-done" data-id="${tok.id}">
+            ✅ पूरा हुआ
+          </button>
+        ` : `
+          <button type="button" class="btn btn-sm btn-soft btn-ticket-start" data-act="token-start" data-id="${tok.id}">
+            ▶️ बुलाएँ
+          </button>
+        `)}
+      </div>
+
+      <div class="ticket-util-actions">
+        <button type="button" class="ticket-icon-btn edit" data-act="token-edit" data-id="${tok.id}" title="टोकन विवरण सुधारें (Edit)">
+          ✏️
+        </button>
+        <button type="button" class="ticket-icon-btn wa" data-act="token-notify-wa" data-id="${tok.id}" title="WhatsApp 'Aata Ready' Notification">
+          💬
+        </button>
+        <button type="button" class="ticket-icon-btn print" data-act="token-print-pos" data-id="${tok.id}" title="थर्मल पर्ची प्रिंट">
+          🖨️
+        </button>
+        <button type="button" class="ticket-icon-btn del" data-act="token-cancel" data-id="${tok.id}" title="रद्द करें / हटाएं">
+          ✕
+        </button>
+      </div>
     </div>
   </div>`;
+}
+
+export function queueRow(tokenRow, isServing) {
+  return tokenTicketCard(tokenRow, isServing ? 'serving' : 'waiting');
 }
 
 export function customerRows(list) {

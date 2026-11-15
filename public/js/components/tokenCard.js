@@ -1,5 +1,5 @@
 import { state } from '../state.js';
-import { esc } from '../utils/formatters.js';
+import { esc, qtyFmt } from '../utils/formatters.js';
 import { t } from '../i18n.js';
 
 export function tokenCard() {
@@ -13,7 +13,7 @@ export function tokenCard() {
       <div class="token-no${serving ? '' : ' is-empty'}">${serving ? serving.no : '—'}</div>
       <div class="token-who">
         ${serving ? esc(serving.name) + (serving.village ? ` <span class="tiny-chip">${esc(serving.village)}</span>` : '') : t('noActiveToken')}
-        ${serving && serving.grossWeight ? `<div class="tiny" style="color:#a5b4fc;margin-top:2px;">${serving.serviceName || t('serviceLabel')} · ⚖️ ${t('inwardGross')}: ${serving.grossWeight}kg (${t('returnNet')}: ${serving.netWeight || serving.grossWeight}kg)</div>` : ''}
+        ${serving && serving.grossWeight ? `<div class="tiny" style="color:#a5b4fc;margin-top:2px;">${serving.serviceName || t('serviceLabel')} · ⚖️ ${t('inwardGross')}: ${qtyFmt(serving.grossWeight)}kg (${t('returnNet')}: ${qtyFmt(serving.netWeight || serving.grossWeight)}kg)</div>` : ''}
       </div>
       <div class="token-stats">
         <div><b>${waitingCount}</b>${t('inLine')}</div>
