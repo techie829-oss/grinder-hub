@@ -23,9 +23,6 @@ export function viewTokens() {
       <p class="page-sub" style="margin-top:4px;">${t('queueStatusSub', { n: tObj.total })}</p>
     </div>
     <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-      <button type="button" class="btn btn-subtle btn-sm" data-act="reset-token-counter" title="टोकन नंबर #1 पर रीसेट करें" style="border:1.5px solid #cbd5e1;padding:8px 10px;border-radius:10px;font-weight:700;display:inline-flex;align-items:center;gap:4px;background:#fff;font-size:12px;">
-        <span>🔄</span> <span>#1 रीसेट</span>
-      </button>
       <button type="button" class="btn btn-primary btn-sm" data-act="switch-job-tab" data-tab="grind" data-goto="job" style="border-radius:10px;font-weight:750;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;">
         <span>🎫</span> <span>${t('newTokenServices')}</span>
       </button>

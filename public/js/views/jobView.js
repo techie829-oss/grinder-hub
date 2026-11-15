@@ -152,10 +152,8 @@ function renderGrindTab(data) {
           value="${esc(job.phone)}" placeholder="${t('phonePlaceholderTen')}" autocomplete="off">
       </div>
       <div style="display:flex;gap:4px;flex-shrink:0;">
-        <button type="button" class="btn btn-sm btn-ghost" data-act="hw-voice-mic" style="padding:6px 8px;font-size:12px;height:38px;border-radius:10px;" title="बोलकर ऑर्डर भरें (Voice Order)">🎙️ ${t('voiceBtnLabel')}</button>
-        <button type="button" class="btn btn-sm btn-ghost" data-act="hw-scale-ocr" style="padding:6px 8px;font-size:12px;height:38px;border-radius:10px;" title="Camera Scale OCR">${t('ocrBtnLabel')}</button>
-        <button type="button" class="btn btn-sm btn-ghost" data-act="hw-scale-bt" style="padding:6px 8px;font-size:12px;height:38px;border-radius:10px;" title="Electronic Scale">⚖️ ${scaleConnected ? liveWt + 'k' : t('scaleBtnLabel')}</button>
-        <button type="button" class="btn btn-sm btn-ghost" data-act="hw-qr-scan" style="padding:6px 8px;font-size:12px;height:38px;border-radius:10px;" title="QR / Barcode Scan">🔲 ${t('qrBtnLabel')}</button>
+        <button type="button" class="btn btn-sm btn-ghost" data-act="hw-voice-mic" style="padding:6px 10px;font-size:12.5px;height:38px;border-radius:10px;" title="बोलकर ऑर्डर भरें (Voice Order)">🎙️ ${t('voiceBtnLabel')}</button>
+        <button type="button" class="btn btn-sm btn-ghost" data-act="hw-qr-scan" style="padding:6px 10px;font-size:12.5px;height:38px;border-radius:10px;" title="QR / Barcode Scan">🔲 ${t('qrBtnLabel')}</button>
       </div>
     </div>
 
@@ -595,12 +593,6 @@ function renderPurchaseTab(data) {
         <div class="pos-total-sub">किसान को देय</div>
         <div class="pos-total-val" id="tr-amount-preview">${inr(amountPaise)}</div>
       </div>
-    </div>
-
-    <!-- Quick Scale Shortcuts for Purchase -->
-    <div style="display:flex;gap:6px;margin-bottom:8px;">
-      <button type="button" class="btn btn-sm btn-ghost" data-act="hw-scale-ocr" style="flex:1;padding:6px;font-size:11.5px;height:34px;border-radius:8px;">📷 OCR वजन</button>
-      <button type="button" class="btn btn-sm btn-ghost" data-act="hw-scale-bt" style="flex:1;padding:6px;font-size:11.5px;height:34px;border-radius:8px;">⚖️ ${scaleConnected ? 'कांटा: ' + liveWt + 'kg' : 'कांटा जोड़ें'}</button>
     </div>
 
     <!-- 4. Farmer Info (2-in-1 Compact Row) -->

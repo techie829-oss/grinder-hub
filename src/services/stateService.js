@@ -257,14 +257,14 @@ export async function buildState(env, businessId, range) {
       })),
     },
     appMeta: {
-      latestVersion: '2.8.10',
-      latestVersionCode: 12,
+      latestVersion: '2.8.11',
+      latestVersionCode: 13,
       downloadUrl: '/tolmaal.apk',
       releasedAt: Date.now(),
       changelog: [
-        'हिंदी व अंग्रेजी संयुक्त ग्राहक नाम (उदा. शाहनवाज़ (Shahnawaz))',
-        'क्रॉस-स्क्रिप्ट डुप्लीकेट ग्राहक सुरक्षा (Cross-Language Anti-Duplicate)',
-        'गाँव / क्षेत्र प्रबंधन व 1-क्लिक फास्ट विलेज चिप्स',
+        'नया काम स्क्रीन से OCR और कांटा बटन हटाकर क्लीन UI',
+        'टोकन रीसेट बटन केवल सेटिंग्स में सुरक्षित रखा गया',
+        'हिंदी व अंग्रेजी संयुक्त ग्राहक नाम व क्रॉस-स्क्रिप्ट एंटी-डुप्लीकेट',
       ]
     },
   };
