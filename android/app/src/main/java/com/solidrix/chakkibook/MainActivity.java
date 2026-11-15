@@ -19,9 +19,14 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Ensure status bar icons are visible (dark icons on light background)
+        // Ensure status bar and navigation bar have clean spacing and visible icons
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+            int flags = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                flags |= View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+                getWindow().setNavigationBarColor(android.graphics.Color.parseColor("#ffffff"));
+            }
+            getWindow().getDecorView().setSystemUiVisibility(flags);
             getWindow().setStatusBarColor(android.graphics.Color.parseColor("#ffffff"));
         }
 

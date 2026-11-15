@@ -173,14 +173,14 @@ async function route(request, env, url) {
   if (path === '/api/app-version' && method === 'GET') {
     return json({
       ok: true,
-      version: '2.8.12',
-      versionCode: 14,
+      version: '2.8.13',
+      versionCode: 15,
       downloadUrl: '/tolmaal.apk',
       releasedAt: Date.now(),
       changelog: [
+        'टॉप नोटिफिकेशन एरिया (Notch) व बॉटम नेविगेशन बटन ओवरलैप से बचाव हेतु बेहतर स्पेसिंग',
+        'Android नेविगेशन बार व बॉटम टैब बार सेफ-एरिया पैडिंग सुधार',
         'माल जमा (टोकन) और हाथों-हाथ डिलीवरी बिल के बीच स्पष्ट विभाजक व UX सुधार',
-        'गलती से डायरेक्ट बिल दबने से रोकने के लिए हाई-विजिबिलिटी कार्ड व चेतावनी',
-        'टोकन और कस्टमर लेजर सिंक व द्विभाषी सुधार',
       ]
     });
   }
