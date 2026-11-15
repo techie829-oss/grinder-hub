@@ -78,6 +78,12 @@ export async function saveCustomer(request, env, business, range) {
     )
       .bind(name, key, village, vKey, phone, finalPhoto, id, business.id)
       .run();
+
+    await env.DB.prepare(
+      'UPDATE entries SET name = ?, village = ? WHERE customer_id = ? AND business_id = ?'
+    )
+      .bind(name, village, id, business.id)
+      .run();
   } else {
     const exists = await env.DB.prepare(
       'SELECT id, name FROM customers WHERE business_id = ? AND name_key = ? AND village_key = ?'

@@ -1,6 +1,6 @@
 // Queue and Token Management Controller
 import { readJson, json, bad } from '../utils/response.js';
-import { clean, dayKey } from '../utils/helpers.js';
+import { clean, dayKey, toBilingualName, standardizeVillage } from '../utils/helpers.js';
 import { issueToken } from '../services/tokenService.js';
 import { buildState } from '../services/stateService.js';
 
@@ -17,8 +17,11 @@ export async function createToken(request, env, business, range) {
     if (!svc) return bad('सेवा नहीं मिली');
   }
 
-  const name = clean(body.name, 60);
-  const village = clean(body.village, 60);
+  let name = clean(body.name, 60);
+  if (name && name !== 'Customer' && name !== 'ग्राहक') {
+    name = toBilingualName(name);
+  }
+  const village = standardizeVillage(clean(body.village, 60));
   const phone = body.phone ? String(body.phone).replace(/\D/g, '').slice(-10) : '';
   const note = clean(body.note, 120);
   const grossWeight = Number(body.grossWeight != null ? body.grossWeight : body.qty) || 0;

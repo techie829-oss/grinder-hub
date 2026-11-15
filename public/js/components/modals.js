@@ -234,7 +234,7 @@ export function openCustomerEditModal(id) {
       <div class="village-chips-scroll" style="margin-top:-6px;margin-bottom:12px;">
         ${(state.data?.villages || []).map((v) => {
           const vName = typeof v === 'object' ? v.name : v;
-          return `<button type="button" class="btn-village-chip" onclick="document.getElementById('ec-village').value = '${esc(vName)}';">📍 ${esc(vName)}</button>`;
+          return `<button type="button" class="btn-village-chip" data-act="quick-pick-village" data-prefix="ec" data-village="${esc(vName)}">📍 ${esc(vName)}</button>`;
         }).join('')}
       </div>
 

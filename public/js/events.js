@@ -9,7 +9,7 @@ import { customerRows } from './components/rows.js';
 import { filteredCustomers } from './views/customerView.js';
 import { currentService } from './views/jobView.js';
 import { showAuthError } from './views/authView.js';
-import { isPhoneticMatch, latinToDeva } from './utils/phonetic.js';
+import { isPhoneticMatch, latinToDeva, devaToLatin, toBilingualName } from './utils/phonetic.js';
 import { setLanguage, t } from './i18n.js';
 import { enqueueOfflineAction, syncOfflineQueue, saveOfflineSnapshot } from './sync.js';
 
@@ -1492,7 +1492,9 @@ export function setupEventListeners() {
       case 'quick-pick-village': {
         const prefix = el.dataset.prefix || 'j';
         const villageName = el.dataset.village;
-        const villageEl = document.getElementById(prefix === 'j' ? 'j-village' : (prefix === 'tr' ? 'tr-village' : 't-village'));
+        const villageEl = document.getElementById(
+          prefix === 'j' ? 'j-village' : (prefix === 'tr' ? 'tr-village' : (prefix === 'ec' ? 'ec-village' : 't-village'))
+        );
         if (villageEl) {
           villageEl.value = villageName;
         }
@@ -1506,7 +1508,9 @@ export function setupEventListeners() {
             btn.classList.toggle('active', btn.dataset.village === villageName);
           });
         }
-        updateCustomerDisambiguation(prefix);
+        if (prefix === 'j' || prefix === 'tr') {
+          updateCustomerDisambiguation(prefix);
+        }
         break;
       }
 
@@ -2467,10 +2471,11 @@ export function setupEventListeners() {
         const data = await api('/api/customers', payload);
         if (data && data.offline) {
           enqueueOfflineAction('customer', payload);
+          const bilingualName = toBilingualName(payload.name, payload.nameEn);
           if (!id) {
             state.data.customers.push({
               id: 'offline-' + crypto.randomUUID(),
-              name: payload.name,
+              name: bilingualName,
               village: payload.village,
               phone: payload.phone,
               photo: payload.photo || '',
@@ -2480,7 +2485,7 @@ export function setupEventListeners() {
           } else {
             const existing = state.data.customers.find((c) => c.id === id);
             if (existing) {
-              existing.name = payload.name;
+              existing.name = bilingualName;
               existing.village = payload.village;
               existing.phone = payload.phone;
               if (payload.photo) existing.photo = payload.photo;
