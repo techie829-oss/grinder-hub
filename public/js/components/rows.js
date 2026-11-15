@@ -1,6 +1,6 @@
 // Reusable List Row & Card Components
 import { state } from '../state.js';
-import { esc, inr, qtyFmt, unitOf, dateTxt, timeTxt, relTxt, emptyBlock } from '../utils/formatters.js';
+import { esc, inr, qtyFmt, unitOf, dateTxt, timeTxt, relTxt, emptyBlock, phoneFmt } from '../utils/formatters.js';
 import { t } from '../i18n.js';
 
 export function entryRow(entry, options = {}) {
@@ -175,7 +175,7 @@ export function queueRow(tokenRow, isServing) {
 
 export function customerRows(list) {
   if (!list.length) {
-    return state.data.customers.length
+    return state.data?.customers?.length
       ? emptyBlock(t('noCustomerFound'), t('noCustomerSub'))
       : emptyBlock(t('noCustomerYet'), t('noCustomerYetSub'));
   }
@@ -183,20 +183,70 @@ export function customerRows(list) {
     const cls = c.balancePaise > 0 ? 'due' : (c.balancePaise < 0 ? 'adv' : 'zero');
     const text = c.balancePaise > 0
       ? inr(c.balancePaise) + ' ' + t('dueTag')
-      : (c.balancePaise < 0 ? inr(-c.balancePaise) + ' ' + t('advTag') : t('settledTag'));
+      : (c.balancePaise < 0 ? inr(-c.balancePaise) + ' ' + t('advTag') : '✓ ' + t('settledTag'));
     const avatarHtml = c.photo
-      ? `<img src="${c.photo}" class="avatar" alt="${esc(c.name)}" style="object-fit:cover;border:1.5px solid #cbd5e1;box-shadow:0 1px 3px rgba(0,0,0,0.08);">`
-      : `<span class="avatar">${esc(c.name.trim().charAt(0) || '?')}</span>`;
+      ? `<img src="${c.photo}" class="cust-card-avatar-img" alt="${esc(c.name)}">`
+      : `<span class="cust-card-avatar-txt">${esc((c.name || 'G').trim().charAt(0) || '?')}</span>`;
+
+    const cleanPhone = (c.phone || '').trim();
+    const cleanDigits = cleanPhone.replace(/\D/g, '');
 
     return `
-    <button type="button" class="row-item" data-act="open-cust" data-id="${c.id}">
-      ${avatarHtml}
-      <span class="grow">
-        <span class="row-title ellipsis">${esc(c.name)}${c.village ? ` <span class="tiny-chip">${esc(c.village)}</span>` : ''}</span>
-        <span class="row-sub">${c.phone ? '📞 ' + esc(c.phone) : '—'}${c.lastAt ? ' · ' + relTxt(c.lastAt) : ''}</span>
-      </span>
-      <span class="bal ${cls}">${text}</span>
-    </button>`;
+    <div class="cust-card">
+      <!-- Card Top: Avatar, Customer Name & Village, Khata Status Badge -->
+      <div class="cust-card-top" data-act="open-cust" data-id="${c.id}" role="button" tabindex="0">
+        <div class="cust-card-avatar">
+          ${avatarHtml}
+        </div>
+        <div class="cust-card-info">
+          <div class="cust-card-name ellipsis">${esc(c.name)}</div>
+          <div class="cust-card-sub">
+            ${c.village ? `<span class="cust-pill loc">📍 ${esc(c.village)}</span>` : '<span class="cust-pill muted">गाँव दर्ज नहीं</span>'}
+            ${cleanPhone ? `<span class="cust-pill phone">📞 ${esc(phoneFmt(cleanPhone))}</span>` : ''}
+          </div>
+        </div>
+        <div class="cust-card-bal-wrap">
+          <span class="cust-bal-pill ${cls}">${text}</span>
+        </div>
+      </div>
+
+      <!-- Card Meta: Last active and/or Add Phone shortcut -->
+      <div class="cust-card-meta">
+        <span class="cust-meta-txt">
+          ${c.lastAt ? `🕒 अंतिम काम: <b>${relTxt(c.lastAt)}</b>` : '✨ <span style="color:#94a3b8;">नया खाता</span>'}
+        </span>
+        ${!cleanPhone ? `
+          <button type="button" class="cust-link-btn" data-act="edit-cust" data-id="${c.id}" title="फ़ोन नंबर जोड़ें">
+            + फ़ोन जोड़ें
+          </button>
+        ` : ''}
+      </div>
+
+      <!-- Card Footer: Quick Actions Bar -->
+      <div class="cust-card-actions">
+        <div class="cust-primary-actions">
+          <button type="button" class="btn btn-sm btn-cust-ledger" data-act="open-cust" data-id="${c.id}" title="खाता और लेन-देन देखें">
+            📖 खाता देखें
+          </button>
+          <button type="button" class="btn btn-sm btn-cust-job" data-act="cust-new-job" data-id="${c.id}" title="इस ग्राहक के लिए नया बिल/काम बनाएं">
+            🌾 नया काम
+          </button>
+        </div>
+        <div class="cust-icon-actions">
+          ${cleanPhone ? `
+            <a href="tel:${esc(cleanPhone)}" class="cust-icon-btn call" title="कॉल करें" aria-label="कॉल करें">
+              📞
+            </a>
+            <a href="https://wa.me/91${esc(cleanDigits)}" target="_blank" rel="noopener noreferrer" class="cust-icon-btn wa" title="व्हाट्सएप भेजें" aria-label="व्हाट्सएप">
+              💬
+            </a>
+          ` : ''}
+          <button type="button" class="cust-icon-btn edit" data-act="edit-cust" data-id="${c.id}" title="सुधारें (Edit)" aria-label="सुधारें">
+            ✏️
+          </button>
+        </div>
+      </div>
+    </div>`;
   }).join('');
 }
 

@@ -65,6 +65,7 @@ export const state = {
   range: 'today',
   q: '',
   custFilter: 'all',
+  custVillageFilter: 'all',
   data: null,
   customer: null,
   busy: false,

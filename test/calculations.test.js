@@ -90,9 +90,13 @@ describe('Chakki Book Calculations & Formatters Suite', () => {
       assert.equal(unitOf(null), 'kg');
     });
 
-    it('should format quantities with locale number format', () => {
+    it('should format quantities with locale number format up to 3 decimal places', () => {
       assert.equal(qtyFmt(30), '30');
       assert.equal(qtyFmt(29.7), '29.7');
+      assert.equal(qtyFmt(20.61), '20.61');
+      assert.equal(qtyFmt(20.301), '20.301');
+      assert.equal(qtyFmt(28.368), '28.368');
+      assert.equal(qtyFmt(28.368000000000002), '28.368');
       assert.equal(qtyFmt(0), '0');
     });
   });

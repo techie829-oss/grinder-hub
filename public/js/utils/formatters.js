@@ -6,7 +6,7 @@ export const esc = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, (m) => 
   { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]
 ));
 
-const decFmt = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 2 });
+const decFmt = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 3 });
 
 export const inr = (paise, forceDecimals) => {
   const num = (Number(paise) || 0) / 100;

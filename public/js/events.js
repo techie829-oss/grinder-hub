@@ -107,9 +107,9 @@ export function recalcJob() {
   state.job.grossWeight = grossWeight;
 
   if (amtPreview) amtPreview.textContent = inr(amountPaise);
-  if (grossPreview) grossPreview.textContent = grossWeight ? `${grossWeight.toFixed(2)} ${unit}` : `0 ${unit}`;
+  if (grossPreview) grossPreview.textContent = grossWeight ? `${qtyFmt(grossWeight)} ${unit}` : `0 ${unit}`;
   if (lossPreview) lossPreview.textContent = totalLossG ? `-${totalLossG} g` : '0 g';
-  if (netPreview) netPreview.textContent = netWeight ? `${netWeight.toFixed(3)} ${unit}` : `0 ${unit}`;
+  if (netPreview) netPreview.textContent = netWeight ? `${qtyFmt(netWeight)} ${unit}` : `0 ${unit}`;
   if (outputNetPreview) outputNetPreview.textContent = enteredWeight ? `${qtyFmt(enteredWeight)} ${unit}` : `0 ${unit}`;
 
   const calcHint = document.getElementById('j-calc-hint');
@@ -161,9 +161,9 @@ export function recalcToken() {
   state.tokenForm.totalLossG = totalLossG;
   state.tokenForm.netWeight = netWeight;
 
-  if (grossPreview) grossPreview.textContent = grossWeight ? `${grossWeight} ${unit}` : `0 ${unit}`;
+  if (grossPreview) grossPreview.textContent = grossWeight ? `${qtyFmt(grossWeight)} ${unit}` : `0 ${unit}`;
   if (lossPreview) lossPreview.textContent = totalLossG ? `-${totalLossG} g` : '0 g';
-  if (netPreview) netPreview.textContent = netWeight ? `${netWeight.toFixed(3).replace(/\.?0+$/, '')} ${unit}` : `0 ${unit}`;
+  if (netPreview) netPreview.textContent = netWeight ? `${qtyFmt(netWeight)} ${unit}` : `0 ${unit}`;
   if (estPreview) estPreview.textContent = inr(estAmountPaise);
 }
 
@@ -1686,12 +1686,35 @@ export function setupEventListeners() {
       }
 
       case 'cust-filter': {
-        state.custFilter = el.dataset.filter;
+        state.custFilter = el.dataset.val || el.dataset.filter || 'all';
         document.querySelectorAll('[data-act="cust-filter"]').forEach((b) => {
-          b.classList.toggle('is-on', b.dataset.filter === state.custFilter);
+          b.classList.toggle('is-on', (b.dataset.val || b.dataset.filter || 'all') === state.custFilter);
         });
         const box = document.getElementById('cust-list');
         if (box) box.innerHTML = customerRows(filteredCustomers());
+        break;
+      }
+
+      case 'cust-vfilter': {
+        state.custVillageFilter = el.dataset.val || 'all';
+        document.querySelectorAll('[data-act="cust-vfilter"]').forEach((b) => {
+          b.classList.toggle('is-on', (b.dataset.val || 'all') === state.custVillageFilter);
+        });
+        const box = document.getElementById('cust-list');
+        if (box) box.innerHTML = customerRows(filteredCustomers());
+        break;
+      }
+
+      case 'cust-new-job': {
+        const cid = el.dataset.id;
+        const c = state.data?.customers?.find((x) => x.id === cid);
+        if (c) {
+          state.job.name = c.name;
+          state.job.village = c.village || '';
+          state.job.phone = c.phone || '';
+          state.job.customerId = c.id;
+        }
+        goTo('job');
         break;
       }
 
