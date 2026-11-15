@@ -233,18 +233,50 @@ function renderGrindTab(data) {
       <input id="j-note" name="note" maxlength="120" value="${esc(job.note)}" placeholder="${t('noteOptionalPlaceholder')}">
     </div>
 
-    <!-- 7. Primary Action: टोकन पर्ची जारी करें -->
+    <!-- 7. Option 1: माल जमा पर्ची / टोकन जारी करें -->
     ${job.tokenNo ? '' : `
-    <button type="button" class="btn btn-block btn-soft" data-act="issue-token-from-job" style="padding:12px;font-size:14px;font-weight:800;background:linear-gradient(135deg, #e0e7ff, #c7d2fe);color:#3730a3;border:1.5px solid #a5b4fc;border-radius:12px;margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 2px 8px rgba(99,102,241,0.15);">
-      <span>🎫</span> <span>${t('issueTokenWithSlipBtn')}</span>
-    </button>
+    <div class="pos-token-action-card" style="background:linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);border:2px solid #f59e0b;border-radius:14px;padding:12px;margin-bottom:12px;box-shadow:0 3px 10px rgba(245,158,11,0.18);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <div style="display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:850;color:#92400e;">
+          <span>🎫</span> <span>${t('optTokenTitle')}</span>
+        </div>
+        <span style="font-size:10.5px;font-weight:800;background:#fde68a;color:#854d0e;padding:2px 8px;border-radius:10px;border:1px solid #fcd34d;">
+          पिसाई बाद में / पर्ची
+        </span>
+      </div>
+      <p style="font-size:11.5px;color:#78350f;margin:0 0 10px;line-height:1.4;">
+        ${t('optTokenSub')}
+      </p>
+      <button type="button" class="btn btn-block" data-act="issue-token-from-job" style="padding:13px;font-size:15px;font-weight:850;background:linear-gradient(135deg, #f59e0b, #d97706);color:#ffffff;border:none;border-radius:12px;box-shadow:0 4px 14px rgba(217,119,6,0.35);display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;">
+        <span style="font-size:18px;">🎫</span> <span>${t('issueTokenWithSlipBtn')}</span>
+      </button>
+    </div>
+
+    <!-- Clear Unmistakable Separator (विभाजक) -->
+    <div class="pos-or-divider" style="position:relative;text-align:center;margin:16px 0 14px;">
+      <div style="position:absolute;top:50%;left:0;right:0;height:2px;background:#cbd5e1;transform:translateY(-50%);"></div>
+      <div style="position:relative;display:inline-flex;align-items:center;gap:6px;background:#f8fafc;padding:5px 16px;border-radius:20px;border:1.5px solid #94a3b8;font-size:11.5px;font-weight:850;color:#334155;box-shadow:0 2px 4px rgba(0,0,0,0.06);">
+        <span style="color:#d97706;">⚡</span>
+        <span>${t('optOrDivider')}</span>
+        <span style="color:#4f46e5;">⚡</span>
+      </div>
+    </div>
     `}
 
-    <!-- 8. Delivery & Payment Section -->
-    <div style="background:#f8fafc;border:1.5px solid #cbd5e1;border-radius:14px;padding:12px;margin-bottom:6px;">
-      <div style="font-size:12.5px;font-weight:800;color:#0f172a;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <span>${t('deliveryAndPaymentTitle')}</span>
-        <span style="font-size:11px;color:#64748b;">${t('deliveryAndPaymentSub')} <strong id="j-calc-hint" style="color:#0f172a;">${inr(amountPaise)}</strong></span>
+    <!-- 8. Delivery & Payment Section (Option 2: Direct Delivery) -->
+    <div style="background:#f8fafc;border:2px solid #cbd5e1;border-radius:14px;padding:12px;margin-bottom:6px;">
+      <div style="font-size:12.5px;font-weight:800;color:#0f172a;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid #e2e8f0;">
+        <div>
+          <div style="font-size:13px;font-weight:850;color:#0f172a;display:flex;align-items:center;gap:6px;">
+            <span>💵</span> <span>${job.tokenNo ? t('saveTokenBillBtn', { no: job.tokenNo }) : t('deliveryAndPaymentTitle')}</span>
+          </div>
+          <div style="font-size:10.5px;color:#64748b;margin-top:2px;">
+            ${job.tokenNo ? `टोकन #${job.tokenNo} का अंतिम हिसाब व भुगतान` : 'केवल तभी जब माल तैयार है और तुरंत दे रहे हों'}
+          </div>
+        </div>
+        <span style="font-size:12px;font-weight:800;color:#15803d;background:#dcfce7;border:1px solid #bbf7d0;padding:3px 8px;border-radius:8px;">
+          ${t('deliveryAndPaymentSub')} <strong id="j-calc-hint" style="color:#15803d;">${inr(amountPaise)}</strong>
+        </span>
       </div>
 
       <!-- Adjustable Collected Amount Field -->
@@ -302,8 +334,16 @@ function renderGrindTab(data) {
         <input type="hidden" id="j-photo" name="photo" value="${matchedCustomer ? esc(matchedCustomer.photo || '') : ''}">
       </div>
 
-      <button class="btn btn-primary btn-block pos-submit-btn" type="submit" style="padding:12px;font-weight:800;font-size:15px;border-radius:12px;">
-        ${job.tokenNo ? t('saveTokenBillBtn', { no: job.tokenNo }) : t('saveBillAndEntryBtn')}
+      ${job.tokenNo ? '' : `
+      <!-- Warning Tip to prevent brother from clicking by mistake -->
+      <div style="font-size:11px;color:#b91c1c;background:#fef2f2;border:1px dashed #fca5a5;padding:6px 10px;border-radius:8px;margin-bottom:8px;line-height:1.35;text-align:center;">
+        ${t('optDirectBillWarn')}
+      </div>
+      `}
+
+      <button class="btn btn-primary btn-block pos-submit-btn" type="submit" style="padding:13px;font-weight:850;font-size:15px;border-radius:12px;display:flex;align-items:center;justify-content:center;gap:8px;">
+        <span>✓</span>
+        <span>${job.tokenNo ? t('saveTokenBillBtn', { no: job.tokenNo }) : t('saveBillAndEntryBtn')}</span>
       </button>
     </div>
   </form>`;
