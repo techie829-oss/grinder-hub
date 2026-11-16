@@ -146,7 +146,11 @@ export function viewDashboard() {
       </div>
       ${recent.length
         ? `<div class="row-list">${recent.map((e) => entryRow(e)).join('')}</div>`
-        : emptyBlock(t('noTransactionsYet'), t('noTransactionsSub'))}
+        : `<div style="text-align:center;padding:18px 12px;color:#64748b;">
+             <span style="font-size:26px;display:block;margin-bottom:6px;">📋</span>
+             <div style="font-weight:750;font-size:13.5px;color:#0f172a;">${t('noTransactionsYet')}</div>
+             <div style="font-size:11.5px;margin-top:2px;color:#64748b;">${t('noTransactionsSub')}</div>
+           </div>`}
     </section>
 
     <section class="card">
@@ -156,22 +160,38 @@ export function viewDashboard() {
       </div>
       ${(dues.length ? dues : d.customers.slice(0, 6)).length
         ? `<div class="row-list">
-            ${(dues.length ? dues : d.customers.slice(0, 6)).map((c) => `
-              <div class="row-item" style="cursor:pointer;" data-act="open-cust" data-id="${c.id}">
-                <span class="avatar" style="width:34px;height:34px;border-radius:10px;background:#eef2ff;color:#4338ca;font-weight:800;font-size:13px;display:grid;place-items:center;flex-shrink:0;">${c.name.slice(0, 1)}</span>
-                <span class="grow" style="min-width:0;">
-                  <span class="row-title ellipsis">${esc(c.name)}${c.village ? ` <span class="tiny-chip">${esc(c.village)}</span>` : ''}</span>
-                  <span class="row-sub">${c.phone ? phoneFmt(c.phone) : '—'}</span>
+            ${(dues.length ? dues : d.customers.slice(0, 6)).map((c) => {
+              const cls = c.balancePaise > 0 ? 'due' : (c.balancePaise < 0 ? 'adv' : 'zero');
+              const text = c.balancePaise > 0
+                ? `बाकी: ${inr(c.balancePaise)}`
+                : (c.balancePaise < 0 ? `अग्रिम: ${inr(-c.balancePaise)}` : '✓ चुकता');
+              return `
+              <div class="dash-cust-row" data-act="open-cust" data-id="${c.id}" role="button" tabindex="0">
+                <span class="avatar" style="width:34px;height:34px;border-radius:10px;background:#eef2ff;color:#4338ca;font-weight:850;font-size:13px;display:grid;place-items:center;flex-shrink:0;">
+                  ${esc((c.name || 'G').trim().charAt(0))}
                 </span>
-                <span class="right">
-                  <span class="pill-balance ${c.balancePaise > 0 ? 'red' : (c.balancePaise < 0 ? 'green' : '')}">
-                    ${c.balancePaise > 0 ? `बाकी: ${inr(c.balancePaise)}` : (c.balancePaise < 0 ? `अग्रिम: ${inr(-c.balancePaise)}` : 'हिसाब चुकता')}
+                <div style="flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px;">
+                  <div style="font-weight:800;font-size:13.5px;color:#0f172a;line-height:1.25;" class="ellipsis">
+                    ${esc(c.name)}
+                  </div>
+                  <div style="font-size:11px;color:#64748b;font-weight:600;display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                    ${c.village ? `<span class="tiny-chip" style="font-size:10.5px;padding:1px 6px;">📍 ${esc(c.village)}</span>` : ''}
+                    ${c.phone ? `<span>📞 ${phoneFmt(c.phone)}</span>` : ''}
+                  </div>
+                </div>
+                <div style="flex:0 0 auto;text-align:right;">
+                  <span class="cust-bal-pill ${cls}">
+                    ${text}
                   </span>
-                </span>
-              </div>
-            `).join('')}
+                </div>
+              </div>`;
+            }).join('')}
           </div>`
-        : emptyBlock(t('noCustomersYet'), t('noCustomersSub'))}
+        : `<div style="text-align:center;padding:18px 12px;color:#64748b;">
+             <span style="font-size:26px;display:block;margin-bottom:6px;">👥</span>
+             <div style="font-weight:750;font-size:13.5px;color:#0f172a;">${t('noCustomersYet')}</div>
+             <div style="font-size:11.5px;margin-top:2px;color:#64748b;">${t('noCustomersSub')}</div>
+           </div>`}
     </section>
   </div>`;
 }

@@ -1263,7 +1263,7 @@ body:has(#modal:not(:empty)) .tabbar {
     display: flex !important;
     flex-direction: column !important;
     width: 100% !important;
-    gap: 14px !important;
+    gap: 12px !important;
   }
   .grid-2 > .card {
     width: 100% !important;
@@ -1271,7 +1271,7 @@ body:has(#modal:not(:empty)) .tabbar {
     min-width: 0 !important;
     box-sizing: border-box !important;
   }
-  .grid-2 > .card + .card { margin-top: 14px !important; }
+  .grid-2 > .card + .card { margin-top: 0 !important; }
 }
 
 @media (max-width: 900px) {
@@ -2623,14 +2623,32 @@ body:has(#modal:not(:empty)) .tabbar {
   border: 1px solid #fecaca;
 }
 .cust-bal-pill.adv {
-  background: #f0fdf4;
-  color: #15803d;
-  border: 1px solid #86efac;
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
 }
 .cust-bal-pill.zero {
-  background: #f1f5f9;
-  color: #64748b;
-  border: 1px solid #e2e8f0;
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+/* Dashboard Customer Row */
+.dash-cust-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid #f1f5f9;
+  cursor: pointer;
+  transition: background 0.12s ease;
+  width: 100%;
+}
+.dash-cust-row:last-child {
+  border-bottom: none;
+}
+.dash-cust-row:hover {
+  background: #f8fafc;
 }
 
 /* Card Meta: Recent activity & Phone link */
