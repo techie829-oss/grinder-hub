@@ -26,6 +26,9 @@ export function viewTokens() {
       <button type="button" class="btn btn-primary btn-sm" data-act="switch-job-tab" data-tab="grind" data-goto="job" style="border-radius:10px;font-weight:750;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;">
         <span>🎫</span> <span>${t('newTokenServices')}</span>
       </button>
+      <button type="button" class="btn btn-soft btn-sm" data-act="open-scan-modal" style="border:1.5px solid #c7d2fe;background:#eef2ff;color:#3730a3;border-radius:10px;font-weight:750;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;">
+        <span>📸</span> <span>रजिस्टर स्कैन</span>
+      </button>
       <button type="button" class="btn btn-subtle btn-sm" data-act="open-status-modal" style="border:1.5px solid #cbd5e1;padding:8px 14px;border-radius:10px;font-weight:700;display:inline-flex;align-items:center;gap:6px;background:#fff;">
         <span>🔍</span> <span>खोजें</span>
       </button>

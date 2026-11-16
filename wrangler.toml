@@ -19,3 +19,6 @@ database_id = "d80886c4-3927-4250-9b41-0760a31cf036"
 [vars]
 SUPER_ADMIN_KEY = "chakki_admin_2026"
 
+[ai]
+binding = "AI"
+

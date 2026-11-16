@@ -12,6 +12,7 @@ import { saveProduct, deleteProduct } from './controllers/productController.js';
 import { saveVillage, deleteVillage, seedDefaultVillages } from './controllers/villageController.js';
 import { saveSettings, exportData, resetTokenCounter } from './controllers/settingsController.js';
 import { getDaySummary } from './controllers/reportController.js';
+import { testAiConnection, processScanImage, getScanBatch, approveScanBatch } from './controllers/scanController.js';
 import { syncBatch } from './controllers/syncController.js';
 import {
   adminLogin,
@@ -171,17 +172,18 @@ async function route(request, env, url) {
   if (path === '/api/login' && method === 'POST') return login(request, env, url);
   if (path === '/api/logout' && method === 'POST') return logout(request, env, url);
   if (path === '/api/status' && (method === 'GET' || method === 'POST')) return checkStatus(request, env, url);
+  if (path === '/api/scan/test-ai' && method === 'GET') return testAiConnection(request, env);
   if (path === '/api/app-version' && method === 'GET') {
     return json({
       ok: true,
-      version: '2.8.15',
-      versionCode: 17,
+      version: '2.8.16',
+      versionCode: 18,
       downloadUrl: '/tolmaal.apk',
       releasedAt: Date.now(),
       changelog: [
-        'तारीख अनुसार सम्पूर्ण बहीखाता (Date-Wise Order Book) — आज, कल, 2 दिन पहले या कैलेंडर से किसी भी दिन का नकद, उधार, माल डिलीवरी व पेंडिंग हिसाब',
-        'मेन डैशबोर्ड UX व कार्ड्स का संपूर्ण आधुनिकीकरण — नया शॉप हीरो कार्ड, 4 क्विक एक्शन टाइल्स, व स्पष्ट वित्तीय कार्ड्स',
-        'ऑर्डर-वार विस्तृत सूची व 1-क्लिक बिलिंग/डिलीवरी सुविधा',
+        'रजिस्टर/डायरी फोटो स्कैनर (AI Image Scanner) — अलग स्टेजिंग टेबल (scans/scan_items) व स्मार्ट ग्राहक मैपिंग के साथ',
+        'तारीख अनुसार सम्पूर्ण बहीखाता (Date-Wise Order Book) व 1-क्लिक बिलिंग',
+        'डैशबोर्ड UX व कार्ड्स का संपूर्ण आधुनिकीकरण',
       ]
     });
   }
@@ -215,6 +217,9 @@ async function route(request, env, url) {
     return json({ ok: true, state: await buildState(env, business.id, range) });
   }
   if (path === '/api/day-summary' && method === 'GET') return getDaySummary(request, env, business, url);
+  if (path === '/api/scan/process' && method === 'POST') return processScanImage(request, env, business);
+  if (path === '/api/scan/batch' && method === 'GET') return getScanBatch(request, env, business, url);
+  if (path === '/api/scan/approve' && method === 'POST') return approveScanBatch(request, env, business, range);
   if (path === '/api/sync' && method === 'POST') return syncBatch(request, env, business, range);
   if (path === '/api/jobs' && method === 'POST') return createJob(request, env, business, range);
   if (path === '/api/trades' && method === 'POST') return createTrade(request, env, business, range);

@@ -924,3 +924,147 @@ export function openEditTokenModal(tokenId) {
   `);
 }
 
+export function openScanModal() {
+  showModal(`
+    <div class="sheet-head">
+      <div style="font-size:17px;font-weight:850;color:#0f172a;display:flex;align-items:center;gap:6px;">
+        <span>📸</span> <span>रजिस्टर / डायरी फोटो स्कैन</span>
+      </div>
+      <button type="button" class="icon-btn" data-act="close-modal" aria-label="Close">✕</button>
+    </div>
+
+    <div style="padding:16px 0;">
+      <p style="font-size:13px;color:#475569;margin-bottom:16px;line-height:1.5;">
+        अपने रजिस्टर या डायरी के पन्ने की फोटो खींचें। <b>Cloudflare AI</b> हाथ से लिखे नाम, गाँव और वजन को पहचान कर अलग स्टेजिंग टेबल में लाएगा, जहां आप जांचकर मंज़ूरी दे सकेंगे।
+      </p>
+
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <label class="btn btn-primary" style="padding:14px;display:flex;align-items:center;justify-content:center;gap:10px;font-size:15px;font-weight:800;border-radius:14px;cursor:pointer;box-shadow:0 4px 12px rgba(79,70,229,0.25);">
+          <span style="font-size:20px;">📷</span> <span>कैमरा से पन्ने की फोटो खींचें</span>
+          <input type="file" id="scan-camera-input" accept="image/*" capture="environment" style="display:none;" data-act="handle-scan-image">
+        </label>
+
+        <label class="btn btn-soft" style="padding:14px;display:flex;align-items:center;justify-content:center;gap:10px;font-size:14.5px;font-weight:750;border-radius:14px;cursor:pointer;border:1.5px solid #cbd5e1;background:#fff;">
+          <span style="font-size:20px;">🖼️</span> <span>गैलरी से फोटो चुनें</span>
+          <input type="file" id="scan-gallery-input" accept="image/*" style="display:none;" data-act="handle-scan-image">
+        </label>
+      </div>
+
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:12px;margin-top:18px;font-size:12px;color:#64748b;line-height:1.5;">
+        <strong style="color:#0f172a;display:block;margin-bottom:4px;">💡 बेहतर रिज़ल्ट के लिए सुझाव:</strong>
+        • पन्ने की सीधी और पूरी फोटो लें ताकि सभी पंक्तियाँ दिखें।<br>
+        • अच्छी रोशनी रखें और परछाई से बचें।<br>
+        • डेटा सीधे मुख्य बहीखाते में नहीं जाएगा — पहले आपको रिव्यू व एडिट करने का पूरा मौक़ा मिलेगा।
+      </div>
+    </div>
+  `);
+}
+
+export function showScanLoadingModal() {
+  showModal(`
+    <div style="padding:34px 16px;text-align:center;">
+      <div style="font-size:40px;margin-bottom:12px;animation:pulse 1s infinite;">🧠</div>
+      <div style="font-weight:850;font-size:16.5px;color:#0f172a;margin-bottom:6px;">Cloudflare AI पन्ने को पढ़ रहा है…</div>
+      <div style="font-size:12.5px;color:#64748b;line-height:1.5;max-width:320px;margin:0 auto;">
+        हस्तलिखित नाम, गाँव और वज़न की पंक्तियां पहचानी जा रही हैं।<br>कृपया 5-10 सेकंड प्रतीक्षा करें…
+      </div>
+    </div>
+  `);
+}
+
+export function renderScanReviewModal(scanData) {
+  state.currentScan = scanData;
+  const items = scanData.items || [];
+
+  showModal(`
+    <div class="sheet-head">
+      <div>
+        <div style="font-size:16.5px;font-weight:850;color:#0f172a;display:flex;align-items:center;gap:6px;">
+          <span>📸</span> <span>रजिस्टर स्कैन समीक्षा</span>
+        </div>
+        <div style="font-size:11.5px;color:#64748b;margin-top:2px;">
+          कुल <b>${items.length}</b> पंक्तियाँ मिलीं · आवश्यकतानुसार सुधारें या मंज़ूरी दें
+        </div>
+      </div>
+      <button type="button" class="icon-btn" data-act="close-modal" aria-label="Close">✕</button>
+    </div>
+
+    <!-- Option Bar: Direct Output / Zero Loss -->
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:10px 12px;margin:12px 0;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+      <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:750;color:#166534;cursor:pointer;">
+        <input type="checkbox" id="scan-mark-ready-toggle" checked style="width:17px;height:17px;accent-color:#16a34a;">
+        <span>तैयार माल (सीधा Output / Zero Loss)</span>
+      </label>
+      <span class="tiny-chip" style="background:#dcfce7;color:#15803d;font-weight:800;">काट: 0g</span>
+    </div>
+
+    <!-- Scanned Items Review List -->
+    <div style="max-height:55vh;overflow-y:auto;padding-right:4px;-webkit-overflow-scrolling:touch;">
+      ${items.map((it) => `
+        <div class="scan-review-item" id="scan-item-${it.id}" style="background:#fff;border:1.5px solid ${it.matchedCustomerId ? '#bbf7d0' : '#e2e8f0'};border-radius:14px;padding:12px;margin-bottom:10px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <div style="display:flex;align-items:center;gap:6px;min-width:0;flex:1 1 auto;">
+              <span style="background:#e0e7ff;color:#3730a3;font-weight:800;font-size:12px;padding:2px 8px;border-radius:6px;flex:0 0 auto;">#${it.rowIndex}</span>
+              <span style="font-size:11px;color:#64748b;" class="ellipsis">मूल: "${esc(it.rawText)}"</span>
+            </div>
+            <label style="display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:750;color:#334155;cursor:pointer;flex:0 0 auto;margin-left:8px;">
+              <input type="checkbox" class="scan-include-toggle" data-id="${it.id}" checked style="accent-color:#4f46e5;">
+              <span>शामिल करें</span>
+            </label>
+          </div>
+
+          <!-- Customer Match Pill -->
+          <div style="margin-bottom:8px;">
+            ${it.matchedCustomerId ? `
+              <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:750;background:#ecfdf5;color:#047857;border:1px solid #a7f3d0;padding:2px 8px;border-radius:6px;">
+                🟢 मौजूदा ग्राहक: ${esc(it.matchedCustomerName)}${it.matchedCustomerVillage ? ' (' + esc(it.matchedCustomerVillage) + ')' : ''}
+              </span>
+            ` : `
+              <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:750;background:#f8fafc;color:#64748b;border:1px solid #cbd5e1;padding:2px 8px;border-radius:6px;">
+                ⚪ नया ग्राहक (खाता स्वतः बनेगा)
+              </span>
+            `}
+          </div>
+
+          <!-- Editable Inputs -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+            <div>
+              <label style="font-size:10.5px;font-weight:700;color:#64748b;display:block;margin-bottom:2px;">ग्राहक का नाम</label>
+              <input type="text" class="input scan-edit-name" data-id="${it.id}" value="${esc(it.parsedName)}" style="padding:6px 8px;font-size:13px;font-weight:750;">
+            </div>
+            <div>
+              <label style="font-size:10.5px;font-weight:700;color:#64748b;display:block;margin-bottom:2px;">गाँव</label>
+              <input type="text" class="input scan-edit-village" data-id="${it.id}" value="${esc(it.parsedVillage)}" style="padding:6px 8px;font-size:13px;">
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+            <div>
+              <label style="font-size:10.5px;font-weight:700;color:#64748b;display:block;margin-bottom:2px;">आवक (kg)</label>
+              <input type="number" step="0.001" class="input scan-edit-gross" data-id="${it.id}" value="${it.grossWeight}" style="padding:6px 8px;font-size:13px;font-weight:800;">
+            </div>
+            <div>
+              <label style="font-size:10.5px;font-weight:700;color:#64748b;display:block;margin-bottom:2px;">काट (g)</label>
+              <input type="number" step="1" class="input scan-edit-loss" data-id="${it.id}" value="${it.lossG}" style="padding:6px 8px;font-size:13px;">
+            </div>
+            <div>
+              <label style="font-size:10.5px;font-weight:700;color:#15803d;display:block;margin-bottom:2px;">तैयार वापसी (kg)</label>
+              <input type="number" step="0.001" class="input scan-edit-net" data-id="${it.id}" value="${it.netWeight}" style="padding:6px 8px;font-size:13px;font-weight:800;color:#15803d;">
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+
+    <!-- Modal Actions -->
+    <div style="display:flex;gap:8px;margin-top:14px;padding-top:10px;border-top:1px solid #e2e8f0;">
+      <button type="button" class="btn btn-primary" id="btn-submit-scan-approve" data-act="submit-scan-approval" data-scan-id="${scanData.scanId}" style="flex:1;padding:12px;font-size:14px;font-weight:800;border-radius:12px;">
+        ✓ सभी स्वीकृत करें व टोकन बनाएं (${items.length})
+      </button>
+      <button type="button" class="btn btn-ghost" data-act="close-modal" style="padding:12px 16px;border-radius:12px;">
+        रद्द करें
+      </button>
+    </div>
+  `);
+}
+

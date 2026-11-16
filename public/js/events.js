@@ -4,7 +4,8 @@ import { api, withBusy, loadState, applyState, toast, loadAdminData, loadDaySumm
 import { inr, unitOf, esc, qtyFmt } from './utils/formatters.js';
 import { printReceipt } from './utils/print.js';
 import { entryWaText, openWhatsApp } from './utils/whatsapp.js';
-import { closeModal, openCustomer, openCustomerEditModal, openEditTokenModal, showJobDone, findEntry, openStatusModal, renderStatusResult, renderUniversalSearchResults } from './components/modals.js';
+import { closeModal, openCustomer, openCustomerEditModal, openEditTokenModal, openScanModal, showScanLoadingModal, renderScanReviewModal, showJobDone, findEntry, openStatusModal, renderStatusResult, renderUniversalSearchResults } from './components/modals.js';
+import { compressImage } from './utils/imageCompressor.js';
 import { customerRows } from './components/rows.js';
 import { filteredCustomers } from './views/customerView.js';
 import { currentService } from './views/jobView.js';
@@ -622,6 +623,56 @@ export function setupEventListeners() {
         state.q = el.dataset.q || '';
         goTo('customers');
         break;
+
+      case 'open-scan-modal':
+        openScanModal();
+        break;
+
+      case 'submit-scan-approval': {
+        const scanId = el.dataset.scanId;
+        if (!scanId || !state.currentScan) return;
+        const markReady = Boolean(document.getElementById('scan-mark-ready-toggle')?.checked);
+        const payloadItems = [];
+
+        (state.currentScan.items || []).forEach((it) => {
+          const rowEl = document.getElementById(`scan-item-${it.id}`);
+          if (!rowEl) return;
+          const isIncluded = rowEl.querySelector('.scan-include-toggle')?.checked !== false;
+          if (!isIncluded) {
+            payloadItems.push({ id: it.id, action: 'skip' });
+            return;
+          }
+          const nameInput = rowEl.querySelector('.scan-edit-name');
+          const villageInput = rowEl.querySelector('.scan-edit-village');
+          const grossInput = rowEl.querySelector('.scan-edit-gross');
+          const lossInput = rowEl.querySelector('.scan-edit-loss');
+          const netInput = rowEl.querySelector('.scan-edit-net');
+
+          payloadItems.push({
+            id: it.id,
+            action: 'import',
+            name: nameInput ? nameInput.value : it.parsedName,
+            village: villageInput ? villageInput.value : it.parsedVillage,
+            grossWeight: grossInput ? Number(grossInput.value) : it.grossWeight,
+            lossG: lossInput ? Number(lossInput.value) : it.lossG,
+            netWeight: netInput ? Number(netInput.value) : it.netWeight,
+            markReady,
+          });
+        });
+
+        await withBusy(el, async () => {
+          const res = await api('/api/scan/approve', { scanId, items: payloadItems });
+          if (res && res.ok) {
+            closeModal();
+            applyState(res.state);
+            toast(`✓ ${res.importedCount} टोकन सफलतापूर्वक दर्ज हुए!`);
+            goTo('token');
+          } else {
+            toast(res?.error || 'मंज़ूरी विफल रही');
+          }
+        });
+        break;
+      }
 
       case 'trigger-sync':
         toast('Syncing with server…');
@@ -1886,6 +1937,26 @@ export function setupEventListeners() {
     if (tEl.dataset.act === 'change-report-day' || tEl.id === 'report-date-picker') {
       if (tEl.value) {
         loadDaySummary(tEl.value);
+      }
+      return;
+    }
+
+    if (tEl.dataset.act === 'handle-scan-image') {
+      const file = tEl.files && tEl.files[0];
+      if (!file) return;
+      try {
+        showScanLoadingModal();
+        const compressedBase64 = await compressImage(file, 1280, 0.8);
+        const res = await api('/api/scan/process', { image: compressedBase64 });
+        if (res && res.ok) {
+          renderScanReviewModal(res);
+        } else {
+          toast(res?.error || 'फोटो से कोई पंक्ति नहीं पहचानी जा सकी');
+          openScanModal();
+        }
+      } catch (err) {
+        toast('फोटो प्रोसेस करने में समस्या हुई: ' + (err.message || String(err)));
+        openScanModal();
       }
       return;
     }
