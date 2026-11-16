@@ -117,20 +117,62 @@ export function renderCustomerModal() {
       </div>
     </div>
 
-    <!-- Compact Payment Input Bar -->
-    <form data-form="payment" style="display:flex;align-items:center;gap:6px;background:#f8fafc;padding:8px;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:12px;">
-      <input type="hidden" name="customerId" value="${current.customer.id}">
-      <div style="position:relative;flex:1 1 38%;">
-        <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-weight:800;color:#64748b;font-size:13px;">₹</span>
-        <input id="p-amount" name="amount" type="number" step="any" min="0" inputmode="decimal"
-          value="${balance > 0 ? (balance / 100) : ''}" placeholder="रकम"
-          style="width:100%;height:36px;padding:0 8px 0 22px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:13.5px;font-weight:750;background:#fff;box-sizing:border-box;">
-      </div>
-      <input id="p-note" name="note" maxlength="120" placeholder="नोट (Cash/UPI)"
-        style="flex:1 1 37%;height:36px;padding:0 8px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:12px;background:#fff;box-sizing:border-box;">
-      <button class="btn btn-primary" type="submit" style="flex:0 0 auto;height:36px;padding:0 12px;font-size:12.5px;font-weight:800;border-radius:8px;white-space:nowrap;">
-        + जमा
+    <!-- Customer Liya-Diya Khatabook Bar -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+      <button type="button" class="btn" data-act="cust-entry-mode" data-mode="give"
+        style="background:#fef2f2;color:#b91c1c;border:1.5px solid #fecaca;padding:9px 6px;border-radius:10px;font-weight:800;font-size:12.5px;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;">
+        <span>🔴</span> <span>मैंने दिया (उधार)</span>
       </button>
+      <button type="button" class="btn" data-act="cust-entry-mode" data-mode="got"
+        style="background:#ecfdf5;color:#047857;border:1.5px solid #a7f3d0;padding:9px 6px;border-radius:10px;font-weight:800;font-size:12.5px;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;">
+        <span>🟢</span> <span>मुझे मिला (जमा)</span>
+      </button>
+    </div>
+
+    <!-- Interactive Custom Entry Box -->
+    <form data-form="cust-custom-entry" id="cust-entry-box" style="background:#f8fafc;padding:10px;border:1.5px solid #e2e8f0;border-radius:12px;margin-bottom:12px;">
+      <input type="hidden" name="customerId" value="${current.customer.id}">
+      <input type="hidden" id="entry-mode-val" name="entryType" value="debit">
+
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px;">
+        <span id="entry-mode-badge" style="font-size:11.5px;font-weight:800;padding:2px 8px;border-radius:6px;background:#fee2e2;color:#991b1b;">
+          🔴 मैंने दिया (उधार / माल)
+        </span>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;">
+          <button type="button" class="btn btn-xs preset-chip" data-preset="give-atta-1" style="font-size:11px;padding:2px 6px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;font-weight:700;">1kg आटा</button>
+          <button type="button" class="btn btn-xs preset-chip" data-preset="give-atta-2" style="font-size:11px;padding:2px 6px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;font-weight:700;">2kg आटा</button>
+          <button type="button" class="btn btn-xs preset-chip" data-preset="give-cash-100" style="font-size:11px;padding:2px 6px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;font-weight:700;">₹100</button>
+          <button type="button" class="btn btn-xs preset-chip" data-preset="give-cash-500" style="font-size:11px;padding:2px 6px;border-radius:6px;border:1px solid #cbd5e1;background:#fff;font-weight:700;">₹500</button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:3px;">रोकड़ रकम (₹)</label>
+          <div style="position:relative;">
+            <span style="position:absolute;left:8px;top:50%;transform:translateY(-50%);font-weight:800;color:#64748b;font-size:13px;">₹</span>
+            <input id="ce-amount" name="amount" type="number" step="any" min="0" placeholder="0"
+              style="width:100%;height:36px;padding:0 8px 0 22px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:14px;font-weight:800;background:#fff;box-sizing:border-box;">
+          </div>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:#64748b;display:block;margin-bottom:3px;">माल / वजन (वैकल्पिक)</label>
+          <div style="display:flex;gap:4px;">
+            <input id="ce-qty" name="grossWeight" type="number" step="any" min="0" placeholder="उदा. 1"
+              style="width:55%;height:36px;padding:0 6px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:13px;font-weight:700;background:#fff;box-sizing:border-box;">
+            <input id="ce-item" name="itemName" placeholder="आटा"
+              style="width:45%;height:36px;padding:0 6px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:12px;font-weight:700;background:#fff;box-sizing:border-box;">
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:6px;align-items:center;">
+        <input id="ce-note" name="note" maxlength="160" placeholder="विवरण (उदा. आटा पिसा नहीं था, 1kg ले गए)"
+          style="flex:1 1 auto;height:36px;padding:0 8px;border:1.5px solid #cbd5e1;border-radius:8px;font-size:12px;background:#fff;box-sizing:border-box;">
+        <button id="ce-submit-btn" class="btn" type="submit" style="flex:0 0 auto;height:36px;padding:0 14px;font-size:13px;font-weight:800;border-radius:8px;white-space:nowrap;background:#dc2626;color:#fff;border:none;">
+          ✓ जोड़ें
+        </button>
+      </div>
     </form>
 
     <!-- Ledger Section -->
@@ -146,17 +188,35 @@ export function renderCustomerModal() {
             const lossG = e.lossG || 0;
             const netWeight = e.netWeight;
             const hasLoss = e.kind !== 'payment' && (lossG > 0 || netWeight != null);
+            const isDebit = e.kind === 'debit';
+            const isPay = e.kind === 'payment';
+            const avatarBg = isDebit ? '#fee2e2' : (isPay ? '#dcfce7' : '#e0e7ff');
+            const avatarCol = isDebit ? '#b91c1c' : (isPay ? '#15803d' : '#3730a3');
+            const avatarTxt = isDebit ? '📦' : (isPay ? '₹' : esc((e.serviceName || 'C').charAt(0)));
+
+            let titleTxt = '';
+            if (isDebit) {
+              titleTxt = `🔴 मैंने दिया: ${esc(e.itemName || 'उधार')}${e.grossWeight ? ' · ' + qtyFmt(e.grossWeight) + ' ' + unitOf(e.unit) : ''}`;
+            } else if (isPay) {
+              titleTxt = `🟢 मुझे मिला: ${esc(e.itemName || 'भुगतान प्राप्त')}`;
+            } else {
+              titleTxt = `${esc(e.serviceName || 'Order')} · ${qtyFmt(e.grossWeight || e.qty)} ${unitOf(e.unit)}`;
+            }
+
             return `
             <div class="row-item" style="padding:8px 6px;gap:8px;">
-              <span class="avatar small${e.kind === 'payment' ? ' pay' : ''}" style="width:30px;height:30px;font-size:13px;flex:0 0 30px;">${e.kind === 'payment' ? '₹' : esc((e.serviceName || 'C').charAt(0))}</span>
+              <span class="avatar small" style="width:30px;height:30px;font-size:13px;flex:0 0 30px;background:${avatarBg};color:${avatarCol};border-radius:8px;display:grid;place-items:center;">${avatarTxt}</span>
               <span class="grow" style="min-width:0;">
-                <span class="row-title ellipsis" style="font-size:13px;font-weight:750;">${e.kind === 'payment' ? 'भुगतान प्राप्त' : esc(e.serviceName || 'Order') + ' · ' + qtyFmt(e.qty) + ' ' + unitOf(e.unit)}</span>
+                <span class="row-title ellipsis" style="font-size:13px;font-weight:750;">${titleTxt}</span>
                 <span class="row-sub" style="font-size:11px;">
                   ${dateTxt(e.at)} · ${timeTxt(e.at)}${e.tokenNo ? ' · #' + e.tokenNo : ''}
+                  ${e.note ? ` · <span style="color:#0f172a;font-weight:600;">"${esc(e.note)}"</span>` : ''}
                   ${hasLoss ? ` · <span style="color:#ea580c">-${lossG}g</span> · <span style="color:#16a34a">${qtyFmt(netWeight)} ${unitOf(e.unit)}</span>` : ''}
                 </span>
               </span>
-              <span class="row-amt${e.kind === 'payment' ? ' amt-plus' : ''}" style="font-size:13px;font-weight:800;white-space:nowrap;">${e.kind === 'payment' ? '+' : ''}${inr(e.amountPaise)}</span>
+              <span class="row-amt${isPay ? ' amt-plus' : ''}" style="font-size:13px;font-weight:800;white-space:nowrap;${isDebit ? 'color:#dc2626;' : ''}">
+                ${isDebit ? (e.amountPaise > 0 ? '-' + inr(e.amountPaise) : (e.grossWeight ? e.grossWeight + ' ' + unitOf(e.unit) : 'उधार')) : (isPay ? '+' + inr(e.amountPaise) : inr(e.amountPaise))}
+              </span>
               <div style="display:flex;align-items:center;gap:2px;flex:0 0 auto;">
                 <button type="button" class="icon-btn" data-act="print-entry" data-id="${e.id}" aria-label="Print Receipt" title="रसीद प्रिंट" style="width:28px;height:28px;font-size:12px;">🧾</button>
                 <button type="button" class="icon-btn" data-act="wa-entry" data-id="${e.id}" aria-label="WhatsApp" title="व्हाट्सएप रसीद" style="width:28px;height:28px;font-size:12px;">📱</button>
@@ -1067,4 +1127,173 @@ export function renderScanReviewModal(scanData) {
     </div>
   `);
 }
+
+export function openExpenseModal() {
+  showModal(`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #e2e8f0;">
+      <h2 style="font-size:16px;font-weight:800;color:#0f172a;display:flex;align-items:center;gap:6px;margin:0;">
+        <span>📉</span> <span>दुकान का खर्चा दर्ज करें</span>
+      </h2>
+      <button type="button" class="icon-btn" data-act="close-modal" aria-label="Close" style="width:32px;height:32px;border-radius:8px;">✕</button>
+    </div>
+
+    <form data-form="expense" style="display:flex;flex-direction:column;gap:12px;">
+      <!-- Expense Category Chips -->
+      <div>
+        <label style="font-size:12px;font-weight:750;color:#475569;display:block;margin-bottom:6px;">खर्चे की श्रेणी चुनें:</label>
+        <div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:6px;" id="expense-cat-chips">
+          <label style="border:1.5px solid #6366f1;background:#eef2ff;color:#4338ca;padding:8px 4px;border-radius:10px;text-align:center;font-size:12px;font-weight:800;cursor:pointer;display:block;">
+            <input type="radio" name="category" value="diesel" checked style="display:none;">
+            ⛽ डीज़ल
+          </label>
+          <label style="border:1.5px solid #cbd5e1;background:#fff;color:#334155;padding:8px 4px;border-radius:10px;text-align:center;font-size:12px;font-weight:750;cursor:pointer;display:block;">
+            <input type="radio" name="category" value="electricity" style="display:none;">
+            ⚡ बिजली
+          </label>
+          <label style="border:1.5px solid #cbd5e1;background:#fff;color:#334155;padding:8px 4px;border-radius:10px;text-align:center;font-size:12px;font-weight:750;cursor:pointer;display:block;">
+            <input type="radio" name="category" value="labor" style="display:none;">
+            👷 मजदूरी
+          </label>
+          <label style="border:1.5px solid #cbd5e1;background:#fff;color:#334155;padding:8px 4px;border-radius:10px;text-align:center;font-size:12px;font-weight:750;cursor:pointer;display:block;">
+            <input type="radio" name="category" value="tea" style="display:none;">
+            ☕ चाय-नाश्ता
+          </label>
+          <label style="border:1.5px solid #cbd5e1;background:#fff;color:#334155;padding:8px 4px;border-radius:10px;text-align:center;font-size:12px;font-weight:750;cursor:pointer;display:block;">
+            <input type="radio" name="category" value="maintenance" style="display:none;">
+            🔧 मेंटेनेंस/ग्रीस
+          </label>
+          <label style="border:1.5px solid #cbd5e1;background:#fff;color:#334155;padding:8px 4px;border-radius:10px;text-align:center;font-size:12px;font-weight:750;cursor:pointer;display:block;">
+            <input type="radio" name="category" value="other" style="display:none;">
+            📦 अन्य
+          </label>
+        </div>
+      </div>
+
+      <!-- Amount Input with Presets -->
+      <div>
+        <label style="font-size:12px;font-weight:750;color:#475569;display:block;margin-bottom:4px;">खर्च रकम (₹):</label>
+        <div style="position:relative;">
+          <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-weight:800;color:#64748b;font-size:16px;">₹</span>
+          <input type="number" step="any" min="1" id="exp-amount-input" name="amount" placeholder="0" required
+            style="width:100%;height:44px;padding:0 12px 0 28px;border:1.5px solid #cbd5e1;border-radius:10px;font-size:18px;font-weight:800;color:#0f172a;box-sizing:border-box;">
+        </div>
+        <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
+          <button type="button" class="btn btn-xs preset-chip" data-preset="exp-50" style="padding:4px 8px;font-size:11.5px;font-weight:750;border-radius:6px;border:1px solid #cbd5e1;background:#fff;">₹50</button>
+          <button type="button" class="btn btn-xs preset-chip" data-preset="exp-100" style="padding:4px 8px;font-size:11.5px;font-weight:750;border-radius:6px;border:1px solid #cbd5e1;background:#fff;">₹100</button>
+          <button type="button" class="btn btn-xs preset-chip" data-preset="exp-200" style="padding:4px 8px;font-size:11.5px;font-weight:750;border-radius:6px;border:1px solid #cbd5e1;background:#fff;">₹200</button>
+          <button type="button" class="btn btn-xs preset-chip" data-preset="exp-500" style="padding:4px 8px;font-size:11.5px;font-weight:750;border-radius:6px;border:1px solid #cbd5e1;background:#fff;">₹500</button>
+          <button type="button" class="btn btn-xs preset-chip" data-preset="exp-1000" style="padding:4px 8px;font-size:11.5px;font-weight:750;border-radius:6px;border:1px solid #cbd5e1;background:#fff;">₹1,000</button>
+        </div>
+      </div>
+
+      <!-- Payment Mode -->
+      <div>
+        <label style="font-size:12px;font-weight:750;color:#475569;display:block;margin-bottom:4px;">भुगतान माध्यम:</label>
+        <div style="display:flex;gap:10px;">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:750;color:#0f172a;cursor:pointer;">
+            <input type="radio" name="paymentMode" value="cash" checked> 💵 गल्ला रोकड़ (Cash)
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:750;color:#0f172a;cursor:pointer;">
+            <input type="radio" name="paymentMode" value="upi"> 📱 ऑनलाइन / UPI
+          </label>
+        </div>
+      </div>
+
+      <!-- Note -->
+      <div>
+        <label style="font-size:12px;font-weight:750;color:#475569;display:block;margin-bottom:4px;">विवरण / टिप्पणी (वैकल्पिक):</label>
+        <input type="text" name="note" maxlength="200" placeholder="उदा. 5 लीटर जनरेटर हेतु, या नाश्ता बिल"
+          style="width:100%;height:38px;padding:0 10px;border:1.5px solid #cbd5e1;border-radius:10px;font-size:13px;box-sizing:border-box;">
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:6px;">
+        <button type="submit" class="btn btn-primary" style="flex:1;padding:12px;font-size:14px;font-weight:800;border-radius:10px;background:#ea580c;border:none;">
+          ✓ खर्च दर्ज करें
+        </button>
+        <button type="button" class="btn btn-ghost" data-act="close-modal" style="padding:12px 14px;border-radius:10px;">
+          ✕ रद्द
+        </button>
+      </div>
+    </form>
+  `);
+}
+
+export function openSmartConfirmModal(parsed) {
+  if (!parsed) return;
+  const c = parsed.customer;
+  const isDebit = parsed.type === 'customer_debit';
+  const isCredit = parsed.type === 'customer_credit';
+  const isExpense = parsed.type === 'expense';
+
+  const catLabels = {
+    diesel: '⛽ डीज़ल',
+    electricity: '⚡ बिजली',
+    labor: '👷 मजदूरी',
+    tea: '☕ चाय-नाश्ता',
+    maintenance: '🔧 मरम्मत/ग्रीस',
+    other: '📦 अन्य खर्चा'
+  };
+
+  showModal(`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #e2e8f0;">
+      <h2 style="font-size:16px;font-weight:800;color:#0f172a;display:flex;align-items:center;gap:6px;margin:0;">
+        <span>🤖</span> <span>स्मार्ट मुंशी — पुष्टि करें</span>
+      </h2>
+      <button type="button" class="icon-btn" data-act="close-modal" aria-label="Close" style="width:32px;height:32px;border-radius:8px;">✕</button>
+    </div>
+
+    <div style="background:${isDebit ? '#fef2f2' : (isCredit ? '#ecfdf5' : '#fff7ed')};border:1.5px solid ${isDebit ? '#fecaca' : (isCredit ? '#a7f3d0' : '#fed7aa')};border-radius:12px;padding:14px;margin-bottom:14px;">
+      <div style="font-size:12px;font-weight:800;text-transform:uppercase;color:${isDebit ? '#991b1b' : (isCredit ? '#047857' : '#c2410c')};margin-bottom:8px;">
+        ${isDebit ? '🔴 ग्राहक उधार / माल दिया' : (isCredit ? '🟢 ग्राहक जमा / भुगतान' : '📉 दुकान का खर्चा')}
+      </div>
+
+      ${c ? `
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:16px;">👤</span>
+        <span style="font-size:15px;font-weight:800;color:#0f172a;">${esc(c.name)}</span>
+        ${c.village ? `<span style="font-size:11px;background:#fff;padding:2px 8px;border-radius:6px;font-weight:700;border:1px solid #cbd5e1;">📍 ${esc(c.village)}</span>` : ''}
+      </div>` : ''}
+
+      ${isExpense ? `
+      <div style="font-size:15px;font-weight:800;color:#0f172a;margin-bottom:8px;">
+        श्रेणी: ${catLabels[parsed.category] || parsed.category}
+      </div>` : ''}
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;background:#fff;padding:10px;border-radius:10px;border:1px solid #e2e8f0;margin-bottom:8px;">
+        <div>
+          <div style="font-size:11px;color:#64748b;font-weight:700;">रकम:</div>
+          <div style="font-size:18px;font-weight:850;color:#0f172a;">${parsed.amount ? inr(parsed.amount * 100) : (parsed.weightKg ? '—' : '₹0')}</div>
+        </div>
+        ${parsed.weightKg ? `
+        <div>
+          <div style="font-size:11px;color:#64748b;font-weight:700;">माल / वजन:</div>
+          <div style="font-size:16px;font-weight:850;color:#ea580c;">${parsed.weightKg} ${parsed.unit || 'kg'} ${esc(parsed.itemName || '')}</div>
+        </div>` : ''}
+      </div>
+
+      <div style="font-size:12px;color:#475569;">
+        <strong>नोट:</strong> "${esc(parsed.note || parsed.rawText || '')}"
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px;">
+      ${isExpense ? `
+      <button type="button" class="btn btn-primary" id="btn-confirm-smart" data-act="confirm-smart-expense"
+        data-cat="${parsed.category}" data-amt="${parsed.amount || 0}" data-note="${esc(parsed.note || '')}"
+        style="flex:1;padding:12px;font-size:14px;font-weight:800;border-radius:10px;background:#ea580c;border:none;">
+        ✓ खर्चा दर्ज करें
+      </button>` : `
+      <button type="button" class="btn btn-primary" id="btn-confirm-smart" data-act="confirm-smart-entry"
+        data-cid="${c ? c.id : ''}" data-type="${isDebit ? 'debit' : 'payment'}" data-amt="${parsed.amount || 0}"
+        data-qty="${parsed.weightKg || 0}" data-item="${esc(parsed.itemName || '')}" data-note="${esc(parsed.note || '')}"
+        style="flex:1;padding:12px;font-size:14px;font-weight:800;border-radius:10px;background:${isDebit ? '#dc2626' : '#16a34a'};border:none;">
+        ✓ ${isDebit ? 'उधार दर्ज करें' : 'जमा दर्ज करें'}
+      </button>`}
+      <button type="button" class="btn btn-ghost" data-act="close-modal" style="padding:12px 16px;border-radius:10px;">
+        ✕ रद्द
+      </button>
+    </div>
+  `);
+}
+
 

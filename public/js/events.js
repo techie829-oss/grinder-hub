@@ -4,7 +4,8 @@ import { api, withBusy, loadState, applyState, toast, loadAdminData, loadDaySumm
 import { inr, unitOf, esc, qtyFmt } from './utils/formatters.js';
 import { printReceipt } from './utils/print.js';
 import { entryWaText, openWhatsApp } from './utils/whatsapp.js';
-import { closeModal, openCustomer, openCustomerEditModal, openEditTokenModal, openScanModal, showScanLoadingModal, renderScanReviewModal, showJobDone, findEntry, openStatusModal, renderStatusResult, renderUniversalSearchResults } from './components/modals.js';
+import { closeModal, openCustomer, openCustomerEditModal, openEditTokenModal, openScanModal, showScanLoadingModal, renderScanReviewModal, showJobDone, findEntry, openStatusModal, renderStatusResult, renderUniversalSearchResults, openExpenseModal, openSmartConfirmModal } from './components/modals.js';
+import { parseSmartQuery } from './utils/smartAssistant.js';
 import { compressImage } from './utils/imageCompressor.js';
 import { customerRows } from './components/rows.js';
 import { filteredCustomers } from './views/customerView.js';
@@ -576,6 +577,37 @@ export function setupEventListeners() {
       return;
     }
 
+    const presetBtn = ev.target.closest('.preset-chip');
+    if (presetBtn) {
+      const p = presetBtn.dataset.preset;
+      if (p === 'give-atta-1') {
+        const q = document.getElementById('ce-qty');
+        const it = document.getElementById('ce-item');
+        const n = document.getElementById('ce-note');
+        if (q) q.value = '1';
+        if (it) it.value = 'आटा';
+        if (n && !n.value) n.value = '1kg आटा उधार ले गए';
+      } else if (p === 'give-atta-2') {
+        const q = document.getElementById('ce-qty');
+        const it = document.getElementById('ce-item');
+        const n = document.getElementById('ce-note');
+        if (q) q.value = '2';
+        if (it) it.value = 'आटा';
+        if (n && !n.value) n.value = '2kg आटा उधार ले गए';
+      } else if (p === 'give-cash-100') {
+        const amt = document.getElementById('ce-amount');
+        if (amt) amt.value = '100';
+      } else if (p === 'give-cash-500') {
+        const amt = document.getElementById('ce-amount');
+        if (amt) amt.value = '500';
+      } else if (p && p.startsWith('exp-')) {
+        const val = p.replace('exp-', '');
+        const expInput = document.getElementById('exp-amount-input');
+        if (expInput) expInput.value = val;
+      }
+      return;
+    }
+
     const roundPill = ev.target.closest('.round-pill');
     if (roundPill) {
       const val = roundPill.dataset.val;
@@ -694,6 +726,88 @@ export function setupEventListeners() {
       case 'dismiss-update-banner': {
         const { dismissUpdateBanner } = await import('./utils/updater.js');
         dismissUpdateBanner();
+        break;
+      }
+
+      case 'open-expense-modal':
+        openExpenseModal();
+        break;
+
+      case 'cust-entry-mode': {
+        const mode = el.dataset.mode;
+        const isGive = mode === 'give';
+        const modeVal = document.getElementById('entry-mode-val');
+        const badge = document.getElementById('entry-mode-badge');
+        const submitBtn = document.getElementById('ce-submit-btn');
+        const noteInput = document.getElementById('ce-note');
+        if (modeVal) modeVal.value = isGive ? 'debit' : 'payment';
+        if (badge) {
+          badge.style.background = isGive ? '#fee2e2' : '#dcfce7';
+          badge.style.color = isGive ? '#991b1b' : '#15803d';
+          badge.textContent = isGive ? '🔴 मैंने दिया (उधार / माल)' : '🟢 मुझे मिला (जमा / रोकड़)';
+        }
+        if (submitBtn) {
+          submitBtn.style.background = isGive ? '#dc2626' : '#16a34a';
+          submitBtn.textContent = isGive ? '✓ उधार जोड़ें' : '✓ जमा जोड़ें';
+        }
+        if (noteInput && !noteInput.value) {
+          noteInput.placeholder = isGive ? 'विवरण (उदा. आटा पिसा नहीं था, 1kg ले गए)' : 'विवरण (उदा. नकद मिला / PhonePe)';
+        }
+        break;
+      }
+
+      case 'confirm-smart-entry': {
+        const cid = el.dataset.cid;
+        const entryType = el.dataset.type;
+        const amount = Number(el.dataset.amt) || 0;
+        const grossWeight = Number(el.dataset.qty) || 0;
+        const itemName = el.dataset.item || '';
+        const note = el.dataset.note || '';
+        await withBusy(el, async () => {
+          const res = await api('/api/customers/entry', { customerId: cid, entryType, amount, grossWeight, itemName, note });
+          if (res && res.state) {
+            applyState(res.state);
+            closeModal();
+            toast(entryType === 'debit' ? '✓ उधार / माल प्रविष्टि दर्ज की गई' : '✓ जमा प्रविष्टि दर्ज की गई');
+          }
+        });
+        break;
+      }
+
+      case 'confirm-smart-expense': {
+        const category = el.dataset.cat || 'other';
+        const amount = Number(el.dataset.amt) || 0;
+        const note = el.dataset.note || '';
+        await withBusy(el, async () => {
+          const res = await api('/api/expenses', { category, amount, paymentMode: 'cash', note });
+          if (res && res.state) {
+            applyState(res.state);
+            closeModal();
+            toast('✓ दुकान का खर्चा दर्ज किया गया');
+          }
+        });
+        break;
+      }
+
+      case 'smart-voice-mic': {
+        startSmartVoiceRecognition();
+        break;
+      }
+
+      case 'smart-submit': {
+        const input = document.getElementById('smart-input');
+        if (input && input.value.trim()) {
+          const parsed = parseSmartQuery(input.value.trim());
+          if (parsed) {
+            if (parsed.type === 'open_customer') {
+              openCustomer(parsed.customer.id);
+            } else if (parsed.type === 'unknown') {
+              toast('समझ नहीं आया, कृपया नाम या खर्चा दोबारा बोलें/लिखें');
+            } else {
+              openSmartConfirmModal(parsed);
+            }
+          }
+        }
         break;
       }
 
@@ -2775,6 +2889,52 @@ export function setupEventListeners() {
       return;
     }
 
+    if (kind === 'cust-custom-entry') {
+      await withBusy(form.querySelector('[type="submit"]'), async () => {
+        const payload = {
+          customerId: fd.get('customerId'),
+          entryType: fd.get('entryType') || 'debit',
+          amount: Number(fd.get('amount')) || 0,
+          grossWeight: Number(fd.get('grossWeight')) || 0,
+          itemName: String(fd.get('itemName') || '').trim(),
+          unit: 'kg',
+          note: String(fd.get('note') || '').trim(),
+        };
+
+        const data = await api('/api/customers/entry', payload);
+        if (data && data.state) {
+          applyState(data.state);
+          toast(payload.entryType === 'debit' ? '✓ उधार / माल प्रविष्टि दर्ज की गई' : '✓ जमा प्रविष्टि दर्ज की गई');
+          if (state.customer && state.customer.customer.id === payload.customerId) {
+            const detail = await api(`/api/customer?id=${encodeURIComponent(payload.customerId)}`);
+            if (detail && detail.ok) {
+              state.customer = detail;
+              renderCustomerModal();
+            }
+          }
+        }
+      });
+      return;
+    }
+
+    if (kind === 'expense') {
+      await withBusy(form.querySelector('[type="submit"]'), async () => {
+        const payload = {
+          category: form.querySelector('input[name="category"]:checked')?.value || 'other',
+          amount: Number(fd.get('amount')) || 0,
+          paymentMode: form.querySelector('input[name="paymentMode"]:checked')?.value || 'cash',
+          note: String(fd.get('note') || '').trim(),
+        };
+        const data = await api('/api/expenses', payload);
+        if (data && data.state) {
+          applyState(data.state);
+          closeModal();
+          toast('✓ दुकान का खर्चा दर्ज किया गया');
+        }
+      });
+      return;
+    }
+
     if (kind === 'password') {
       await withBusy(form.querySelector('[type="submit"]'), async () => {
         const data = await api('/api/password', {
@@ -2947,3 +3107,66 @@ export function setupEventListeners() {
     }
   });
 }
+
+export function startSmartVoiceRecognition() {
+  const SpeechRecognition = (typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition));
+  if (!SpeechRecognition) {
+    toast('इस ब्राउज़र में वॉइस सपोर्ट नहीं है। कृपया लिखकर दर्ज करें।');
+    return;
+  }
+  const recognition = new SpeechRecognition();
+  recognition.lang = 'hi-IN';
+  recognition.interimResults = false;
+  recognition.maxAlternatives = 1;
+
+  const micBtn = document.getElementById('smart-mic-btn');
+  const input = document.getElementById('smart-input');
+  if (micBtn) {
+    micBtn.classList.add('recording');
+    micBtn.textContent = '🔴 सुन रहे हैं…';
+  }
+  toast('🎤 बोलिए… (उदा. सतीश सहजनी 1kg आटा, या डीजल 500)');
+
+  recognition.onresult = (event) => {
+    const transcript = event.results[0][0].transcript;
+    if (input) input.value = transcript;
+    toast(`सुना: "${transcript}"`);
+    const parsed = parseSmartQuery(transcript);
+    if (parsed) {
+      if (parsed.type === 'open_customer') {
+        openCustomer(parsed.customer.id);
+      } else if (parsed.type === 'unknown') {
+        toast(`"${transcript}" को समझ नहीं पाए। कृपया सही नाम या विवरण दें।`);
+      } else {
+        openSmartConfirmModal(parsed);
+      }
+    }
+  };
+
+  recognition.onerror = (event) => {
+    if (micBtn) {
+      micBtn.classList.remove('recording');
+      micBtn.textContent = '🎙️';
+    }
+    if (event.error !== 'no-speech') {
+      toast('वॉइस त्रुटि: ' + event.error);
+    }
+  };
+
+  recognition.onend = () => {
+    if (micBtn) {
+      micBtn.classList.remove('recording');
+      micBtn.textContent = '🎙️';
+    }
+  };
+
+  try {
+    recognition.start();
+  } catch (err) {
+    if (micBtn) {
+      micBtn.classList.remove('recording');
+      micBtn.textContent = '🎙️';
+    }
+  }
+}
+

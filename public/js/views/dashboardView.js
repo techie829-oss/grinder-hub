@@ -48,8 +48,32 @@ export function viewDashboard() {
 
   ${tokenCard()}
 
-  <!-- 4 Action Launcher Tiles -->
-  <div class="dash-launcher-grid">
+  <!-- Smart Voice & Text Assistant Bar (डिजिटल मुंशी 🎙️) -->
+  <div class="card smart-bar-wrap" style="background:#ffffff;border:1.5px solid #c7d2fe;border-radius:16px;padding:12px;margin-bottom:14px;box-shadow:0 4px 14px rgba(99,102,241,0.08);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:4px;">
+      <span style="font-size:12px;font-weight:800;color:#4338ca;display:flex;align-items:center;gap:6px;">
+        <span>🎙️</span> <span>डिजिटल मुंशी (बोलकर या लिखकर 1-टैप में हिसाब)</span>
+      </span>
+      <span style="font-size:11px;color:#64748b;font-weight:600;">उदा. <i>"सतीश सहजनी 1kg आटा"</i> या <i>"डीजल 500"</i></span>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <div style="position:relative;flex:1 1 auto;min-width:0;">
+        <input id="smart-input" placeholder="सतीश सहजनी 1kg आटा, या डीजल 500, या सुरेश 200 जमा…"
+          style="width:100%;height:42px;padding:0 12px;border:1.5px solid #cbd5e1;border-radius:10px;font-size:13.5px;font-weight:700;color:#0f172a;box-sizing:border-box;">
+      </div>
+      <button type="button" id="smart-mic-btn" class="btn" data-act="smart-voice-mic" title="माइक दबाकर बोलें"
+        style="height:42px;padding:0 12px;background:#6366f1;color:#fff;border-radius:10px;border:none;font-size:16px;font-weight:800;display:flex;align-items:center;gap:4px;cursor:pointer;flex-shrink:0;">
+        🎙️
+      </button>
+      <button type="button" class="btn btn-primary" data-act="smart-submit" title="दर्ज करें"
+        style="height:42px;padding:0 14px;border-radius:10px;font-size:13px;font-weight:800;cursor:pointer;flex-shrink:0;">
+        दर्ज करें
+      </button>
+    </div>
+  </div>
+
+  <!-- Action Launcher Tiles (with Shop Expense) -->
+  <div class="dash-launcher-grid" style="grid-template-columns:repeat(auto-fit, minmax(130px, 1fr));">
     <button type="button" class="dash-launcher-tile tile-purple" data-act="goto" data-view="token">
       <span class="dash-tile-icon">🌾</span>
       <span class="dash-tile-title">नया टोकन / काम</span>
@@ -59,6 +83,11 @@ export function viewDashboard() {
       <span class="dash-tile-icon">🛒</span>
       <span class="dash-tile-title">माल बिक्री</span>
       <span class="dash-tile-sub">आटा, तेल, चोकर आदि</span>
+    </button>
+    <button type="button" class="dash-launcher-tile" data-act="open-expense-modal" style="background:#fff7ed;border-color:#fed7aa;color:#c2410c;">
+      <span class="dash-tile-icon">📉</span>
+      <span class="dash-tile-title" style="color:#9a3412;">दुकान का खर्चा</span>
+      <span class="dash-tile-sub" style="color:#c2410c;">डीज़ल, बिजली, चाय आदि</span>
     </button>
     <button type="button" class="dash-launcher-tile tile-amber" data-act="switch-job-tab" data-tab="purchase" data-goto="job">
       <span class="dash-tile-icon">📥</span>
@@ -73,13 +102,21 @@ export function viewDashboard() {
   </div>
 
   <!-- Modern Financial & Operational KPI Cards -->
-  <div class="kpis mt-14">
+  <div class="kpis mt-14" style="grid-template-columns:repeat(auto-fit, minmax(160px, 1fr));">
     <div class="kpi ${s.cashPaise >= 0 ? 'green' : 'amber'}" style="${s.cashPaise < 0 ? 'background:#fff7ed;border-color:#fed7aa;' : 'background:#f0fdf4;border-color:#bbf7d0;'}">
       <div class="kpi-label" style="${s.cashPaise < 0 ? 'color:#c2410c;' : 'color:#15803d;'}">
         <span>💵</span> <span>गल्ले में नकद रोकड़</span>
       </div>
       <div class="kpi-value" style="${s.cashPaise < 0 ? 'color:#ea580c;' : 'color:#16a34a;'}">${inr(s.cashPaise)}</div>
       <div class="kpi-sub">${s.cashPaise < 0 ? 'खर्च बिक्री से अधिक' : 'काउंटर में शुद्ध नकद'}</div>
+    </div>
+
+    <div class="kpi" style="background:#fff7ed;border-color:#fed7aa;cursor:pointer;" data-act="open-expense-modal">
+      <div class="kpi-label" style="color:#c2410c;">
+        <span>📉</span> <span>दुकान खर्च</span>
+      </div>
+      <div class="kpi-value" style="color:#ea580c;">${inr(s.expensePaise || 0)}</div>
+      <div class="kpi-sub">+ खर्च दर्ज करें ➔</div>
     </div>
 
     <div class="kpi accent">
@@ -95,7 +132,7 @@ export function viewDashboard() {
         <span>🔴</span> <span>आज का नया उधार</span>
       </div>
       <div class="kpi-value" style="color:#d97706;">${inr(s.creditPaise)}</div>
-      <div class="kpi-sub">${s.creditPaise > 0 ? 'आज ग्राहकों को दिया उधार' : 'आज कोई नया उधार नहीं ✓'}</div>
+      <div class="kpi-sub">${s.creditPaise > 0 ? 'आज दिया उधार' : 'आज नया उधार नहीं ✓'}</div>
     </div>
 
     <div class="kpi" style="background:#fef2f2;border-color:#fecaca;">
@@ -179,7 +216,7 @@ export function viewDashboard() {
                     ${c.phone ? `<span>📞 ${phoneFmt(c.phone)}</span>` : ''}
                   </div>
                 </div>
-                <div style="flex:0 0 auto;text-align:right;">
+                <div style="flex:0 0 auto;text-align:right;margin-left:auto;padding-left:6px;">
                   <span class="cust-bal-pill ${cls}">
                     ${text}
                   </span>

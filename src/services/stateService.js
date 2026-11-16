@@ -24,7 +24,7 @@ export async function buildState(env, businessId, range) {
               CASE WHEN LENGTH(COALESCE(c.photo, '')) > 8000 THEN '' ELSE COALESCE(c.photo, '') END AS photo,
               CASE WHEN LENGTH(COALESCE(c.photo, '')) > 0 THEN 1 ELSE 0 END AS has_photo,
               c.created_at,
-              COALESCE(SUM(CASE WHEN e.kind IN ('job', 'sale') AND e.paid = 0 THEN e.amount_paise
+              COALESCE(SUM(CASE WHEN e.kind IN ('job', 'sale', 'debit') AND e.paid = 0 THEN e.amount_paise
                                 WHEN e.kind = 'purchase' AND e.paid = 0 THEN -e.amount_paise
                                 WHEN e.kind = 'payment' THEN -e.amount_paise ELSE 0 END), 0) AS balance_paise,
               MAX(e.created_at) AS last_at
@@ -67,7 +67,7 @@ export async function buildState(env, businessId, range) {
               COALESCE(SUM(CASE WHEN kind IN ('job', 'sale') AND paid = 1 THEN amount_paise ELSE 0 END), 0) AS cash_sales,
               COALESCE(SUM(CASE WHEN kind = 'payment' THEN amount_paise ELSE 0 END), 0) AS recovered,
               COALESCE(SUM(CASE WHEN kind = 'purchase' AND paid = 1 THEN amount_paise ELSE 0 END), 0) AS cash_purchase_paid,
-              COALESCE(SUM(CASE WHEN kind IN ('job', 'sale') AND paid = 0 THEN amount_paise ELSE 0 END), 0) AS credit,
+              COALESCE(SUM(CASE WHEN kind IN ('job', 'sale', 'debit') AND paid = 0 THEN amount_paise ELSE 0 END), 0) AS credit,
               COALESCE(SUM(CASE WHEN kind = 'purchase' AND paid = 0 THEN amount_paise ELSE 0 END), 0) AS farmer_payable,
               COALESCE(SUM(CASE WHEN kind = 'job' THEN gross_weight ELSE 0 END), 0) AS gross_weight,
               COALESCE(SUM(CASE WHEN kind = 'job' THEN loss_g ELSE 0 END), 0) AS loss_g,
@@ -93,6 +93,13 @@ export async function buildState(env, businessId, range) {
     env.DB.prepare('SELECT id, name, type, unit, default_rate_paise, active FROM products WHERE business_id = ? AND active = 1 ORDER BY name ASC').bind(businessId),
     // 9: configured shop villages (one-time fast query, zero distinct scans!)
     env.DB.prepare('SELECT id, name, display_order FROM villages WHERE business_id = ? ORDER BY display_order ASC, name ASC').bind(businessId),
+    // 10: expenses for range
+    env.DB.prepare(
+      `SELECT id, category, amount_paise, payment_mode, note, day, created_at
+         FROM expenses
+        WHERE business_id = ? AND ${entriesTimeCondition.replace(/e\./g, '')}
+        ORDER BY created_at DESC LIMIT 100`
+    ).bind(...entriesTimeBinds),
   ]);
 
   const rawVillages = (results[9]?.results || []).map((v, idx) => ({
@@ -191,10 +198,22 @@ export async function buildState(env, businessId, range) {
   const maxTokenNo = tokensToday.reduce((m, t) => Math.max(m, t.no), 0);
   const lastNo = (counter && counter.last_no != null) ? counter.last_no : maxTokenNo;
 
+  const expenses = (results[10]?.results || []).map((ex) => ({
+    id: ex.id,
+    category: ex.category,
+    amountPaise: Number(ex.amount_paise) || 0,
+    paymentMode: ex.payment_mode || 'cash',
+    note: ex.note || '',
+    day: ex.day,
+    at: ex.created_at,
+  }));
+  const expensePaise = expenses.reduce((sum, e) => sum + e.amountPaise, 0);
+  const cashExpensePaise = expenses.filter((e) => e.paymentMode === 'cash').reduce((sum, e) => sum + e.amountPaise, 0);
+
   const cashSales = Number(s.cash_sales) || 0;
   const recovered = Number(s.recovered) || 0;
   const cashPurchasePaid = Number(s.cash_purchase_paid) || 0;
-  const netCashInHand = cashSales + recovered - cashPurchasePaid;
+  const netCashInHand = cashSales + recovered - cashPurchasePaid - cashExpensePaise;
 
   return {
     business: {
@@ -217,6 +236,7 @@ export async function buildState(env, businessId, range) {
     products,
     customers,
     entries,
+    expenses,
     tokens: {
       day,
       tokenMode: biz.token_mode || 'daily',
@@ -240,6 +260,8 @@ export async function buildState(env, businessId, range) {
       cashPaise: netCashInHand,
       creditPaise: s.credit || 0,
       farmerPayablePaise,
+      expensePaise,
+      cashExpensePaise,
       grossWeight: s.gross_weight || 0,
       lossG: s.loss_g || 0,
       netWeight: s.net_weight || 0,

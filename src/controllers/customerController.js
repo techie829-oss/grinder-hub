@@ -1,7 +1,64 @@
 // Customer Directory & Ledger Detail Controller
 import { readJson, json, bad } from '../utils/response.js';
-import { clean, normalizePhone, normName, normVillage, standardizeVillage, toBilingualName } from '../utils/helpers.js';
+import { clean, normalizePhone, normName, normVillage, standardizeVillage, toBilingualName, dayKey } from '../utils/helpers.js';
 import { buildState } from '../services/stateService.js';
+
+export async function createCustomerEntry(request, env, business, range) {
+  const body = await readJson(request);
+  const customerId = clean(body.customerId, 40);
+  const customer = await env.DB.prepare('SELECT id, name, village FROM customers WHERE id = ? AND business_id = ?')
+    .bind(customerId, business.id)
+    .first();
+  if (!customer) return bad('ग्राहक नहीं मिला', 404);
+
+  const entryType = clean(body.entryType || body.type, 20); // 'debit' ("मैंने दिया") or 'payment'/'credit' ("मुझे मिला")
+  const isDebit = entryType === 'debit' || entryType === 'give';
+
+  const amount = Number(body.amount) || 0;
+  const amountPaise = Math.round(amount * 100);
+  if (amountPaise < 0 || amountPaise > 100000000) return bad('रकम सही नहीं है');
+
+  const itemName = clean(body.itemName || body.item_name || (isDebit ? 'उधार' : 'जमा'), 60);
+  const grossWeight = Number(body.grossWeight || body.weightKg || body.qty) || 0;
+  const unit = clean(body.unit, 10) || 'kg';
+  const note = clean(body.note, 200);
+
+  // If no amount and no weight provided, at least a note or item is required
+  if (amountPaise === 0 && grossWeight === 0 && !note) {
+    return bad('रकम, वजन या विवरण भरें');
+  }
+
+  const now = Date.now();
+  const day = clean(body.day, 20) || dayKey(now);
+  const entryId = crypto.randomUUID();
+  const kind = isDebit ? 'debit' : 'payment';
+  const paid = isDebit ? 0 : 1;
+
+  await env.DB.prepare(
+    `INSERT INTO entries (id, business_id, customer_id, kind, item_name, gross_weight, net_weight, unit, name, village, amount_paise, paid, note, day, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  )
+    .bind(
+      entryId,
+      business.id,
+      customer.id,
+      kind,
+      itemName,
+      grossWeight > 0 ? grossWeight : null,
+      grossWeight > 0 ? grossWeight : null,
+      unit,
+      customer.name,
+      customer.village || '',
+      amountPaise,
+      paid,
+      note,
+      day,
+      now
+    )
+    .run();
+
+  return json({ ok: true, entryId, state: await buildState(env, business.id, range) });
+}
 
 export async function customerDetail(request, env, business, url) {
   const id = clean(url.searchParams.get('id'), 40);

@@ -6,7 +6,8 @@ import { signup, login, logout, changePassword } from './controllers/authControl
 import { createJob, createPayment, deleteEntry } from './controllers/jobController.js';
 import { createTrade } from './controllers/tradeController.js';
 import { createToken, updateToken, setTokenStatus, deleteToken } from './controllers/tokenController.js';
-import { customerDetail, saveCustomer, deleteCustomer } from './controllers/customerController.js';
+import { customerDetail, saveCustomer, deleteCustomer, createCustomerEntry } from './controllers/customerController.js';
+import { createExpense, deleteExpense, getExpenses } from './controllers/expenseController.js';
 import { saveService, deleteService } from './controllers/serviceController.js';
 import { saveProduct, deleteProduct } from './controllers/productController.js';
 import { saveVillage, deleteVillage, seedDefaultVillages } from './controllers/villageController.js';
@@ -224,6 +225,10 @@ async function route(request, env, url) {
   if (path === '/api/jobs' && method === 'POST') return createJob(request, env, business, range);
   if (path === '/api/trades' && method === 'POST') return createTrade(request, env, business, range);
   if (path === '/api/payments' && method === 'POST') return createPayment(request, env, business, range);
+  if (path === '/api/customers/entry' && method === 'POST') return createCustomerEntry(request, env, business, range);
+  if (path === '/api/expenses' && method === 'GET') return getExpenses(request, env, business, url);
+  if (path === '/api/expenses' && method === 'POST') return createExpense(request, env, business, range);
+  if (path === '/api/expenses/delete' && method === 'POST') return deleteExpense(request, env, business, range);
   if (path === '/api/tokens' && method === 'POST') return createToken(request, env, business, range);
   if (path === '/api/tokens/update' && method === 'POST') return updateToken(request, env, business, range);
   if (path === '/api/tokens/status' && method === 'POST') return setTokenStatus(request, env, business, range);

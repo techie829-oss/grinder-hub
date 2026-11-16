@@ -2616,6 +2616,7 @@ body:has(#modal:not(:empty)) .tabbar {
   border-radius: 999px;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
 }
 .cust-bal-pill.due {
   background: #fef2f2;
@@ -2643,6 +2644,8 @@ body:has(#modal:not(:empty)) .tabbar {
   cursor: pointer;
   transition: background 0.12s ease;
   width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 .dash-cust-row:last-child {
   border-bottom: none;

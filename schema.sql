@@ -156,3 +156,16 @@ CREATE TABLE IF NOT EXISTS scan_items (
 );
 CREATE INDEX IF NOT EXISTS idx_scan_items_scan ON scan_items(scan_id, row_index ASC);
 CREATE INDEX IF NOT EXISTS idx_scan_items_biz ON scan_items(business_id, status);
+
+CREATE TABLE IF NOT EXISTS expenses (
+  id           TEXT PRIMARY KEY,
+  business_id  TEXT NOT NULL,
+  category     TEXT NOT NULL,
+  amount_paise INTEGER NOT NULL,
+  payment_mode TEXT NOT NULL DEFAULT 'cash',
+  note         TEXT NOT NULL DEFAULT '',
+  day          TEXT NOT NULL,
+  created_at   INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_expenses_biz_time ON expenses(business_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_expenses_biz_day ON expenses(business_id, day);
