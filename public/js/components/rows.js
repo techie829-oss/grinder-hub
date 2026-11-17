@@ -16,9 +16,31 @@ export function entryRow(entry, options = {}) {
         <span class="row-title" style="display:flex;align-items:center;gap:6px;">
           <span>💵 भुगतान मिला</span>
         </span>
-        <span class="row-sub">${esc(entry.name || 'Customer')}${entry.village ? ' (' + esc(entry.village) + ')' : ''} · ${dateTxt(entry.at)} · ${timeTxt(entry.at)}</span>
+        <span class="row-sub">${esc(entry.name || 'Customer')}${entry.village ? ' (' + esc(entry.village) + ')' : ''} · ${dateTxt(entry.at)} · ${timeTxt(entry.at)}${entry.note ? ' · "' + esc(entry.note) + '"' : ''}</span>
       </span>
       <span class="row-amt amt-plus">+${inr(entry.amountPaise)}</span>
+      ${delBtn}
+    </div>`;
+  }
+
+  if (entry.kind === 'debit') {
+    return `
+    <div class="row-item" style="border-left:3px solid #dc2626;padding-left:8px;">
+      <span class="avatar small" style="background:#fee2e2;color:#b91c1c;font-weight:700;">📦</span>
+      <span class="grow" style="min-width:0;">
+        <span class="row-title ellipsis">
+          <strong style="color:#b91c1c;">🔴 उधार दिया: ${esc(entry.itemName || 'माल / रोकड़')}</strong>
+          ${entry.grossWeight ? ` · <span style="font-weight:800;color:#ea580c;">${qtyFmt(entry.grossWeight)} ${unitOf(entry.unit)}</span>` : ''}
+        </span>
+        <span class="row-sub">
+          ${esc(entry.name || 'ग्राहक')}${entry.village ? ' (' + esc(entry.village) + ')' : ''} · ${dateTxt(entry.at)}
+          ${entry.note ? ` · <span style="color:#0f172a;font-weight:600;">"${esc(entry.note)}"</span>` : ''}
+        </span>
+      </span>
+      <span class="badge" style="background:#fee2e2;color:#991b1b;font-weight:800;">उधार</span>
+      <span class="row-amt" style="color:#dc2626;font-weight:800;">
+        ${entry.amountPaise > 0 ? '-' + inr(entry.amountPaise) : (entry.grossWeight ? entry.grossWeight + ' ' + unitOf(entry.unit) : 'उधार')}
+      </span>
       ${delBtn}
     </div>`;
   }
@@ -75,6 +97,32 @@ export function entryRow(entry, options = {}) {
     <span class="badge ${entry.paid ? 'green' : 'amber'}">${entry.paid ? t('cashPaid') : t('creditDue')}</span>
     <span class="row-amt">${inr(entry.amountPaise)}</span>
     ${delBtn}
+  </div>`;
+}
+
+export function expenseRow(ex, options = {}) {
+  const catIcons = {
+    diesel: '⛽ डीज़ल',
+    electricity: '⚡ बिजली',
+    labor: '👷 मजदूरी',
+    tea: '☕ चाय-नाश्ता',
+    maintenance: '🔧 मेंटेनेंस/ग्रीस',
+    other: '📦 अन्य खर्चा'
+  };
+  const iconLabel = catIcons[ex.category] || ex.category;
+  return `
+  <div class="row-item" style="border-left:3px solid #ea580c;padding-left:8px;">
+    <span class="avatar small" style="background:#fff7ed;color:#c2410c;font-size:14px;display:grid;place-items:center;border-radius:8px;">📉</span>
+    <span class="grow" style="min-width:0;">
+      <div class="row-title ellipsis">
+        <strong>${iconLabel}</strong> · <span class="tiny-chip" style="font-size:10px;padding:1px 5px;">${ex.paymentMode === 'cash' ? '💵 नकद (गल्ला)' : '📱 UPI/ऑनलाइन'}</span>
+      </div>
+      <div class="row-sub">
+        ${dateTxt(ex.at)} · ${timeTxt(ex.at)}${ex.note ? ` · <span style="color:#0f172a;font-weight:600;">"${esc(ex.note)}"</span>` : ''}
+      </div>
+    </span>
+    <span class="row-amt" style="color:#ea580c;font-weight:800;white-space:nowrap;">-${inr(ex.amountPaise)}</span>
+    <button type="button" class="icon-btn" data-act="del-expense" data-id="${ex.id}" aria-label="Delete" title="खर्च हटाएं" style="color:#dc2626;margin-left:4px;">✕</button>
   </div>`;
 }
 

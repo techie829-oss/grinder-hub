@@ -1,7 +1,7 @@
 // Financial & Operational Ledger Reports View (Date-Wise Order Book)
 import { state, RANGES } from '../state.js';
 import { inr, qtyFmt, unitOf, rangeLabel, emptyBlock, esc, timeTxt, getISTDayKey, formatDayHindi, formatDayLongHindi } from '../utils/formatters.js';
-import { entryRow } from '../components/rows.js';
+import { entryRow, expenseRow } from '../components/rows.js';
 import { loadDaySummary } from '../api.js';
 import { t } from '../i18n.js';
 
@@ -41,6 +41,8 @@ export function viewReports() {
   };
 
   const rawOrders = dayReport.orders || [];
+  const rawExpenses = dayReport.expenses || [];
+  const customLogs = rawOrders.filter((o) => o.kind === 'debit' || o.kind === 'payment' || o.itemType === 'payment' || o.itemType === 'debit');
 
   // Filter orders by active filter tab
   const activeFilter = dayReport.filter || 'all';
@@ -54,6 +56,7 @@ export function viewReports() {
   else if (activeFilter === 'paid') displayedOrders = paidOrders;
   else if (activeFilter === 'pending') displayedOrders = pendingOrders;
   else if (activeFilter === 'delivered') displayedOrders = deliveredOrders;
+  else if (activeFilter === 'logs') displayedOrders = customLogs;
 
   return `
   <div class="page-head" style="margin-bottom:12px;">
@@ -61,10 +64,11 @@ export function viewReports() {
       <h1 class="page-title" style="display:flex;align-items:center;gap:8px;">
         <span>📅</span> <span>दैनिक बहीखाता व रिपोर्ट</span>
       </h1>
-      <p class="page-sub">किसी भी तारीख का ऑर्डर, नकद, उधार व डिलीवरी हिसाब</p>
+      <p class="page-sub">किसी भी तारीख का ऑर्डर, नकद, उधार, खर्च व कच्चा चिट्ठा</p>
     </div>
     <div style="display:flex;gap:6px;align-items:center;">
       <button type="button" class="btn btn-primary btn-sm" data-act="switch-job-tab" data-tab="grind" data-goto="job">+ नया बिल</button>
+      <button type="button" class="btn btn-sm" data-act="open-expense-modal" style="background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;font-weight:750;">+ खर्च</button>
       <a class="btn btn-ghost btn-sm" href="/api/export" download>${t('downloadBackup')}</a>
     </div>
   </div>
@@ -79,11 +83,11 @@ export function viewReports() {
     </button>
   </div>
 
-  ${dayReport.tab === 'range' ? renderRangeReport(stats, entries) : renderDateWiseReport(dayReport, selectedDay, todayKey, yesterdayKey, twoDaysAgoKey, summary, rawOrders, displayedOrders, unpaidOrders, paidOrders, pendingOrders, deliveredOrders)}
+  ${dayReport.tab === 'range' ? renderRangeReport(stats, entries) : renderDateWiseReport(dayReport, selectedDay, todayKey, yesterdayKey, twoDaysAgoKey, summary, rawOrders, rawExpenses, customLogs, displayedOrders, unpaidOrders, paidOrders, pendingOrders, deliveredOrders)}
   `;
 }
 
-function renderDateWiseReport(dayReport, selectedDay, todayKey, yesterdayKey, twoDaysAgoKey, summary, rawOrders, displayedOrders, unpaidOrders, paidOrders, pendingOrders, deliveredOrders) {
+function renderDateWiseReport(dayReport, selectedDay, todayKey, yesterdayKey, twoDaysAgoKey, summary, rawOrders, rawExpenses, customLogs, displayedOrders, unpaidOrders, paidOrders, pendingOrders, deliveredOrders) {
   const activeFilter = dayReport.filter || 'all';
   const availableDays = dayReport.availableDays || [];
 
@@ -179,43 +183,91 @@ function renderDateWiseReport(dayReport, selectedDay, todayKey, yesterdayKey, tw
         <div class="kpi-value" style="color:#9333ea;">${qtyFmt(summary.pendingWeightKg)} <span style="font-size:15px;font-weight:700;">kg</span></div>
         <div class="kpi-sub" style="color:#6b21a8;"><b>${summary.pendingCount}</b> ग्राहक दुकान/कतार में</div>
       </div>
+
+      <!-- Card 5: Shop Expenses -->
+      <div class="kpi" style="background:#fff7ed;border-color:#fed7aa;cursor:pointer;" data-act="filter-report-orders" data-filter="expenses">
+        <div class="kpi-label" style="color:#c2410c;">
+          <span>📉</span> <span>दुकान का खर्चा</span>
+        </div>
+        <div class="kpi-value" style="color:#ea580c;">${inr(summary.totalExpenseAmountPaise || 0)}</div>
+        <div class="kpi-sub" style="color:#9a3412;"><b>${summary.totalExpensesCount || rawExpenses.length}</b> खर्च · गल्ला शुद्ध: <b>${inr(summary.netCashInHandPaise != null ? summary.netCashInHandPaise : (summary.paidCashAmountPaise - (summary.cashExpenseAmountPaise || 0)))}</b></div>
+      </div>
     </div>
 
     <!-- Order-Wise Itemized List Section -->
     <div class="card mt-14" style="background:#ffffff;border:1.5px solid #e2e8f0;border-radius:18px;padding:16px;">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
-        <h2 style="font-size:15px;font-weight:850;color:#0f172a;display:flex;align-items:center;gap:6px;">
-          <span>📋</span> <span>ऑर्डर व कार्य सूची</span>
-          <span style="font-size:12px;font-weight:700;color:#64748b;margin-left:4px;">(${displayedOrders.length})</span>
+        <h2 style="font-size:15px;font-weight:850;color:#0f172a;display:flex;align-items:center;gap:6px;margin:0;">
+          <span>📋</span> <span>${activeFilter === 'expenses' ? 'दुकान का खर्चा सूची' : (activeFilter === 'logs' ? 'दैनिक कच्चा चिट्ठा (उधार/जमा)' : 'ऑर्डर व कार्य सूची')}</span>
+          <span style="font-size:12px;font-weight:700;color:#64748b;margin-left:4px;">(${activeFilter === 'expenses' ? rawExpenses.length : (activeFilter === 'logs' ? customLogs.length : displayedOrders.length)})</span>
         </h2>
         <span class="tiny muted">${formatDayHindi(selectedDay)}</span>
       </div>
 
-      <!-- Filter Tabs -->
-      <div class="cust-filter-tabs" style="display:grid;grid-template-columns:repeat(5, minmax(0, 1fr));gap:6px;margin-bottom:14px;">
-        <button type="button" class="cust-filter-tab${activeFilter === 'all' ? ' is-active' : ''}" data-act="filter-report-orders" data-filter="all">
+      <!-- Filter Tabs (Scrollable on Mobile) -->
+      <div class="cust-filter-tabs" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px;scrollbar-width:none;-webkit-overflow-scrolling:touch;">
+        <button type="button" class="cust-filter-tab${activeFilter === 'all' ? ' is-active' : ''}" data-act="filter-report-orders" data-filter="all" style="white-space:nowrap;flex-shrink:0;">
           सभी (${rawOrders.length})
         </button>
-        <button type="button" class="cust-filter-tab${activeFilter === 'unpaid' ? ' is-active' : ''}" data-act="filter-report-orders" data-filter="unpaid" style="${activeFilter === 'unpaid' ? 'background:#ef4444;border-color:#dc2626;' : ''}">
+        <button type="button" class="cust-filter-tab${activeFilter === 'expenses' ? ' is-active' : ''}" data-act="filter-report-orders" data-filter="expenses" style="white-space:nowrap;flex-shrink:0;${activeFilter === 'expenses' ? 'background:#ea580c;color:#fff;border-color:#c2410c;' : 'background:#fff7ed;color:#c2410c;border-color:#fed7aa;'}">
+          📉 दुकान खर्च (${rawExpenses.length} · ${inr(summary.totalExpenseAmountPaise || 0)})
+        </button>
+        <button type="button" class="cust-filter-tab${activeFilter === 'logs' ? ' is-active' : ''}" data-act="filter-report-orders" data-filter="logs" style="white-space:nowrap;flex-shrink:0;${activeFilter === 'logs' ? 'background:#4338ca;color:#fff;border-color:#3730a3;' : 'background:#eef2ff;color:#4338ca;border-color:#c7d2fe;'}">
+          📝 कच्चा चिट्ठा / उधार-जमा (${customLogs.length})
+        </button>
+        <button type="button" class="cust-filter-tab${activeFilter === 'unpaid' ? ' is-active' : ''}" data-act="filter-report-orders" data-filter="unpaid" style="white-space:nowrap;flex-shrink:0;${activeFilter === 'unpaid' ? 'background:#ef4444;border-color:#dc2626;' : ''}">
           🔴 बाकी (${unpaidOrders.length})
         </button>
-        <button type="button" class="cust-filter-tab${activeFilter === 'paid' ? ' is-active' : ''}" data-act="filter-report-orders" data-filter="paid" style="${activeFilter === 'paid' ? 'background:#10b981;border-color:#059669;' : ''}">
+        <button type="button" class="cust-filter-tab${activeFilter === 'paid' ? ' is-active' : ''}" data-act="filter-report-orders" data-filter="paid" style="white-space:nowrap;flex-shrink:0;${activeFilter === 'paid' ? 'background:#10b981;border-color:#059669;' : ''}">
           🟢 नकद (${paidOrders.length})
         </button>
-        <button type="button" class="cust-filter-tab${activeFilter === 'pending' ? ' is-active' : ''}" data-act="filter-report-orders" data-filter="pending" style="${activeFilter === 'pending' ? 'background:#8b5cf6;border-color:#7c3aed;' : ''}">
+        <button type="button" class="cust-filter-tab${activeFilter === 'pending' ? ' is-active' : ''}" data-act="filter-report-orders" data-filter="pending" style="white-space:nowrap;flex-shrink:0;${activeFilter === 'pending' ? 'background:#8b5cf6;border-color:#7c3aed;' : ''}">
           ⏳ पेंडिंग (${pendingOrders.length})
         </button>
-        <button type="button" class="cust-filter-tab${activeFilter === 'delivered' ? ' is-active' : ''}" data-act="filter-report-orders" data-filter="delivered" style="${activeFilter === 'delivered' ? 'background:#3b82f6;border-color:#2563eb;' : ''}">
+        <button type="button" class="cust-filter-tab${activeFilter === 'delivered' ? ' is-active' : ''}" data-act="filter-report-orders" data-filter="delivered" style="white-space:nowrap;flex-shrink:0;${activeFilter === 'delivered' ? 'background:#3b82f6;border-color:#2563eb;' : ''}">
           ✓ दिया (${deliveredOrders.length})
         </button>
       </div>
 
-      <!-- Orders List -->
-      ${displayedOrders.length ? `
-        <div class="row-list">
-          ${displayedOrders.map((ord) => renderDayOrderItem(ord)).join('')}
+      <!-- Tab Content Area -->
+      ${activeFilter === 'expenses' ? `
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;background:#fff7ed;padding:12px 14px;border-radius:12px;border:1px solid #fed7aa;flex-wrap:wrap;gap:8px;">
+          <div>
+            <div style="font-size:12px;color:#c2410c;font-weight:750;text-transform:uppercase;">${formatDayHindi(selectedDay)} का कुल दुकान खर्च</div>
+            <div style="font-size:22px;font-weight:900;color:#9a3412;">${inr(summary.totalExpenseAmountPaise || 0)}</div>
+          </div>
+          <button type="button" class="btn btn-primary btn-sm" data-act="open-expense-modal" style="background:#ea580c;border:none;font-weight:800;border-radius:8px;padding:8px 14px;cursor:pointer;">
+            + नया खर्च जोड़ें
+          </button>
         </div>
-      ` : emptyBlock('कोई ऑर्डर नहीं मिला', 'इस फ़िल्टर या तारीख में कोई कार्य दर्ज नहीं है।')}
+        ${rawExpenses.length ? `
+          <div class="row-list">
+            ${rawExpenses.map((ex) => expenseRow(ex)).join('')}
+          </div>
+        ` : emptyBlock('इस तारीख में कोई दुकान खर्च दर्ज नहीं है', '+ नया खर्च जोड़ें बटन से डीजल, बिजली, मजदूरी, चाय दर्ज करें।')}
+      ` : (activeFilter === 'logs' ? `
+        <div style="margin-bottom:12px;background:#eef2ff;padding:12px 14px;border-radius:12px;border:1px solid #c7d2fe;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+          <div>
+            <div style="font-size:12px;color:#4338ca;font-weight:750;text-transform:uppercase;">दैनिक कच्चा चिट्ठा (लिया-दिया व माल उधार)</div>
+            <div style="font-size:14px;font-weight:800;color:#1e1b4b;margin-top:2px;">${customLogs.length} प्रविष्टियाँ दर्ज</div>
+          </div>
+          <button type="button" class="btn btn-ghost btn-sm" data-act="goto" data-view="customers" style="background:#fff;border:1px solid #c7d2fe;font-weight:800;color:#4338ca;border-radius:8px;">
+            📖 ग्राहक खाता खोलें
+          </button>
+        </div>
+        ${customLogs.length ? `
+          <div class="row-list">
+            ${customLogs.map((ord) => renderDayOrderItem(ord)).join('')}
+          </div>
+        ` : emptyBlock('इस तारीख में कोई कच्चा चिट्ठा या उधार-जमा दर्ज नहीं है', 'ग्राहक खाते से "मैंने दिया / मुझे मिला" या होम स्क्रीन पर माइक से बोलकर जोड़ें।')}
+      ` : `
+        <!-- Normal Orders List -->
+        ${displayedOrders.length ? `
+          <div class="row-list">
+            ${displayedOrders.map((ord) => renderDayOrderItem(ord)).join('')}
+          </div>
+        ` : emptyBlock('कोई ऑर्डर नहीं मिला', 'इस फ़िल्टर या तारीख में कोई कार्य दर्ज नहीं है।')}
+      `)}
     </div>
   `}
   `;
@@ -231,6 +283,58 @@ function renderDayOrderItem(order) {
     state.data?.customers?.find((c) => c.name === order.name && (!order.village || c.village === order.village)) ||
     state.data?.customers?.find((c) => c.name === order.name);
   const custId = cust ? cust.id : (order.customerId || '');
+
+  // Special Dedicated Layout for Debit / Commodity Loans
+  if (order.kind === 'debit' || order.itemType === 'debit') {
+    return `
+    <div class="day-order-card" style="border:1.5px solid #fecaca;background:#fff5f5;border-radius:14px;padding:12px;margin-bottom:10px;">
+      <div class="day-order-head">
+        <div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1 1 auto;">
+          <span class="token-badge" style="width:34px;height:34px;border-radius:10px;background:#fee2e2;color:#991b1b;font-weight:850;font-size:14px;display:grid;place-items:center;flex-shrink:0;">
+            📦
+          </span>
+          <div style="min-width:0;">
+            <div style="font-weight:850;font-size:14px;color:#0f172a;line-height:1.2;" class="ellipsis">
+              ${esc(order.name || 'ग्राहक')}
+            </div>
+            <div style="font-size:11px;color:#64748b;font-weight:650;margin-top:2px;">
+              ${order.village ? `<span class="tiny-chip" style="font-size:10.5px;padding:1px 6px;">📍 ${esc(order.village)}</span>` : ''}
+              ${order.phone ? `<span>📞 ${order.phone}</span>` : ''}
+            </div>
+          </div>
+        </div>
+        <div style="flex:0 0 auto;text-align:right;">
+          <span style="font-size:11px;color:#64748b;font-weight:650;">
+            ${order.createdAt ? timeTxt(order.createdAt) : ''}
+          </span>
+        </div>
+      </div>
+
+      <div class="day-order-body" style="margin-top:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:800;color:#991b1b;">
+          <span>🔴 उधार दिया: ${esc(order.serviceName || 'माल / रोकड़')}${order.grossWeight ? ' · ' + qtyFmt(order.grossWeight) + ' ' + unitOf(order.unit) : ''}</span>
+          <span style="font-size:14px;font-weight:850;color:#dc2626;">${order.amountPaise > 0 ? '-' + inr(order.amountPaise) : (order.grossWeight ? order.grossWeight + ' ' + unitOf(order.unit) : 'उधार')}</span>
+        </div>
+        ${order.note ? `
+          <div style="font-size:12px;color:#475569;margin-top:4px;background:#fff;padding:4px 8px;border-radius:6px;border:1px solid #fecaca;">
+            📝 <strong>विवरण:</strong> "${esc(order.note)}"
+          </div>
+        ` : ''}
+      </div>
+
+      <div class="day-order-foot" style="margin-top:8px;display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:11px;font-weight:800;color:#991b1b;background:#fee2e2;padding:2px 8px;border-radius:6px;">
+          कच्चा चिट्ठा / उधार माल
+        </span>
+        ${custId ? `
+          <button type="button" class="btn btn-sm btn-subtle" data-act="open-cust" data-id="${custId}"
+            style="padding:5px 12px;font-size:11.5px;font-weight:800;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#4338ca;">
+            📖 ग्राहक खाता
+          </button>
+        ` : ''}
+      </div>
+    </div>`;
+  }
 
   return `
   <div class="day-order-card" style="border:1.5px solid ${order.isPaid === false ? '#fecaca' : '#e2e8f0'};background:#ffffff;border-radius:14px;padding:12px;margin-bottom:10px;">

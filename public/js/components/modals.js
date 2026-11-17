@@ -4,6 +4,7 @@ import { esc, inr, qtyFmt, unitOf, dateTxt, timeTxt, emptyBlock, phoneFmt } from
 import { api } from '../api.js';
 import { isPhoneticMatch } from '../utils/phonetic.js';
 import { t } from '../i18n.js';
+import { expenseRow } from './rows.js';
 
 export function showModal(html) {
   modalRoot.innerHTML = `<div class="sheet-backdrop"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`;
@@ -1124,6 +1125,58 @@ export function renderScanReviewModal(scanData) {
       <button type="button" class="btn btn-ghost" data-act="close-modal" style="padding:12px 16px;border-radius:12px;">
         रद्द करें
       </button>
+    </div>
+  `);
+}
+
+export function openExpenseListModal() {
+  const expenses = state.data?.expenses || [];
+  const totalPaise = expenses.reduce((s, e) => s + (e.amountPaise || 0), 0);
+  const cashPaise = expenses.filter((e) => e.paymentMode === 'cash').reduce((s, e) => s + (e.amountPaise || 0), 0);
+  const upiPaise = totalPaise - cashPaise;
+
+  showModal(`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #e2e8f0;">
+      <h2 style="font-size:16px;font-weight:800;color:#0f172a;display:flex;align-items:center;gap:6px;margin:0;">
+        <span>📉</span> <span>दुकान का खर्चा बही</span>
+      </h2>
+      <button type="button" class="icon-btn" data-act="close-modal" aria-label="Close" style="width:32px;height:32px;border-radius:8px;">✕</button>
+    </div>
+
+    <!-- Summary Box -->
+    <div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:14px;padding:12px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div style="font-size:11.5px;font-weight:700;color:#c2410c;text-transform:uppercase;">आज का कुल खर्च</div>
+          <div style="font-size:22px;font-weight:900;color:#9a3412;line-height:1.1;">${inr(totalPaise)}</div>
+        </div>
+        <button type="button" class="btn btn-primary btn-sm" data-act="open-expense-modal"
+          style="background:#ea580c;color:#fff;border:none;padding:8px 14px;border-radius:8px;font-weight:800;font-size:12.5px;cursor:pointer;">
+          + नया खर्च जोड़ें
+        </button>
+      </div>
+      <div style="display:flex;gap:12px;font-size:11.5px;color:#7c2d12;font-weight:650;padding-top:6px;border-top:1px dashed #fed7aa;flex-wrap:wrap;">
+        <span>💵 नकद (गल्ला): <b>${inr(cashPaise)}</b></span>
+        <span>📱 ऑनलाइन/UPI: <b>${inr(upiPaise)}</b></span>
+      </div>
+    </div>
+
+    <!-- Expense List -->
+    <div style="font-size:13px;font-weight:800;color:#0f172a;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;">
+      <span>खर्च प्रविष्टियाँ (${expenses.length})</span>
+      <span style="font-size:11px;color:#64748b;font-weight:600;">गल्ले से स्वतः कटौती</span>
+    </div>
+    <div id="expense-list-modal-body" class="row-list" style="max-height:300px;overflow-y:auto;padding-right:2px;">
+      ${expenses.length
+        ? expenses.map((ex) => expenseRow(ex)).join('')
+        : `<div style="text-align:center;padding:26px 12px;color:#94a3b8;background:#f8fafc;border-radius:12px;border:1px dashed #cbd5e1;">
+             <span style="font-size:28px;display:block;margin-bottom:4px;">📋</span>
+             <div style="font-weight:750;color:#475569;font-size:13.5px;">आज अभी तक कोई खर्च दर्ज नहीं है</div>
+             <div style="font-size:11.5px;color:#94a3b8;margin-top:2px;">डीज़ल, बिजली, मजदूरी, चाय खर्च यहाँ दर्ज करें ताकि गल्ला सही रहे।</div>
+             <button type="button" class="btn btn-sm btn-primary mt-8" data-act="open-expense-modal" style="background:#ea580c;border:none;border-radius:8px;font-weight:800;cursor:pointer;">
+               + पहला खर्च जोड़ें
+             </button>
+           </div>`}
     </div>
   `);
 }

@@ -106,6 +106,18 @@ test('Day Summary Controller: computes metrics for paid, unpaid, delivered, and 
     },
   ];
 
+  const mockExpenses = [
+    {
+      id: 'exp-1',
+      category: 'diesel',
+      amount_paise: 5000, // ₹50
+      payment_mode: 'cash',
+      note: '5L Diesel',
+      day: '2026-11-15',
+      created_at: 1731654000000,
+    }
+  ];
+
   const env = {
     DB: {
       prepare() {
@@ -120,6 +132,7 @@ test('Day Summary Controller: computes metrics for paid, unpaid, delivered, and 
           { results: mockTokens },
           { results: mockEntries },
           { results: [{ day: '2026-11-15' }] },
+          { results: mockExpenses },
         ];
       },
     },
@@ -172,4 +185,12 @@ test('Day Summary Controller: computes metrics for paid, unpaid, delivered, and 
   assert.equal(tok3.isBilled, true);
   assert.equal(tok3.isPaid, false);
   assert.equal(tok3.isDelivered, false);
+
+  // Verify Expenses:
+  assert.equal(data.expenses.length, 1);
+  assert.equal(data.summary.totalExpensesCount, 1);
+  assert.equal(data.summary.totalExpenseAmountPaise, 5000);
+  assert.equal(data.summary.cashExpenseAmountPaise, 5000);
+  // Net cash: 24000 - 5000 = 19000 paise (₹190)
+  assert.equal(data.summary.netCashInHandPaise, 19000);
 });

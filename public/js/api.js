@@ -121,6 +121,7 @@ export async function loadDaySummary(day) {
   if (res && res.ok) {
     state.dayReport.summary = res.summary;
     state.dayReport.orders = res.orders || [];
+    state.dayReport.expenses = res.expenses || [];
     state.dayReport.availableDays = res.availableDays || [];
     state.dayReport.error = '';
   } else {

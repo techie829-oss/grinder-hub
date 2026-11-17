@@ -1,14 +1,20 @@
 import { state } from '../state.js';
 import { inr, qtyFmt, rangeLabel, emptyBlock, esc, todayTxt, phoneFmt } from '../utils/formatters.js';
 import { tokenCard } from '../components/tokenCard.js';
-import { entryRow } from '../components/rows.js';
+import { entryRow, expenseRow } from '../components/rows.js';
 import { t } from '../i18n.js';
 
 export function viewDashboard() {
   const d = state.data;
   const s = d.stats;
   const label = rangeLabel(s.range);
-  const recent = d.entries.slice(0, 8);
+
+  const recentEntries = (d.entries || []).map((e) => ({ ...e, eventType: 'entry' }));
+  const recentExpenses = (d.expenses || []).map((ex) => ({ ...ex, eventType: 'expense' }));
+  const recentAll = [...recentEntries, ...recentExpenses]
+    .sort((a, b) => (b.at || b.created_at || 0) - (a.at || a.created_at || 0))
+    .slice(0, 10);
+
   const dues = d.customers.filter((c) => c.balancePaise > 0).slice(0, 6);
   const tObj = d.tokens || { waiting: [], done: 0, nextNo: 1, serving: null, doneList: [] };
   const doneList = tObj.doneList || [];
@@ -84,10 +90,10 @@ export function viewDashboard() {
       <span class="dash-tile-title">माल बिक्री</span>
       <span class="dash-tile-sub">आटा, तेल, चोकर आदि</span>
     </button>
-    <button type="button" class="dash-launcher-tile" data-act="open-expense-modal" style="background:#fff7ed;border-color:#fed7aa;color:#c2410c;">
+    <button type="button" class="dash-launcher-tile" data-act="open-expense-list-modal" style="background:#fff7ed;border-color:#fed7aa;color:#c2410c;">
       <span class="dash-tile-icon">📉</span>
       <span class="dash-tile-title" style="color:#9a3412;">दुकान का खर्चा</span>
-      <span class="dash-tile-sub" style="color:#c2410c;">डीज़ल, बिजली, चाय आदि</span>
+      <span class="dash-tile-sub" style="color:#c2410c;">खर्च सूची व नया जोड़ें</span>
     </button>
     <button type="button" class="dash-launcher-tile tile-amber" data-act="switch-job-tab" data-tab="purchase" data-goto="job">
       <span class="dash-tile-icon">📥</span>
@@ -111,12 +117,12 @@ export function viewDashboard() {
       <div class="kpi-sub">${s.cashPaise < 0 ? 'खर्च बिक्री से अधिक' : 'काउंटर में शुद्ध नकद'}</div>
     </div>
 
-    <div class="kpi" style="background:#fff7ed;border-color:#fed7aa;cursor:pointer;" data-act="open-expense-modal">
+    <div class="kpi" style="background:#fff7ed;border-color:#fed7aa;cursor:pointer;" data-act="open-expense-list-modal">
       <div class="kpi-label" style="color:#c2410c;">
         <span>📉</span> <span>दुकान खर्च</span>
       </div>
       <div class="kpi-value" style="color:#ea580c;">${inr(s.expensePaise || 0)}</div>
-      <div class="kpi-sub">+ खर्च दर्ज करें ➔</div>
+      <div class="kpi-sub">खर्च सूची व हिसाब ➔</div>
     </div>
 
     <div class="kpi accent">
@@ -181,8 +187,8 @@ export function viewDashboard() {
         <h2 class="section-title">${t('recentTransactions')}</h2>
         <button class="section-link" data-act="goto" data-view="reports">${t('navReports')}</button>
       </div>
-      ${recent.length
-        ? `<div class="row-list">${recent.map((e) => entryRow(e)).join('')}</div>`
+      ${recentAll.length
+        ? `<div class="row-list">${recentAll.map((item) => item.eventType === 'expense' ? expenseRow(item) : entryRow(item)).join('')}</div>`
         : `<div style="text-align:center;padding:18px 12px;color:#64748b;">
              <span style="font-size:26px;display:block;margin-bottom:6px;">📋</span>
              <div style="font-weight:750;font-size:13.5px;color:#0f172a;">${t('noTransactionsYet')}</div>

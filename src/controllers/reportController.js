@@ -7,7 +7,7 @@ export async function getDaySummary(request, env, business, url) {
     day = dayKey(Date.now());
   }
 
-  const [tokensRes, entriesRes, daysRes] = await env.DB.batch([
+  const [tokensRes, entriesRes, daysRes, expensesRes] = await env.DB.batch([
     // 0: tokens for the day
     env.DB.prepare(
       `SELECT t.id, t.no, t.name, COALESCE(t.village, '') AS village, COALESCE(t.phone, '') AS phone,
@@ -39,13 +39,34 @@ export async function getDaySummary(request, env, business, url) {
          SELECT day FROM tokens WHERE business_id = ?
          UNION
          SELECT day FROM entries WHERE business_id = ?
+         UNION
+         SELECT day FROM expenses WHERE business_id = ?
        ) ORDER BY day DESC LIMIT 30`
-    ).bind(business.id, business.id),
+    ).bind(business.id, business.id, business.id),
+    // 3: shop expenses for the day
+    env.DB.prepare(
+      `SELECT id, category, amount_paise, payment_mode, note, day, created_at
+         FROM expenses
+        WHERE business_id = ? AND day = ?
+        ORDER BY created_at DESC`
+    ).bind(business.id, day),
   ]);
 
   const rawTokens = tokensRes?.results || [];
   const rawEntries = entriesRes?.results || [];
   const availableDays = (daysRes?.results || []).map((r) => r.day);
+  const rawExpenses = (expensesRes?.results || []).map((ex) => ({
+    id: ex.id,
+    category: ex.category,
+    amountPaise: Number(ex.amount_paise) || 0,
+    paymentMode: ex.payment_mode || 'cash',
+    note: ex.note || '',
+    day: ex.day,
+    at: ex.created_at,
+  }));
+
+  const totalExpenseAmountPaise = rawExpenses.reduce((sum, e) => sum + e.amountPaise, 0);
+  const cashExpenseAmountPaise = rawExpenses.filter((e) => e.paymentMode === 'cash').reduce((sum, e) => sum + e.amountPaise, 0);
 
   // Map token_no -> entry for this day
   const tokenEntryMap = new Map();
@@ -190,6 +211,10 @@ export async function getDaySummary(request, env, business, url) {
     deliveredWeightKg: Math.round(deliveredWeightKg * 1000) / 1000,
     pendingCount,
     pendingWeightKg: Math.round(pendingWeightKg * 1000) / 1000,
+    totalExpensesCount: rawExpenses.length,
+    totalExpenseAmountPaise,
+    cashExpenseAmountPaise,
+    netCashInHandPaise: paidCashAmountPaise - cashExpenseAmountPaise,
   };
 
   return json({
@@ -197,6 +222,7 @@ export async function getDaySummary(request, env, business, url) {
     day,
     summary,
     orders,
+    expenses: rawExpenses,
     availableDays,
   });
 }

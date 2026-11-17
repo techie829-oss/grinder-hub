@@ -115,9 +115,10 @@ export const state = {
   dayReport: {
     selectedDay: null,
     tab: 'orders', // 'orders' | 'range'
-    filter: 'all', // 'all' | 'unpaid' | 'paid' | 'pending' | 'delivered'
+    filter: 'all', // 'all' | 'unpaid' | 'paid' | 'pending' | 'delivered' | 'expenses' | 'logs'
     summary: null,
     orders: [],
+    expenses: [],
     availableDays: [],
     loading: false,
     error: '',

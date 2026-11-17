@@ -4,7 +4,7 @@ import { api, withBusy, loadState, applyState, toast, loadAdminData, loadDaySumm
 import { inr, unitOf, esc, qtyFmt } from './utils/formatters.js';
 import { printReceipt } from './utils/print.js';
 import { entryWaText, openWhatsApp } from './utils/whatsapp.js';
-import { closeModal, openCustomer, openCustomerEditModal, openEditTokenModal, openScanModal, showScanLoadingModal, renderScanReviewModal, showJobDone, findEntry, openStatusModal, renderStatusResult, renderUniversalSearchResults, openExpenseModal, openSmartConfirmModal } from './components/modals.js';
+import { closeModal, openCustomer, openCustomerEditModal, openEditTokenModal, openScanModal, showScanLoadingModal, renderScanReviewModal, showJobDone, findEntry, openStatusModal, renderStatusResult, renderUniversalSearchResults, openExpenseModal, openExpenseListModal, openSmartConfirmModal } from './components/modals.js';
 import { parseSmartQuery } from './utils/smartAssistant.js';
 import { compressImage } from './utils/imageCompressor.js';
 import { customerRows } from './components/rows.js';
@@ -732,6 +732,30 @@ export function setupEventListeners() {
       case 'open-expense-modal':
         openExpenseModal();
         break;
+
+      case 'open-expense-list-modal':
+        openExpenseListModal();
+        break;
+
+      case 'del-expense': {
+        const id = el.dataset.id;
+        if (!id) return;
+        if (!confirm('क्या आप इस खर्चे को हटाना चाहते हैं?')) return;
+        await withBusy(el, async () => {
+          const res = await api('/api/expenses/delete', { id });
+          if (res && res.state) {
+            applyState(res.state);
+            toast('खर्च हटा दिया गया');
+            if (document.getElementById('expense-list-modal-body')) {
+              openExpenseListModal();
+            }
+            if (state.view === 'reports' && state.dayReport.selectedDay) {
+              loadDaySummary(state.dayReport.selectedDay);
+            }
+          }
+        });
+        break;
+      }
 
       case 'cust-entry-mode': {
         const mode = el.dataset.mode;
