@@ -279,14 +279,14 @@ export async function buildState(env, businessId, range) {
       })),
     },
     appMeta: {
-      latestVersion: '2.8.14',
-      latestVersionCode: 16,
-      downloadUrl: '/tolmaal.apk',
+      latestVersion: '2.8.18',
+      latestVersionCode: 20,
+      downloadUrl: '/tolmaal-v2.8.18.apk',
       releasedAt: Date.now(),
       changelog: [
-        'टोकन काउंटर मैन्युअल सेट करने की सुविधा (Settings से किसी भी नंबर से टोकन शुरू करें)',
-        'टोकन विवरण संपादन (Edit/Update) सुविधा — नाम, गाँव, मोबाइल, सेवा व वज़न सुधारें',
-        'टॉप नोटिफिकेशन एरिया व बॉटम नेविगेशन बटन ओवरलैप से बचाव हेतु बेहतर स्पेसिंग',
+        'दुकान का खर्चा (Shop Expense) और डेली गल्ला (Net Cash) ट्रैकिंग',
+        'कस्टमर खाता - उधार माल (1kg आटा आदि) व नकदी का कच्चा चिट्ठा',
+        'डिजिटल मुंशी (AI Voice & Text Assistant) — बोलकर या लिखकर लेन-देन',
       ]
     },
   };

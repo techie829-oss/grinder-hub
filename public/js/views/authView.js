@@ -19,7 +19,7 @@ export function viewAuth() {
         </div>
       </div>
       <div class="public-header-actions">
-        <a href="/tolmaal.apk" download="tolmaal.apk" class="btn btn-sm btn-apk-dl" title="TolMaal Android App (.apk)">
+        <a href="/tolmaal-v2.8.18.apk" download="tolmaal-v2.8.18.apk" class="btn btn-sm btn-apk-dl" title="TolMaal Android App (v2.8.18 .apk)">
           <span>📲</span> <span>App</span>
         </a>
         ${langSelector()}

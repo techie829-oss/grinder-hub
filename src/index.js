@@ -54,10 +54,14 @@ export default {
     }
     if (!url.pathname.startsWith('/api/')) {
       if (url.pathname === '/tolmaal.apk' || url.pathname.endsWith('.apk')) {
-        const assetRes = await env.ASSETS.fetch(request);
+        let assetRes = await env.ASSETS.fetch(request);
+        if (assetRes.status === 404 && url.pathname !== '/tolmaal.apk') {
+          const fallbackReq = new Request(new URL('/tolmaal.apk', request.url), request);
+          assetRes = await env.ASSETS.fetch(fallbackReq);
+        }
         const headers = new Headers(assetRes.headers);
         headers.set('content-type', 'application/vnd.android.package-archive');
-        headers.set('content-disposition', 'attachment; filename="tolmaal.apk"');
+        headers.set('content-disposition', 'attachment; filename="tolmaal-v2.8.18.apk"');
         headers.set('cache-control', 'public, max-age=60');
         return new Response(assetRes.body, {
           status: assetRes.status,
@@ -94,18 +98,18 @@ export default {
   <div class="card">
     <img src="/icon.svg" class="logo" alt="TolMaal Logo">
     <h1>तौल-माल (TolMaal)</h1>
-    <p class="sub">आटा चक्की व व्यापार प्रबंधन मोबाइल ऐप (v2.8.3)</p>
-    <a href="/tolmaal.apk" class="btn-dl" id="dl-btn">
-      <span>📥</span> <span>अभी ऐप डाउनलोड करें (APK)</span>
+    <p class="sub">आटा चक्की व व्यापार प्रबंधन मोबाइल ऐप (v2.8.18)</p>
+    <a href="/tolmaal-v2.8.18.apk" class="btn-dl" id="dl-btn">
+      <span>📥</span> <span>अभी ऐप डाउनलोड करें (v2.8.18 APK)</span>
     </a>
-    <a href="https://tolmaal.rohitkmarch96.workers.dev/tolmaal.apk" class="btn-mirror">
+    <a href="https://tolmaal.rohitkmarch96.workers.dev/tolmaal-v2.8.18.apk" class="btn-mirror">
       🔄 यदि डाउनलोड शुरू न हो तो यहाँ क्लिक करें (Mirror)
     </a>
     <div class="steps">
       <strong>📱 इंस्टॉल कैसे करें:</strong>
       <ol>
         <li>ऊपर दिए गए हरे बटन पर क्लिक करें।</li>
-        <li>मोबाइल के <strong>Notification Bar</strong> में डाउनलोड पूरा होने पर <strong>tolmaal.apk</strong> पर टैप करें।</li>
+        <li>मोबाइल के <strong>Notification Bar</strong> में डाउनलोड पूरा होने पर <strong>tolmaal-v2.8.18.apk</strong> पर टैप करें।</li>
         <li><strong>"Install"</strong> या <strong>"Update"</strong> चुनें।</li>
         <li>आपका कोई भी पुराना डेटा या हिसाब डिलीट नहीं होगा!</li>
       </ol>
@@ -118,7 +122,7 @@ export default {
     // Auto trigger download after 1 second if redirected
     if (new URLSearchParams(window.location.search).has('auto')) {
       setTimeout(() => {
-        window.location.href = '/tolmaal.apk';
+        window.location.href = '/tolmaal-v2.8.18.apk';
       }, 800);
     }
   </script>
@@ -177,14 +181,14 @@ async function route(request, env, url) {
   if (path === '/api/app-version' && method === 'GET') {
     return json({
       ok: true,
-      version: '2.8.16',
-      versionCode: 18,
-      downloadUrl: '/tolmaal.apk',
+      version: '2.8.18',
+      versionCode: 20,
+      downloadUrl: '/tolmaal-v2.8.18.apk',
       releasedAt: Date.now(),
       changelog: [
-        'रजिस्टर/डायरी फोटो स्कैनर (AI Image Scanner) — अलग स्टेजिंग टेबल (scans/scan_items) व स्मार्ट ग्राहक मैपिंग के साथ',
-        'तारीख अनुसार सम्पूर्ण बहीखाता (Date-Wise Order Book) व 1-क्लिक बिलिंग',
-        'डैशबोर्ड UX व कार्ड्स का संपूर्ण आधुनिकीकरण',
+        'दुकान का खर्चा (Shop Expense) और डेली गल्ला (Net Cash) ट्रैकिंग',
+        'कस्टमर खाता - उधार माल (1kg आटा आदि) व नकदी का कच्चा चिट्ठा',
+        'डिजिटल मुंशी (AI Voice & Text Assistant) — बोलकर या लिखकर लेन-देन',
       ]
     });
   }

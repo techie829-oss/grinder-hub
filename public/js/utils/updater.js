@@ -77,7 +77,8 @@ export function renderUpdateBanner() {
 }
 
 export function triggerAppDownload() {
-  const externalWorkerUrl = 'https://tolmaal.rohitkmarch96.workers.dev/tolmaal.apk';
+  const apkFileName = 'tolmaal-v2.8.18.apk';
+  const externalWorkerUrl = `https://tolmaal.rohitkmarch96.workers.dev/${apkFileName}`;
   const downloadPageUrl = 'https://tolmaal.solidrix.com/download';
   const installed = getInstalledAppInfo();
 
@@ -101,8 +102,8 @@ export function triggerAppDownload() {
   } else {
     // Standard web browser download
     const a = document.createElement('a');
-    a.href = '/tolmaal.apk';
-    a.download = 'tolmaal.apk';
+    a.href = `/${apkFileName}`;
+    a.download = apkFileName;
     document.body.appendChild(a);
     a.click();
     setTimeout(() => a.remove(), 100);
@@ -112,14 +113,14 @@ export function triggerAppDownload() {
   openDownloadModal(externalWorkerUrl, downloadPageUrl);
 }
 
-export function openDownloadModal(externalWorkerUrl = 'https://tolmaal.rohitkmarch96.workers.dev/tolmaal.apk', downloadPageUrl = 'https://tolmaal.solidrix.com/download') {
+export function openDownloadModal(externalWorkerUrl = 'https://tolmaal.rohitkmarch96.workers.dev/tolmaal-v2.8.18.apk', downloadPageUrl = 'https://tolmaal.solidrix.com/download') {
   showModal(`
     <div class="sheet-head" style="display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #e2e8f0;padding-bottom:10px;margin-bottom:12px;">
       <div style="display:flex;align-items:center;gap:8px;">
         <span style="font-size:24px;">📥</span>
         <div>
           <div style="font-size:16px;font-weight:800;color:#0f172a;">नया ऐप डाउनलोड हो रहा है...</div>
-          <div style="font-size:11.5px;color:#059669;font-weight:700;">TolMaal Android APK (v2.8.4)</div>
+          <div style="font-size:11.5px;color:#059669;font-weight:700;">TolMaal Android APK (v2.8.18)</div>
         </div>
       </div>
       <button type="button" class="icon-btn" data-act="close-modal" aria-label="Close">✕</button>
@@ -157,7 +158,7 @@ export function openDownloadModal(externalWorkerUrl = 'https://tolmaal.rohitkmar
       <div style="display:flex;flex-direction:column;gap:8px;font-size:12px;color:#475569;">
         <div style="display:flex;align-items:flex-start;gap:8px;">
           <span style="background:#4f46e5;color:#fff;border-radius:50%;width:18px;height:18px;display:grid;place-items:center;font-size:11px;font-weight:800;flex-shrink:0;">1</span>
-          <span>डाउनलोड पूरा होने पर नोटिफिकेशन से <strong>tolmaal.apk</strong> पर क्लिक करें।</span>
+          <span>डाउनलोड पूरा होने पर नोटिफिकेशन से <strong>tolmaal-v2.8.18.apk</strong> पर क्लिक करें।</span>
         </div>
         <div style="display:flex;align-items:flex-start;gap:8px;">
           <span style="background:#4f46e5;color:#fff;border-radius:50%;width:18px;height:18px;display:grid;place-items:center;font-size:11px;font-weight:800;flex-shrink:0;">2</span>

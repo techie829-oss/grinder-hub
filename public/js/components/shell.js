@@ -72,7 +72,7 @@ export function topbar() {
           <span>🚀</span> <span style="font-size:11px;">अपडेट</span>
         </button>
       ` : `
-        <a href="/tolmaal.apk" download="tolmaal.apk" class="btn btn-sm btn-apk-dl hide-mobile" title="TolMaal Android App (.apk) डाउनलोड करें" style="background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;font-weight:700;display:inline-flex;align-items:center;gap:4px;padding:5px 9px;border-radius:8px;text-decoration:none;font-size:11.5px;white-space:nowrap;margin-right:2px;">
+        <a href="/tolmaal-v2.8.18.apk" download="tolmaal-v2.8.18.apk" class="btn btn-sm btn-apk-dl hide-mobile" title="TolMaal Android App (v2.8.18 .apk) डाउनलोड करें" style="background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;font-weight:700;display:inline-flex;align-items:center;gap:4px;padding:5px 9px;border-radius:8px;text-decoration:none;font-size:11.5px;white-space:nowrap;margin-right:2px;">
           <span>📲</span> <span>App</span>
         </a>
       `}
